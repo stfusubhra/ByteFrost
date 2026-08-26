@@ -1,0 +1,103 @@
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["version"] == "0.1.0"
+
+
+def test_register_and_login():
+    # Register
+    reg_response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "test@bytefrost.com",
+            "password": "testpass123",
+            "full_name": "Test Farmer",
+            "role": "farmer",
+        },
+    )
+    assert reg_response.status_code == 201
+    data = reg_response.json()
+    assert "access_token" in data
+    assert data["role"] == "farmer"
+
+    # Login
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "test@bytefrost.com",
+            "password": "testpass123",
+        },
+    )
+    assert login_response.status_code == 200
+    assert "access_token" in login_response.json()
+
+
+def test_create_listing():
+    # Register first
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "farmer1@bytefrost.com",
+            "password": "testpass123",
+            "full_name": "Farmer One",
+            "role": "farmer",
+        },
+    )
+    token = reg.json()["access_token"]
+
+    # Create listing
+    response = client.post(
+        "/api/v1/listings",
+        json={
+            "crop_name": "Rice",
+            "variety": "Basmati",
+            "quantity_kg": 500,
+            "quality_grade": "A",
+            "price_per_kg": 25.0,
+            "pickup_location": "West Bengal, India",
+            "pickup_latitude": 22.5726,
+            "pickup_longitude": 88.3639,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["crop_name"] == "Rice"
+    assert data["quantity_kg"] == 500
+
+
+def test_list_listings():
+    response = client.get("/api/v1/listings")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_matching_placeholder():
+    # Register
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "buyer1@bytefrost.com",
+            "password": "testpass123",
+            "full_name": "Buyer One",
+            "role": "buyer_bulk",
+        },
+    )
+    token = reg.json()["access_token"]
+
+    # Test matching
+    response = client.post(
+        "/api/v1/matching/find-matches",
+        json={"listing_id": "00000000-0000-0000-0000-000000000000"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
