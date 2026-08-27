@@ -6,6 +6,7 @@ from app.schemas.schemas import MatchRequest, MatchResult
 
 try:
     from app.ml.serve import recommend_price as ml_recommend_price
+    from app.ml.serve import forecast_demand as ml_forecast_demand
     ML_AVAILABLE = True
 except Exception:  # pragma: no cover - model may not be trained yet
     ML_AVAILABLE = False
@@ -95,12 +96,30 @@ async def recommend_price(
 async def forecast_demand(
     crop_name: str,
     region: str,
+    recent_demand: list[float] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
     AI-powered demand forecasting.
-    TODO: Integrate with ML service.
+    Uses the trained XGBoost model when available; falls back to a
+    deterministic estimate otherwise.
     """
+    if ML_AVAILABLE:
+        try:
+            # If no recent demand history provided, seed with a reasonable
+            # baseline so the recursive forecast can run.
+            if not recent_demand:
+                recent_demand = [150000.0] * 30
+            result = ml_forecast_demand(
+                crop_name=crop_name,
+                region=region,
+                recent_demand=recent_demand,
+            )
+            return result
+        except Exception as exc:  # pragma: no cover
+            raise HTTPException(status_code=500, detail=f"ML inference failed: {exc}")
+
+    # Fallback deterministic estimate (no trained model)
     return {
         "crop": crop_name,
         "region": region,
