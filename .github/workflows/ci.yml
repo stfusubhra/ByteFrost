@@ -49,7 +49,7 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bytefrost_test
+          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bytefrost_test
           SECRET_KEY: test-secret-key
         run: pytest -v --tb=short
 
