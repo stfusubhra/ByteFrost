@@ -39,6 +39,8 @@ Thumbs.db
 *.ipynb_checkpoints/
 *.pkl
 *.joblib
+ml/data/
+ml/models/
 
 # Testing
 .coverage

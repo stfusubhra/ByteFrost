@@ -1,8 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 
 from app.core.security import get_current_user
 from app.schemas.schemas import MatchRequest, MatchResult
+
+try:
+    from app.ml.serve import recommend_price as ml_recommend_price
+    ML_AVAILABLE = True
+except Exception:  # pragma: no cover - model may not be trained yet
+    ML_AVAILABLE = False
 
 router = APIRouter()
 
@@ -34,12 +40,48 @@ async def find_matches(
 @router.post("/price-recommendation")
 async def recommend_price(
     listing_id: UUID,
+    crop_name: str = "tomato",
+    mandi: str = "Azadpur, Delhi",
+    month: int = 8,
+    week_of_year: int = 35,
+    day_of_year: int = 240,
+    lag_7: float = 1900.0,
+    lag_14: float = 1850.0,
+    lag_30: float = 1800.0,
+    rolling_mean_7: float = 1880.0,
+    rolling_std_7: float = 120.0,
+    quantity_kg: float = 2500.0,
     current_user: dict = Depends(get_current_user),
 ):
     """
     AI-powered price recommendation.
-    TODO: Integrate with ML service.
+    Uses the trained XGBoost model when available; falls back to a
+    deterministic estimate otherwise.
     """
+    import math
+
+    if ML_AVAILABLE:
+        try:
+            result = ml_recommend_price(
+                crop_name=crop_name,
+                mandi=mandi,
+                month=month,
+                week_of_year=week_of_year,
+                day_of_year=day_of_year,
+                lag_7=lag_7,
+                lag_14=lag_14,
+                lag_30=lag_30,
+                rolling_mean_7=rolling_mean_7,
+                rolling_std_7=rolling_std_7,
+                quantity_log=math.log1p(quantity_kg),
+                quantity_lag_7=math.log1p(quantity_kg * 0.96),
+            )
+            result["listing_id"] = str(listing_id)
+            return result
+        except Exception as exc:  # pragma: no cover
+            raise HTTPException(status_code=500, detail=f"ML inference failed: {exc}")
+
+    # Fallback deterministic estimate (no trained model)
     return {
         "listing_id": str(listing_id),
         "recommended_price": 25.0,
