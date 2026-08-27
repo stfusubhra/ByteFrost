@@ -19,6 +19,8 @@ node_modules/
 .next/
 out/
 .turbo/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # Docker
 docker-compose.override.yml
