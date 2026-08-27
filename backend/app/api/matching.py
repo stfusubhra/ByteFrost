@@ -1,12 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 from uuid import UUID
 
+from app.core.database import get_db
 from app.core.security import get_current_user
+from app.models.models import (
+    User, UserRole, ProduceListing, Order, OrderItem, OrderStatus,
+)
 from app.schemas.schemas import MatchRequest, MatchResult
 
 try:
     from app.ml.serve import recommend_price as ml_recommend_price
     from app.ml.serve import forecast_demand as ml_forecast_demand
+    from app.ml.serve import score_buyer_matches as ml_score_buyer_matches
     ML_AVAILABLE = True
 except Exception:  # pragma: no cover - model may not be trained yet
     ML_AVAILABLE = False
@@ -18,23 +25,146 @@ router = APIRouter()
 async def find_matches(
     payload: MatchRequest,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     AI-powered buyer matching endpoint.
-    TODO: Integrate with ML service for scoring.
+
+    Given a seller's produce listing, ranks candidate buyers using a
+    weighted scoring algorithm across five dimensions:
+      - quantity fit
+      - price compatibility
+      - distance (geographic proximity)
+      - reliability (verification + completion ratio)
+      - transaction history (order volume & frequency)
+
+    Falls back to a deterministic ranking when the ML service is unavailable.
     """
-    # Placeholder: return dummy match
+    # Load the listing
+    listing_result = await db.execute(
+        select(ProduceListing).where(ProduceListing.id == payload.listing_id)
+    )
+    listing = listing_result.scalar_one_or_none()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    # Candidate buyers: bulk buyers and retailers (exclude the seller)
+    buyer_roles = [UserRole.BUYER_BULK, UserRole.BUYER_RETAILER]
+    buyers_result = await db.execute(
+        select(User).where(
+            User.role.in_(buyer_roles),
+            User.id != listing.seller_id,
+            User.is_active == True,  # noqa: E712
+        )
+    )
+    buyers = buyers_result.scalars().all()
+
+    if not buyers:
+        return []
+
+    # Build per-buyer stats from order history
+    buyer_ids = [b.id for b in buyers]
+
+    # Aggregate order stats per buyer
+    stats_result = await db.execute(
+        select(
+            Order.buyer_id,
+            func.count(Order.id).label("total_orders"),
+            func.sum(
+                func.case(
+                    (Order.status == OrderStatus.DELIVERED, 1),
+                    else_=0,
+                )
+            ).label("completed_orders"),
+            func.coalesce(func.sum(Order.total_amount), 0.0).label("total_amount"),
+        )
+        .where(Order.buyer_id.in_(buyer_ids))
+        .group_by(Order.buyer_id)
+    )
+    order_stats = {
+        row.buyer_id: row for row in stats_result.all()
+    }
+
+    # Aggregate order-item stats (avg order quantity, avg price) per buyer
+    item_stats_result = await db.execute(
+        select(
+            Order.buyer_id,
+            func.avg(OrderItem.quantity_kg).label("avg_qty"),
+            func.avg(OrderItem.price_per_kg).label("avg_price"),
+            func.coalesce(func.sum(OrderItem.quantity_kg), 0.0).label("total_volume"),
+        )
+        .join(OrderItem, OrderItem.order_id == Order.id)
+        .where(Order.buyer_id.in_(buyer_ids))
+        .group_by(Order.buyer_id)
+    )
+    item_stats = {
+        row.buyer_id: row for row in item_stats_result.all()
+    }
+
+    # Assemble buyer feature dicts for the scoring function
+    buyer_features = []
+    for b in buyers:
+        os_ = order_stats.get(b.id)
+        is_ = item_stats.get(b.id)
+        buyer_features.append({
+            "buyer_id": b.id,
+            "latitude": b.latitude,
+            "longitude": b.longitude,
+            "is_verified": b.is_verified,
+            "avg_order_quantity_kg": float(is_.avg_qty) if is_ and is_.avg_qty else None,
+            "avg_price_per_kg": float(is_.avg_price) if is_ and is_.avg_price else None,
+            "completed_orders": int(os_.completed_orders) if os_ else 0,
+            "total_orders": int(os_.total_orders) if os_ else 0,
+            "total_volume_kg": float(is_.total_volume) if is_ else 0.0,
+        })
+
+    listing_dict = {
+        "quantity_kg": listing.quantity_kg,
+        "price_per_kg": listing.price_per_kg,
+        "pickup_latitude": listing.pickup_latitude,
+        "pickup_longitude": listing.pickup_longitude,
+    }
+
+    if ML_AVAILABLE:
+        try:
+            ranked = ml_score_buyer_matches(listing_dict, buyer_features)
+        except Exception as exc:  # pragma: no cover
+            raise HTTPException(status_code=500, detail=f"ML inference failed: {exc}")
+    else:
+        # Deterministic fallback: rank by reliability then distance
+        ranked = sorted(
+            buyer_features,
+            key=lambda b: (
+                b["completed_orders"],
+                b["is_verified"],
+            ),
+            reverse=True,
+        )
+        ranked = [
+            {
+                "buyer_id": str(b["buyer_id"]),
+                "score": 0.5,
+                "explanation": {
+                    "quantity_fit": 0.5,
+                    "price_compatibility": 0.5,
+                    "distance": 0.5,
+                    "reliability": 0.5,
+                    "transaction_history": 0.5,
+                },
+            }
+            for b in ranked
+        ]
+
+    # Limit results
+    ranked = ranked[: payload.max_results]
+
     return [
         MatchResult(
-            buyer_id=UUID("00000000-0000-0000-0000-000000000000"),
-            score=0.85,
-            explanation={
-                "quantity_fit": 0.9,
-                "price_score": 0.8,
-                "distance_score": 0.7,
-                "reliability": 0.9,
-            },
+            buyer_id=UUID(r["buyer_id"]),
+            score=r["score"],
+            explanation=r["explanation"],
         )
+        for r in ranked
     ]
 
 

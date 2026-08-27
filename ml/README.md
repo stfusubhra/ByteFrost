@@ -28,7 +28,7 @@ ml/
 
 The serving module lives in the backend so FastAPI can call it:
 ```
-backend/app/ml/serve.py            # Loads models, exposes recommend_price() + forecast_demand()
+backend/app/ml/serve.py            # Loads models, exposes recommend_price(), forecast_demand(), score_buyer_matches()
 ```
 
 ## Environment setup
@@ -105,17 +105,35 @@ The model predicts next-day demand from lag/rolling/calendar features; the servi
 
 `POST /matching/demand-forecast` calls `forecast_demand()` in `backend/app/ml/serve.py`, which returns 7-day and 30-day demand predictions with confidence. Falls back to a deterministic estimate if the model isn't present.
 
+## Buyer-seller matching
+
+The matching engine ranks candidate buyers for a seller's produce listing using **weighted scoring** across five dimensions (each normalized 0–1):
+
+| Dimension | Weight | Description |
+|-----------|--------|-------------|
+| Quantity fit | 0.25 | How well the buyer's typical order size matches the listing quantity (log-ratio) |
+| Price compatibility | 0.25 | How close the buyer's typical price is to the listing price (log-ratio) |
+| Distance | 0.20 | Geographic proximity via haversine distance (decays to 0 at ~500 km) |
+| Reliability | 0.15 | Verification status + completed-order ratio |
+| Transaction history | 0.15 | Order volume & frequency (saturating) |
+
+`score_buyer_matches(listing, buyers)` in `backend/app/ml/serve.py` computes the weighted score for each buyer and returns a ranked list with per-dimension explanations.
+
+### Serve / integrate
+
+`POST /matching/find-matches` loads the listing, aggregates each buyer's order history from the database (avg order quantity, avg price, completed orders, total volume), and calls `score_buyer_matches()`. Falls back to a deterministic reliability-based ranking if the ML service is unavailable.
+
 ## Status
 
 - ✅ Task 1 (Planning) — complete
 - ✅ Synthetic data generated (prices + demand)
 - ✅ Price prediction prototype trained + wired into backend
 - ✅ Demand forecasting prototype trained + wired into backend
-- ⏳ Buyer matching — simplified weighted scoring (next)
+- ✅ Buyer matching — weighted scoring wired into backend
 
 ## Demo priority
 
 Per SIH Demo Prioritization:
 - ✅ **Price Prediction = MUST-HAVE** (done)
 - ✅ Demand Forecasting = prototype done (was CUT if behind; now delivered ahead of schedule)
-- ⚠️ Buyer Matching = simplify to basic filter if needed
+- ✅ Buyer Matching = simplified weighted scoring (done)

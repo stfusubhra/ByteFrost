@@ -270,6 +270,164 @@ def forecast_demand(
     }
 
 
+# ---------------------------------------------------------------------------
+# Buyer-Seller Matching (weighted scoring)
+# ---------------------------------------------------------------------------
+
+# Default weights for the matching dimensions (sum to 1.0)
+DEFAULT_MATCH_WEIGHTS = {
+    "quantity_fit": 0.25,
+    "price_compatibility": 0.25,
+    "distance": 0.20,
+    "reliability": 0.15,
+    "transaction_history": 0.15,
+}
+
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    """Great-circle distance between two lat/lon points in km."""
+    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
+        return None
+    R = 6371.0
+    p1, p2 = np.radians(lat1), np.radians(lat2)
+    dp = np.radians(lat2 - lat1)
+    dl = np.radians(lon2 - lon1)
+    a = np.sin(dp / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
+    return float(R * 2 * np.arcsin(np.sqrt(a)))
+
+
+def _quantity_fit_score(listing_qty, buyer_avg_qty):
+    """How well the buyer's typical order size matches the listing quantity."""
+    if not buyer_avg_qty or buyer_avg_qty <= 0:
+        # No order history: neutral (0.5) — can't judge fit
+        return 0.5
+    ratio = listing_qty / buyer_avg_qty
+    # Perfect when ratio ~ 1; penalize both over- and under-sizing.
+    # Use log-ratio so 2x and 0.5x are symmetric.
+    log_ratio = abs(np.log(max(ratio, 1e-6)))
+    return float(np.clip(1.0 - log_ratio / np.log(4.0), 0.0, 1.0))
+
+
+def _price_compatibility_score(listing_price, buyer_avg_price):
+    """How close the buyer's typical price is to the listing price."""
+    if not buyer_avg_price or buyer_avg_price <= 0:
+        return 0.5  # no history, neutral
+    if not listing_price or listing_price <= 0:
+        return 0.5  # no listing price, neutral
+    ratio = buyer_avg_price / listing_price
+    log_ratio = abs(np.log(max(ratio, 1e-6)))
+    # Within ~25% (log 1.25) is a good match
+    return float(np.clip(1.0 - log_ratio / np.log(1.25), 0.0, 1.0))
+
+
+def _distance_score(km):
+    """Score decays with distance; ~50km is a strong match, 500km+ weak."""
+    if km is None:
+        return 0.5  # unknown location, neutral
+    return float(np.clip(1.0 - km / 500.0, 0.0, 1.0))
+
+
+def _reliability_score(is_verified, completed_orders, total_orders):
+    """Reliability from verification status and completed-order ratio."""
+    completion_ratio = 0.0
+    if total_orders and total_orders > 0:
+        completion_ratio = completed_orders / total_orders
+    verified_bonus = 0.2 if is_verified else 0.0
+    return float(np.clip(completion_ratio * 0.8 + verified_bonus, 0.0, 1.0))
+
+
+def _transaction_history_score(completed_orders, total_volume_kg):
+    """Reward buyers with more completed orders and larger purchase volume."""
+    # Saturating function: more history -> higher score, capped at 1.0
+    order_score = 1.0 - np.exp(-completed_orders / 10.0)
+    volume_score = 1.0 - np.exp(-(total_volume_kg or 0.0) / 5000.0)
+    return float(np.clip(0.5 * order_score + 0.5 * volume_score, 0.0, 1.0))
+
+
+def score_buyer_matches(listing, buyers, weights=None):
+    """
+    Rank candidate buyers for a produce listing using weighted scoring.
+
+    Args:
+        listing: dict with keys:
+            - quantity_kg (float)
+            - price_per_kg (float, optional)
+            - pickup_latitude / pickup_longitude (float, optional)
+        buyers: list of dicts, each with keys:
+            - buyer_id (str/UUID)
+            - latitude / longitude (float, optional)
+            - is_verified (bool)
+            - avg_order_quantity_kg (float, optional)
+            - avg_price_per_kg (float, optional)
+            - completed_orders (int)
+            - total_orders (int)
+            - total_volume_kg (float)
+        weights: optional dict overriding DEFAULT_MATCH_WEIGHTS.
+
+    Returns:
+        List of dicts sorted by score desc:
+            {
+                "buyer_id": str,
+                "score": float (0-1),
+                "explanation": {
+                    "quantity_fit": float,
+                    "price_compatibility": float,
+                    "distance": float,
+                    "reliability": float,
+                    "transaction_history": float,
+                },
+            }
+    """
+    w = dict(DEFAULT_MATCH_WEIGHTS)
+    if weights:
+        w.update(weights)
+
+    listing_qty = float(listing.get("quantity_kg") or 0.0)
+    listing_price = listing.get("price_per_kg")
+    listing_lat = listing.get("pickup_latitude")
+    listing_lon = listing.get("pickup_longitude")
+
+    results = []
+    for b in buyers:
+        qty = _quantity_fit_score(listing_qty, b.get("avg_order_quantity_kg"))
+        price = _price_compatibility_score(listing_price, b.get("avg_price_per_kg"))
+        km = _haversine_km(
+            listing_lat, listing_lon, b.get("latitude"), b.get("longitude")
+        )
+        dist = _distance_score(km)
+        rel = _reliability_score(
+            b.get("is_verified", False),
+            b.get("completed_orders", 0),
+            b.get("total_orders", 0),
+        )
+        hist = _transaction_history_score(
+            b.get("completed_orders", 0), b.get("total_volume_kg", 0.0)
+        )
+
+        score = (
+            w["quantity_fit"] * qty
+            + w["price_compatibility"] * price
+            + w["distance"] * dist
+            + w["reliability"] * rel
+            + w["transaction_history"] * hist
+        )
+
+        results.append({
+            "buyer_id": str(b["buyer_id"]),
+            "score": round(float(score), 4),
+            "explanation": {
+                "quantity_fit": round(qty, 4),
+                "price_compatibility": round(price, 4),
+                "distance": round(dist, 4),
+                "reliability": round(rel, 4),
+                "transaction_history": round(hist, 4),
+            },
+        })
+
+    results.sort(key=lambda r: r["score"], reverse=True)
+    return results
+
+
 if __name__ == "__main__":
     # Quick smoke test
     result = recommend_price(
@@ -295,3 +453,28 @@ if __name__ == "__main__":
     fc = forecast_demand("tomato", "North India", recent)
     print("\n=== Demand Forecast ===")
     print(json.dumps(fc, indent=2))
+
+    # Buyer-seller matching smoke test
+    listing = {
+        "quantity_kg": 2000.0,
+        "price_per_kg": 25.0,
+        "pickup_latitude": 28.6,
+        "pickup_longitude": 77.2,  # Delhi
+    }
+    buyers = [
+        {"buyer_id": "b1", "latitude": 28.6, "longitude": 77.2,
+         "is_verified": True, "avg_order_quantity_kg": 1800.0,
+         "avg_price_per_kg": 24.0, "completed_orders": 25,
+         "total_orders": 30, "total_volume_kg": 45000.0},
+        {"buyer_id": "b2", "latitude": 19.0, "longitude": 72.8,
+         "is_verified": False, "avg_order_quantity_kg": 500.0,
+         "avg_price_per_kg": 18.0, "completed_orders": 2,
+         "total_orders": 10, "total_volume_kg": 1000.0},
+        {"buyer_id": "b3", "latitude": 28.6, "longitude": 77.2,
+         "is_verified": True, "avg_order_quantity_kg": 2000.0,
+         "avg_price_per_kg": 25.0, "completed_orders": 60,
+         "total_orders": 60, "total_volume_kg": 120000.0},
+    ]
+    matches = score_buyer_matches(listing, buyers)
+    print("\n=== Buyer-Seller Matches ===")
+    print(json.dumps(matches, indent=2))
