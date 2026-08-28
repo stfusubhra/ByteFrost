@@ -11,10 +11,10 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Determine correct static directory path for built assets
-  let staticPath = path.resolve(__dirname, "public");
+  // Determine correct static directory path for built SPA assets
+  let staticPath = path.resolve(__dirname, "..", "dist");
   if (!fs.existsSync(staticPath)) {
-    staticPath = path.resolve(__dirname, "..", "dist", "public");
+    staticPath = path.resolve(__dirname, "dist");
   }
 
   app.use(express.static(staticPath));
