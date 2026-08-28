@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncConnection
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from app.core.config import settings
@@ -14,20 +14,26 @@ TestingSessionLocal = sessionmaker(
 )
 
 @pytest.fixture(autouse=True)
-def override_get_db():
-    async def _override_get_db():
-        async with TestingSessionLocal() as session:
-            # Suppress commit to keep changes within the transaction that will be rolled back
-            original_commit = session.commit
-            session.commit = lambda: None  # no-op
+async def override_get_db():
+    # Create a connection and begin a transaction
+    connection: AsyncConnection = await test_engine.connect()
+    trans = await connection.begin()
+    # Configure the session to use our connection
+    async_session = TestingSessionLocal(bind=connection)
+    try:
+        # Override the dependency to use our session
+        async def _get_db_override():
             try:
-                yield session
+                yield async_session
             finally:
-                session.commit = original_commit
-                await session.close()
-    app.dependency_overrides[get_db] = _override_get_db
-    yield
-    app.dependency_overrides.clear()
+                await async_session.close()
+        app.dependency_overrides[get_db] = _get_db_override
+        yield
+    finally:
+        # Roll back the transaction and clean up
+        await trans.rollback()
+        await connection.close()
+        app.dependency_overrides.clear()
 
 @pytest.fixture
 def client():
@@ -57,6 +63,8 @@ def test_register_and_login(client):
     data = reg_response.json()
     assert "access_token" in data
     assert data["role"] == "farmer"
+    # Save the token for login
+    token = data["access_token"]
 
     # Login
     login_response = client.post(
@@ -67,7 +75,10 @@ def test_register_and_login(client):
         },
     )
     assert login_response.status_code == 200
-    assert "access_token" in login_response.json()
+    login_data = login_response.json()
+    assert "access_token" in login_data
+    # Optionally, we can check that the token is the same or at least valid
+    assert login_data["access_token"] is not None
 
 
 def test_create_listing(client):
@@ -81,6 +92,7 @@ def test_create_listing(client):
             "role": "farmer",
         },
     )
+    assert reg.status_code == 201
     token = reg.json()["access_token"]
 
     # Create listing
@@ -121,6 +133,7 @@ def test_matching_placeholder(client):
             "role": "buyer_bulk",
         },
     )
+    assert reg.status_code == 201
     token = reg.json()["access_token"]
 
     # Test matching
