@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm run build",
-  "outputDirectory": "dist/public",
+  "buildCommand": "cd kisansetu && pnpm install && pnpm run build",
+  "outputDirectory": "kisansetu/dist/public",
   "cleanUrls": true,
   "rewrites": [
     {
