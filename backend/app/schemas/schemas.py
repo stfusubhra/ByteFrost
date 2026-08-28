@@ -113,15 +113,269 @@ class MatchResult(BaseModel):
 
 
 # --- Logistics ---
+
+# == Vehicle ==
+class VehicleCreate(BaseModel):
+    capacity_kg: float
+    vehicle_type: str  # standard / refrigerated
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    operating_cost_per_km: float
+
+
+class VehicleUpdate(BaseModel):
+    status: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    current_load_kg: Optional[float] = None
+
+
+class VehicleResponse(BaseModel):
+    id: UUID
+    capacity_kg: float
+    vehicle_type: str
+    latitude: Optional[float]
+    longitude: Optional[float]
+    status: str
+    current_load_kg: float
+    operating_cost_per_km: float
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+# == Hub ==
+class HubCreate(BaseModel):
+    name: str
+    hub_type: str  # local / regional
+    latitude: float
+    longitude: float
+    address: Optional[str] = None
+    capacity_kg: float
+
+
+class HubUpdate(BaseModel):
+    status: Optional[str] = None
+    capacity_kg: Optional[float] = None
+    current_load_kg: Optional[float] = None
+
+
+class HubResponse(BaseModel):
+    id: UUID
+    name: str
+    hub_type: str
+    latitude: float
+    longitude: float
+    address: Optional[str]
+    capacity_kg: float
+    current_load_kg: float
+    status: str
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+# == Hub Inventory ==
+class HubInventoryResponse(BaseModel):
+    id: UUID
+    hub_id: UUID
+    listing_id: UUID
+    quantity_kg: float
+    arrived_at: datetime
+    quality_verified: bool
+    quality_grade_verified: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+# == Time Window ==
+class TimeWindow(BaseModel):
+    earliest: datetime
+    latest: datetime
+
+
+# == Route Stop ==
+class RouteStopCreate(BaseModel):
+    stop_type: str  # pickup / hub / drop
+    farmer_id: Optional[UUID] = None
+    hub_id: Optional[UUID] = None
+    buyer_id: Optional[UUID] = None
+    latitude: float
+    longitude: float
+    quantity_kg: float
+    sequence: int
+    time_window_earliest: Optional[datetime] = None
+    time_window_latest: Optional[datetime] = None
+    max_transit_hours: Optional[float] = None
+    eta: Optional[datetime] = None
+
+
+class RouteStopResponse(BaseModel):
+    id: UUID
+    stop_type: str
+    farmer_id: Optional[UUID]
+    hub_id: Optional[UUID]
+    buyer_id: Optional[UUID]
+    latitude: float
+    longitude: float
+    quantity_kg: float
+    sequence: int
+    time_window_earliest: Optional[datetime]
+    time_window_latest: Optional[datetime]
+    max_transit_hours: Optional[float]
+    eta: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+# == Route ==
+class RouteResponse(BaseModel):
+    id: UUID
+    vehicle_id: UUID
+    distance_km: Optional[float]
+    duration_minutes: Optional[int]
+    status: str
+    route_mode: Optional[str]
+    stops: List[RouteStopResponse] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# == Buyer Requirement (fulfill-order input) ==
+class BuyerRequirement(BaseModel):
+    crop_name: str
+    required_quantity_kg: float
+    min_quality_grade: str = "B"
+    delivery_latitude: float
+    delivery_longitude: float
+    delivery_address: str
+    delivery_deadline: Optional[datetime] = None
+    max_price_per_kg: Optional[float] = None
+
+
+# == Landed Cost Breakdown ==
+class LandedCostBreakdown(BaseModel):
+    produce_cost: float
+    transport_cost: float
+    handling_cost: float
+    expected_loss: float
+    total: float
+
+    model_config = {"from_attributes": True}
+
+
+# == Vehicle Route (for fulfillment response) ==
+class VehicleRouteResponse(BaseModel):
+    vehicle_id: UUID
+    stops: List[RouteStopResponse]
+    distance_km: float
+    duration_min: float
+    load_kg: float
+    operating_cost: float
+
+
+# == Fulfillment Plan Response ==
+class FulfillmentPlanResponse(BaseModel):
+    status: str  # FEASIBLE / PARTIAL / INFEASIBLE
+    infeasibility_reason: Optional[str] = None
+    routing_mode: Optional[str] = None  # direct / hub / multi_hub
+    vehicle_routes: List[VehicleRouteResponse] = []
+    landed_cost: Optional[LandedCostBreakdown] = None
+    consolidation_savings_km: Optional[float] = None
+    estimated_delivery: Optional[datetime] = None
+    shipment_ids: List[UUID] = []
+
+
+# == Shipment ==
+class ShipmentResponse(BaseModel):
+    id: UUID
+    allocation_id: UUID
+    order_id: Optional[UUID]
+    route_id: Optional[UUID]
+    vehicle_id: Optional[UUID]
+    status: str
+    landed_cost: Optional[float]
+    route_mode: Optional[str]
+    pickup_time: Optional[datetime]
+    delivery_time: Optional[datetime]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# == Tracking ==
+class TrackingEventCreate(BaseModel):
+    event_type: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    notes: Optional[str] = None
+
+
+class TrackingEventResponse(BaseModel):
+    id: UUID
+    event_type: str
+    latitude: Optional[float]
+    longitude: Optional[float]
+    notes: Optional[str]
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TrackingStatus(BaseModel):
+    shipment_id: UUID
+    current_status: str
+    current_latitude: Optional[float] = None
+    current_longitude: Optional[float] = None
+    estimated_arrival: Optional[datetime] = None
+    events: List[TrackingEventResponse] = []
+    maps_url: Optional[str] = None
+
+
+# == Temperature Log ==
+class TemperatureLogCreate(BaseModel):
+    temperature_celsius: float
+
+
+class TemperatureLogResponse(BaseModel):
+    id: UUID
+    shipment_id: UUID
+    temperature_celsius: float
+    recorded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# == Farmer Reliability ==
+class FarmerReliabilityResponse(BaseModel):
+    id: UUID
+    farmer_id: UUID
+    reliability_score: float
+    total_orders_accepted: int
+    orders_fulfilled_on_time: int
+    orders_cancelled: int
+    average_quantity_accuracy: Optional[float]
+    last_updated: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# == Route Request (direct VRP-only call, backward compatible) ==
 class RouteRequest(BaseModel):
     pickup_locations: List[dict]  # [{lat, lng, quantity}]
     drop_locations: List[dict]    # [{lat, lng, quantity}]
     vehicle_capacity_kg: float
     deadline: Optional[datetime] = None
 
-
-class RouteResponse(BaseModel):
-    routes: List[dict]
-    total_distance_km: float
-    total_duration_min: float
-    vehicle_count: int

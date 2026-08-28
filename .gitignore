@@ -45,3 +45,6 @@ htmlcov/
 
 # Logs
 *.log
+
+# Scripts
+backend/check_logistics.py
