@@ -15,7 +15,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-# Enum type objects — reused in upgrade and downgrade
+    # Enum type objects — reused in upgrade and downgrade
 vehicletype_enum = sa.Enum('STANDARD', 'REFRIGERATED', name='vehicletype')
 vehiclestatus_enum = sa.Enum('AVAILABLE', 'ASSIGNED', 'IN_TRANSIT', 'MAINTENANCE', 'INACTIVE', name='vehiclestatus')
 hubtype_enum = sa.Enum('LOCAL', 'REGIONAL', name='hubtype')
@@ -32,18 +32,7 @@ logisticseventtype_enum = sa.Enum(
 
 def upgrade() -> None:
     # =========================================================================
-    # Step 1: Create enum types
-    # =========================================================================
-    vehicletype_enum.create(op.get_bind(), checkfirst=True)
-    vehiclestatus_enum.create(op.get_bind(), checkfirst=True)
-    hubtype_enum.create(op.get_bind(), checkfirst=True)
-    hubstatus_enum.create(op.get_bind(), checkfirst=True)
-    routestatus_enum.create(op.get_bind(), checkfirst=True)
-    stoptype_enum.create(op.get_bind(), checkfirst=True)
-    logisticseventtype_enum.create(op.get_bind(), checkfirst=True)
-
-    # =========================================================================
-    # Step 2: CREATE TABLE vehicles (no FK deps)
+    # Step 1: CREATE TABLE vehicles (no FK deps)
     # =========================================================================
     op.create_table('vehicles',
         sa.Column('id', sa.UUID(), nullable=False),
@@ -63,7 +52,7 @@ def upgrade() -> None:
     )
 
     # =========================================================================
-    # Step 3: CREATE TABLE hubs (no FK deps)
+    # Step 2: CREATE TABLE hubs (no FK deps)
     # =========================================================================
     op.create_table('hubs',
         sa.Column('id', sa.UUID(), nullable=False),
@@ -83,13 +72,13 @@ def upgrade() -> None:
     )
 
     # =========================================================================
-    # Step 4: ALTER TABLE orders — add produce_type, quantity_kg
+    # Step 3: ALTER TABLE orders — add produce_type, quantity_kg
     # =========================================================================
     op.add_column('orders', sa.Column('produce_type', sa.String(length=255), nullable=True))
     op.add_column('orders', sa.Column('quantity_kg', sa.Float(), nullable=True))
 
     # =========================================================================
-    # Step 5: CREATE TABLE routes (FK -> vehicles)
+    # Step 4: CREATE TABLE routes (FK -> vehicles)
     # =========================================================================
     op.create_table('routes',
         sa.Column('id', sa.UUID(), nullable=False),
@@ -108,7 +97,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_routes_vehicle_id'), 'routes', ['vehicle_id'])
 
     # =========================================================================
-    # Step 6: CREATE TABLE route_stops (FK -> routes, users x2, hubs)
+    # Step 5: CREATE TABLE route_stops (FK -> routes, users x2, hubs)
     # =========================================================================
     op.create_table('route_stops',
         sa.Column('id', sa.UUID(), nullable=False),
@@ -141,7 +130,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_route_stops_buyer_id'), 'route_stops', ['buyer_id'])
 
     # =========================================================================
-    # Step 7: ALTER TABLE shipments — add logistics columns + FKs
+    # Step 6: ALTER TABLE shipments — add logistics columns + FKs
     # =========================================================================
     op.add_column('shipments', sa.Column('order_id', sa.UUID(), nullable=True))
     op.add_column('shipments', sa.Column('route_id', sa.UUID(), nullable=True))
@@ -159,14 +148,14 @@ def upgrade() -> None:
     op.create_index(op.f('ix_shipments_route_id'), 'shipments', ['route_id'])
 
     # =========================================================================
-    # Step 8: ALTER TABLE allocations — add logistics columns
+    # Step 7: ALTER TABLE allocations — add logistics columns
     # =========================================================================
     op.add_column('allocations', sa.Column('farmer_reliability_score', sa.Float(), nullable=True))
     op.add_column('allocations', sa.Column('hub_id', sa.UUID(), nullable=True))
     op.create_foreign_key('fk_allocations_hub_id', 'allocations', 'hubs', ['hub_id'], ['id'])
 
     # =========================================================================
-    # Step 9: CREATE TABLE hub_inventory (FK -> hubs, produce_listings, users)
+    # Step 8: CREATE TABLE hub_inventory (FK -> hubs, produce_listings, users)
     # =========================================================================
     op.create_table('hub_inventory',
         sa.Column('id', sa.UUID(), nullable=False),
@@ -186,7 +175,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_hub_inventory_hub_id'), 'hub_inventory', ['hub_id'])
 
     # =========================================================================
-    # Step 10: CREATE TABLE farmer_reliability_scores (FK -> users, UNIQUE)
+    # Step 9: CREATE TABLE farmer_reliability_scores (FK -> users, UNIQUE)
     # =========================================================================
     op.create_table('farmer_reliability_scores',
         sa.Column('id', sa.UUID(), nullable=False),
