@@ -58,6 +58,11 @@ jobs:
             sleep 2
           done
 
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bytefrost_test
+        run: alembic upgrade head
+
       - name: Run tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bytefrost_test
