@@ -31,6 +31,29 @@ class OrderStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
+class VehicleType(str, enum.Enum):
+    STANDARD = "STANDARD"
+    REFRIGERATED = "REFRIGERATED"
+
+
+class VehicleStatus(str, enum.Enum):
+    AVAILABLE = "AVAILABLE"
+    ASSIGNED = "ASSIGNED"
+    IN_TRANSIT = "IN_TRANSIT"
+    MAINTENANCE = "MAINTENANCE"
+    INACTIVE = "INACTIVE"
+
+
+class HubType(str, enum.Enum):
+    LOCAL = "LOCAL"
+    REGIONAL = "REGIONAL"
+
+
+class HubStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -181,3 +204,34 @@ class Payment(Base):
     transaction_id = Column(String(255), nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class Vehicle(Base):
+    __tablename__ = "vehicles"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    capacity_kg = Column(Float, nullable=False)
+    vehicle_type = Column(Enum(VehicleType, name="vehicletype"), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    status = Column(Enum(VehicleStatus, name="vehiclestatus"), default=VehicleStatus.AVAILABLE)
+    current_load_kg = Column(Float, nullable=False, default=0)
+    operating_cost_per_km = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class Hub(Base):
+    __tablename__ = "hubs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False)
+    hub_type = Column(Enum(HubType, name="hubtype"), nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    address = Column(Text, nullable=True)
+    capacity_kg = Column(Float, nullable=False)
+    current_load_kg = Column(Float, nullable=False, default=0)
+    status = Column(Enum(HubStatus, name="hubstatus"), default=HubStatus.ACTIVE)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

@@ -6,9 +6,9 @@
  */
 import axios, { AxiosError } from "axios";
 
-// The backend base URL. Override with VITE_API_URL if the backend is hosted
-// elsewhere; otherwise default to the local FastAPI dev server.
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+// Use the same-origin proxy in production; override with VITE_API_URL for local
+// development or a directly hosted backend.
+const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
 export class ApiError extends Error {
   status: number;
