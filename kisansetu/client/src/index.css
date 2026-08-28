@@ -129,9 +129,49 @@ h1 { font-family: "DM Serif Display", Georgia, serif; font-size: clamp(31px, 3vw
 .prem-menu-btn { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 0; border: 0; background: transparent; color: var(--pr-ink); font-size: 11px; cursor: pointer; }
 .prem-wordmark { display: inline-flex; align-items: center; gap: 8px; font-family: "DM Serif Display", Georgia, serif; font-size: 21px; text-decoration: none; }
 .prem-wordmark span { width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
-.prem-actions { display: flex; align-items: center; justify-self: end; gap: 17px; font-size: 11px; }
+.prem-actions { display: flex; align-items: center; justify-self: end; gap: 14px; font-size: 11px; }
 .prem-actions button { display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--pr-ink); cursor: pointer; }
 .prem-actions a { text-decoration: none; }
+
+/* Auth button styling */
+.prem-auth-btn, .public-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none !important;
+  transition: all 180ms ease;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.prem-auth-btn.outline, .public-auth-btn.outline {
+  border: 1px solid rgba(35, 92, 69, 0.4);
+  color: #235c45 !important;
+  background: transparent;
+}
+
+.prem-auth-btn.outline:hover, .public-auth-btn.outline:hover {
+  background: rgba(35, 92, 69, 0.08);
+  border-color: #235c45;
+}
+
+.prem-auth-btn.solid, .public-auth-btn.solid {
+  background: #235c45;
+  color: #ffffff !important;
+  border: 1px solid #235c45;
+  box-shadow: 0 2px 8px rgba(35, 92, 69, 0.15);
+}
+
+.prem-auth-btn.solid:hover, .public-auth-btn.solid:hover {
+  background: #19372a;
+  border-color: #19372a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(35, 92, 69, 0.25);
+}
 
 /* ============ HERO ============ */
 .prem-hero { position: relative; min-height: calc(100vh - 101px); display: flex; flex-direction: column; justify-content: center; overflow: hidden; background: linear-gradient(135deg, #e9e6dc, #dfe4d8); }

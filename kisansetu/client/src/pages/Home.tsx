@@ -41,14 +41,14 @@ function Header({ onMenu }: { onMenu: () => void }) {
           {token ? (
             <>
               <span className="prem-user">Welcome</span>
-              <button onClick={handleLogout} className="prem-button prem-button-secondary">
+              <button onClick={handleLogout} className="prem-auth-btn outline">
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link href="/login">Login</Link>
-              <Link href="/signup">Sign up</Link>
+              <Link href="/login" className="prem-auth-btn outline">Sign in</Link>
+              <Link href="/signup" className="prem-auth-btn solid">Sign up</Link>
             </>
           )}
         </div>
@@ -166,10 +166,14 @@ export default function Home() {
       {menu && (
         <div className="prem-menu">
           <button onClick={() => setMenu(false)} aria-label="Close menu"><X size={21} /></button>
-          <Link href="/story" onClick={() => setMenu(false)}>Our story</Link>
+          <Link href="/" onClick={() => setMenu(false)}>Home</Link>
           <Link href="/marketplace" onClick={() => setMenu(false)}>Marketplace</Link>
           <Link href="/market-match" onClick={() => setMenu(false)}>Find your market match</Link>
-          <Link href="/dashboard" onClick={() => setMenu(false)}>Open product <ArrowRight size={15} /></Link>
+          <Link href="/story" onClick={() => setMenu(false)}>Our story</Link>
+          <Link href="/faq" onClick={() => setMenu(false)}>FAQ</Link>
+          <Link href="/contact" onClick={() => setMenu(false)}>Contact</Link>
+          <Link href="/login" onClick={() => setMenu(false)}>Sign in</Link>
+          <Link href="/signup" onClick={() => setMenu(false)} style={{ color: "#d59a39" }}>Create free account →</Link>
         </div>
       )}
 

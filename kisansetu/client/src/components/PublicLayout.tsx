@@ -103,7 +103,7 @@ export default function PublicLayout({
           KisanSetu
         </Link>
 
-        <nav className="public-nav">
+        <nav className="public-nav" style={{ alignItems: "center", gap: "14px" }}>
           <Link href="/marketplace">Marketplace</Link>
           <Link href="/market-match">Find your match</Link>
           {hasToken ? (
@@ -111,7 +111,7 @@ export default function PublicLayout({
               <Link href="/dashboard">Dashboard</Link>
               <button
                 onClick={handleLogout}
-                className="filter-button"
+                className="public-auth-btn outline"
                 style={{ cursor: "pointer" }}
               >
                 Logout
@@ -119,8 +119,10 @@ export default function PublicLayout({
             </>
           ) : (
             <>
-              <Link href="/login">Sign in</Link>
-              <Link href="/signup" style={{ fontWeight: 600 }}>
+              <Link href="/login" className="public-auth-btn outline">
+                Sign in
+              </Link>
+              <Link href="/signup" className="public-auth-btn solid">
                 Sign up
               </Link>
             </>
