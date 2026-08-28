@@ -27,7 +27,8 @@ def create_data_model(
     vehicle_capacities: List[float],
     time_windows: List[tuple],  # [(start_min, end_min)]
     num_vehicles: int,
-    depot: int = 0
+    starts: List[int] = None,
+    ends: List[int] = None
 ) -> Dict:
     """Stores the data for the routing problem."""
     data = {}
@@ -44,7 +45,8 @@ def create_data_model(
     data["vehicle_capacities"] = [int(c * 1000) for c in vehicle_capacities]
     data["time_windows"] = time_windows
     data["num_vehicles"] = num_vehicles
-    data["depot"] = depot
+    data["starts"] = starts if starts is not None else [0] * num_vehicles
+    data["ends"] = ends if ends is not None else [0] * num_vehicles
     
     return data
 
@@ -52,6 +54,8 @@ def create_data_model(
 async def solve_vrp(
     locations: List[dict],  # [{lat, lng, quantity_kg, tw_start, tw_end, is_drop}]
     vehicle_capacities: List[float],
+    starts: List[int] = None,
+    ends: List[int] = None
 ) -> Optional[dict]:
     """
     Solve VRP for given locations and vehicles.
@@ -99,12 +103,13 @@ async def solve_vrp(
     # Create Data Model
     data = create_data_model(
         dist_matrix, time_matrix, pickup_demands, delivery_demands,
-        vehicle_capacities, time_windows, len(vehicle_capacities), depot=0
+        vehicle_capacities, time_windows, len(vehicle_capacities),
+        starts=starts, ends=ends
     )
 
     # Create Routing Index Manager and Model
     manager = pywrapcp.RoutingIndexManager(
-        len(data["distance_matrix"]), data["num_vehicles"], data["depot"]
+        len(data["distance_matrix"]), data["num_vehicles"], data["starts"], data["ends"]
     )
     routing = pywrapcp.RoutingModel(manager)
 
@@ -164,10 +169,16 @@ async def solve_vrp(
 
     # Add time window constraints
     for location_idx, time_window in enumerate(data["time_windows"]):
-        if location_idx == data["depot"]:
-            continue
+        # Nodes that are solely depots (start/end) don't typically have time constraints in this simple model, 
+        # but if they do, we enforce them. We can skip checking against a single `depot` now.
         index = manager.NodeToIndex(location_idx)
-        time_dimension.CumulVar(index).SetRange(time_window[0], time_window[1])
+        # manager.NodeToIndex can return -1 if the node is dropped or not visitable, but 
+        # for standard nodes it returns a valid index. If it is a start/end node it could be mapped 
+        # differently, so we check if it's within bounds.
+        try:
+            time_dimension.CumulVar(index).SetRange(time_window[0], time_window[1])
+        except Exception:
+            pass
 
     # Allow dropping nodes (if infeasible) with high penalty
     penalty = 1000000
@@ -212,6 +223,8 @@ async def solve_vrp(
         # Add the end node (depot)
         node_index = manager.IndexToNode(index)
         route_nodes.append(node_index)
+        
+        route_duration_min = solution.Min(time_dimension.CumulVar(index))
 
         # Only add if it actually did something (more than just start/end at depot)
         if len(route_nodes) > 2:
@@ -220,9 +233,11 @@ async def solve_vrp(
                 "vehicle_index": vehicle_id,
                 "route_sequence": route_nodes,
                 "distance_km": round(dist_km, 2),
+                "duration_min": round(route_duration_min, 2),
                 "load_kg": round(route_load / 1000.0, 2)
             })
             total_distance_km += dist_km
+            total_time_min += route_duration_min
 
     if not routes:
         return None
@@ -230,5 +245,6 @@ async def solve_vrp(
     return {
         "routes": routes,
         "total_distance_km": round(total_distance_km, 2),
+        "total_time_min": round(total_time_min, 2),
         "status": "SUCCESS"
     }

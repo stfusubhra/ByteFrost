@@ -164,19 +164,34 @@ async def fulfill_order(req: BuyerRequirement, db: AsyncSession = Depends(get_db
     if not cost_breakdown.is_economically_viable:
         logger.warning(f"Plan not economically viable: {cost_breakdown.warning}")
 
+    vehicle_routes = []
+    for r in vrp_res["routes"]:
+        # Map node indices from VRP to the actual locations
+        mapped_stops = []
+        for node_idx in r["route_sequence"]:
+            loc = vrp_locations[node_idx]
+            mapped_stops.append({
+                "latitude": loc["lat"],
+                "longitude": loc["lng"],
+                "quantity_kg": loc["quantity_kg"],
+                "is_drop": loc["is_drop"]
+            })
+            
+        vehicle_routes.append({
+            "vehicle_id": truck.id,  # Assuming single truck for now based on the input
+            "stops": mapped_stops,
+            "distance_km": r["distance_km"],
+            "duration_min": r["duration_min"],
+            "load_kg": r["load_kg"],
+            "operating_cost": r["distance_km"] * truck.operating_cost_per_km
+        })
+
     return FulfillmentPlanResponse(
         status=match_res.status,
         routing_mode=hub_decision.mode,
         landed_cost=cost_breakdown,
         consolidation_savings_km=0.0,  # to calculate fully we need a baseline
-        vehicle_routes=[{
-            "vehicle_id": truck.id,
-            "stops": [],  # mapped from VRP response in a real implementation
-            "distance_km": vrp_res["total_distance_km"],
-            "duration_min": 300, # placeholder
-            "load_kg": primary_batch.total_quantity_kg,
-            "operating_cost": vrp_res["total_distance_km"] * truck.operating_cost_per_km
-        }]
+        vehicle_routes=vehicle_routes
     )
 
 
