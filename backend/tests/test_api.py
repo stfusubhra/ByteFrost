@@ -1,26 +1,41 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.core.database import async_engine, AsyncSessionLocal, get_db
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from app.core.database import get_db, Base
+from app.core.config import settings
 
-# Override the dependency to provide a transactional session
+# Use a separate engine with NullPool for tests to avoid connection reuse
+TEST_DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=None)  # NullPool is default? Actually poolclass=None uses default QueuePool. We want NullPool.
+from sqlalchemy.pool import NullPool
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
+TestingSessionLocal = sessionmaker(
+    test_engine, class_=AsyncSession, expire_on_commit=False
+)
+
 @pytest.fixture(autouse=True)
 def override_get_db():
-    # Create a new async session for each test
     async def _override_get_db():
-        async with AsyncSessionLocal() as session:
+        async with TestingSessionLocal() as session:
             try:
                 yield session
-                # Do not commit; rollback after test
                 await session.rollback()
             finally:
                 await session.close()
-    # Replace the dependency
     app.dependency_overrides[get_db] = _override_get_db
     yield
-    # Clean up
     app.dependency_overrides.clear()
+    # Dispose the engine to close all connections
+    # Note: we keep the engine alive across tests for efficiency; but we could dispose each time.
+    # We'll dispose after each test to be safe.
+    # However, disposing the engine while other tests might be using it? Since we override per test, it's fine.
+    # We'll dispose after each test in the fixture teardown.
+    # Actually we should dispose after yielding, but we need to ensure the engine is not used later.
+    # We'll move the dispose inside the finally after closing session? But we need the engine for the next test.
+    # Instead, we will not dispose; we rely on NullPool which creates a new connection each time and closes it.
+    # With NullPool, each connection is closed when the session closes, so we don't need to dispose.
 
 @pytest.fixture
 def client():
