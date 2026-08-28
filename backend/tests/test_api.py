@@ -1,10 +1,13 @@
+import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
-client = TestClient(app)
+@pytest.fixture
+def client():
+    return TestClient(app)
 
 
-def test_health_check():
+def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
@@ -12,7 +15,7 @@ def test_health_check():
     assert data["version"] == "0.1.0"
 
 
-def test_register_and_login():
+def test_register_and_login(client):
     # Register
     reg_response = client.post(
         "/api/v1/auth/register",
@@ -40,7 +43,7 @@ def test_register_and_login():
     assert "access_token" in login_response.json()
 
 
-def test_create_listing():
+def test_create_listing(client):
     # Register first
     reg = client.post(
         "/api/v1/auth/register",
@@ -74,13 +77,13 @@ def test_create_listing():
     assert data["quantity_kg"] == 500
 
 
-def test_list_listings():
+def test_list_listings(client):
     response = client.get("/api/v1/listings")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
-def test_matching_placeholder():
+def test_matching_placeholder(client):
     # Register
     reg = client.post(
         "/api/v1/auth/register",
