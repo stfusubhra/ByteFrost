@@ -13,6 +13,18 @@ const img = {
 };
 
 function Header({ onMenu }: { onMenu: () => void }) {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = localStorage.getItem("kisansetu_token");
+    setToken(t);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("kisansetu_token");
+    window.location.href = "/";
+  };
+
   return (
     <>
       <div className="prem-announce">Direct market intelligence for everyday farming</div>
@@ -26,6 +38,19 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="prem-actions">
           <button aria-label="Search"><Search size={17} /></button>
           <Link href="/marketplace">Marketplace</Link>
+          {token ? (
+            <>
+              <span className="prem-user">Welcome</span>
+              <button onClick={handleLogout} className="prem-button prem-button-secondary">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">Login</Link>
+              <Link href="/signup">Sign up</Link>
+            </>
+          )}
         </div>
       </header>
     </>

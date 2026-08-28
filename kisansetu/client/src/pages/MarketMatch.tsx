@@ -9,7 +9,7 @@
  */
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { fetchListings, fetchMatches, ApiError } from "@/lib/api";
+import { fetchListings, fetchMatches, ApiError, MatchResult } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
 import React from "react";
 
@@ -22,22 +22,6 @@ type MatchListing = {
   quantity_kg: number;
   price_per_kg: number | null;
   pickup_location: string;
-};
-
-/**
- * Shape of a match result from the backend.
- */
-type MatchResult = {
-  buyer_id: string;
-  score: number;
-  explanation: {
-    quantity_fit: number;
-    price_score: number;
-    distance_score: number;
-    reliability: number;
-    distance_km: number | null;
-    order_history: number;
-  };
 };
 
 export default function MarketMatch() {

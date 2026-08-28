@@ -74,7 +74,15 @@ export interface Listing {
 export interface MatchResult {
   buyer_id: string;
   score: number;
-  explanation: Record<string, unknown>;
+  explanation: {
+    quantity_fit: number;
+    price_score: number;
+    distance_score: number;
+    reliability: number;
+    distance_km: number | null;
+    order_history: number;
+    [key: string]: unknown;
+  };
 }
 
 export interface PriceRecommendation {
@@ -118,4 +126,5 @@ export async function fetchPriceRecommendation(
   return data;
 }
 
-export { API_BASE };
+export { API_BASE, client as api };
+
