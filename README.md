@@ -128,7 +128,7 @@ docker-compose up -d
 | **Aradhya Bandyopadhyay** | Research / Data | [@rio4508](https://github.com/rio4508) |
 | **Ankit Chakraborty** | Logistics / Routing | [@Ankyytt284](https://github.com/Ankyytt284) |
 | **Moupriya Ghosh** | Frontend / UI Design | [@moupriya2803](https://github.com/moupriya2803) |
-| **Agni Pratap Pramanik** | AI/ML / Data Pipelines | — |
+| **Agni Pratap Pramanik** | AI/ML / Data Pipelines | [@AGNI-911-69](https://github.com/AGNI-911-69) |
 | **Rajika Pramanick** | Presentation / Testing | — |
 
 ---
