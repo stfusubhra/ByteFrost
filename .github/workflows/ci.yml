@@ -1,3 +1,11 @@
+# ByteFrost CI Workflow
+# ========== SECRETS CHECKLIST FOR DEPLOYMENT ==========
+# For deploying to Render (backend) and Vercel (frontend), ensure these secrets are configured:
+# - RENDER_API_KEY: API key for Render (to trigger deploys via API)
+# - VERCEL_TOKEN: Vercel CLI token for deployments
+# - Note: Render service uses environment variables (DATABASE_URL, etc.) set in the Render dashboard, not as repo secrets.
+# ========================================================
+
 name: CI
 
 on:
@@ -41,7 +49,7 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bytefrost_test
+          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bytefrost_test
           SECRET_KEY: test-secret-key
         run: pytest -v --tb=short
 
