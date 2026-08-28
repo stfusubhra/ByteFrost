@@ -80,24 +80,59 @@ def test_list_listings():
     assert isinstance(response.json(), list)
 
 
-def test_matching_placeholder():
-    # Register
-    reg = client.post(
+def test_matching():
+    # Register a farmer and create a listing to match against
+    farmer_reg = client.post(
         "/api/v1/auth/register",
         json={
-            "email": "buyer1@bytefrost.com",
+            "email": "farmer_match@bytefrost.com",
             "password": "testpass123",
-            "full_name": "Buyer One",
+            "full_name": "Farmer Match",
+            "role": "farmer",
+        },
+    )
+    farmer_token = farmer_reg.json()["access_token"]
+
+    listing_response = client.post(
+        "/api/v1/listings",
+        json={
+            "crop_name": "Tomato",
+            "quantity_kg": 2000,
+            "price_per_kg": 25.0,
+            "pickup_location": "Delhi, India",
+            "pickup_latitude": 28.6,
+            "pickup_longitude": 77.2,
+        },
+        headers={"Authorization": f"Bearer {farmer_token}"},
+    )
+    assert listing_response.status_code == 201
+    listing_id = listing_response.json()["id"]
+
+    # Register a buyer
+    buyer_reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "buyer_match@bytefrost.com",
+            "password": "testpass123",
+            "full_name": "Buyer Match",
             "role": "buyer_bulk",
         },
     )
-    token = reg.json()["access_token"]
+    buyer_token = buyer_reg.json()["access_token"]
 
-    # Test matching
+    # Test matching against the real listing
     response = client.post(
         "/api/v1/matching/find-matches",
-        json={"listing_id": "00000000-0000-0000-0000-000000000000"},
-        headers={"Authorization": f"Bearer {token}"},
+        json={"listing_id": listing_id},
+        headers={"Authorization": f"Bearer {buyer_token}"},
     )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+    # Unknown listing should 404
+    not_found = client.post(
+        "/api/v1/matching/find-matches",
+        json={"listing_id": "00000000-0000-0000-0000-000000000000"},
+        headers={"Authorization": f"Bearer {buyer_token}"},
+    )
+    assert not_found.status_code == 404

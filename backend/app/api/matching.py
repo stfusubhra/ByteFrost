@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from uuid import UUID
 
 from app.core.database import get_db
@@ -71,7 +71,7 @@ async def find_matches(
             Order.buyer_id,
             func.count(Order.id).label("total_orders"),
             func.sum(
-                func.case(
+                case(
                     (Order.status == OrderStatus.DELIVERED, 1),
                     else_=0,
                 )
