@@ -41,7 +41,7 @@ export default function Signup() {
       if (response.data?.access_token) {
         localStorage.setItem("kisansetu_token", response.data.access_token);
       }
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Registration failed. Please try again.");
     } finally {
