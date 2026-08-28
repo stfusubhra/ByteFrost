@@ -1,7 +1,8 @@
 {
+  "version": 2,
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
-  "cleanUrls": true,
+  "framework": null,
   "rewrites": [
     {
       "source": "/api/(.*)",

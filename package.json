@@ -1,0 +1,9 @@
+{
+  "name": "bytefrost",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd kisansetu && pnpm install && pnpm run build",
+    "start": "cd kisansetu && pnpm run start"
+  }
+}

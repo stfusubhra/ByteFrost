@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd kisansetu && pnpm install && pnpm run build",
-  "outputDirectory": "kisansetu/dist",
+  "buildCommand": "cd ../kisansetu && pnpm install && pnpm run build && mkdir -p ../frontend/dist && cp -r dist/* ../frontend/dist/",
+  "outputDirectory": "dist",
   "framework": null,
   "rewrites": [
     {
