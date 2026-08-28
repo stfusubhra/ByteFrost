@@ -48,17 +48,11 @@ async function submitContactDemo(data: ContactFormData): Promise<void> {
   };
 
   // Store demo submissions in localStorage for transparency
-  // (In a real system, this would be in a database)
   const existing = JSON.parse(localStorage.getItem("kisansetu_demo_contacts") || "[]");
   localStorage.setItem(
     "kisansetu_demo_contacts",
     JSON.stringify([...existing, demoSubmission])
   );
-
-  // Simulate occasional network error for realism (10% failure rate)
-  if (Math.random() < 0.1) {
-    throw new Error("Demo submission failed: simulated network error");
-  }
 }
 
 export default function Contact() {

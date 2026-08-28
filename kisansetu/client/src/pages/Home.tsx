@@ -198,7 +198,12 @@ export default function Home() {
 
             <div className="prem-hero-media" ref={spotlight}>
               <div className="prem-tilt">
-                <img src={img.hero} alt="Farmer working in a lush green field at golden hour" />
+                <img
+                  src={img.hero}
+                  alt="Farmer working in a lush green field at golden hour"
+                  loading="eager"
+                  fetchPriority="high"
+                />
                 <div className="prem-spotlight" aria-hidden="true" />
                 <div className="prem-shade" aria-hidden="true" />
               </div>
