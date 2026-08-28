@@ -1,6 +1,26 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from app.core.database import async_engine, AsyncSessionLocal, get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+
+# Override the dependency to provide a transactional session
+@pytest.fixture(autouse=True)
+def override_get_db():
+    # Create a new async session for each test
+    async def _override_get_db():
+        async with AsyncSessionLocal() as session:
+            try:
+                yield session
+                # Do not commit; rollback after test
+                await session.rollback()
+            finally:
+                await session.close()
+    # Replace the dependency
+    app.dependency_overrides[get_db] = _override_get_db
+    yield
+    # Clean up
+    app.dependency_overrides.clear()
 
 @pytest.fixture
 def client():
