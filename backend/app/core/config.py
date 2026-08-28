@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 
 class Settings(BaseSettings):
@@ -12,6 +13,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Auth
+    # In production the SECRET_KEY MUST be set via environment variable.
+    # The insecure default is only acceptable for local development.
     SECRET_KEY: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 1440  # 24 hours
@@ -35,5 +38,15 @@ class Settings(BaseSettings):
         case_sensitive = True
         extra = "ignore"
 
+    def validate_security(self) -> None:
+        """Fail fast in production if the secret key is the insecure default."""
+        env = os.getenv("ENVIRONMENT", "development").lower()
+        if env in {"production", "prod"} and self.SECRET_KEY == "change-me-in-production":
+            raise RuntimeError(
+                "SECRET_KEY must be set to a strong random value in production. "
+                "Set the SECRET_KEY environment variable before starting the server."
+            )
+
 
 settings = Settings()
+settings.validate_security()

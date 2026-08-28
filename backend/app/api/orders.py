@@ -6,11 +6,19 @@ from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.security import get_current_user
-from app.models.models import Order, OrderItem, OrderStatus, ProduceListing
-from app.schemas.schemas import OrderCreate, OrderResponse
+from app.core.security import get_current_user, require_roles
+from app.models.models import Order, OrderItem, OrderStatus, ProduceListing, UserRole
+from app.schemas.schemas import AllocationRequest, OrderCreate, OrderResponse
 
 router = APIRouter()
+
+# Roles allowed to place orders (buyers and consumers)
+ORDER_CREATOR_ROLES = {
+    UserRole.BUYER_BULK,
+    UserRole.BUYER_RETAILER,
+    UserRole.CONSUMER,
+    UserRole.FPO_MANAGER,
+}
 
 
 @router.post("/", response_model=OrderResponse, status_code=201)
@@ -19,6 +27,8 @@ async def create_order(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    require_roles(current_user, ORDER_CREATOR_ROLES)
+
     order = Order(
         buyer_id=UUID(current_user["id"]),
         delivery_address=payload.delivery_address,
@@ -32,16 +42,58 @@ async def create_order(
 
     total = 0
     for item in payload.items:
+        # Load the listing server-side; NEVER trust the client for price.
+        result = await db.execute(
+            select(ProduceListing).where(
+                ProduceListing.id == item.listing_id,
+                ProduceListing.is_active == True,
+            )
+        )
+        listing = result.scalar_one_or_none()
+        if not listing:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Listing {item.listing_id} not found or inactive",
+            )
+
+        # Oversell prevention: the listing must have enough available quantity.
+        if listing.quantity_kg < item.quantity_kg:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Insufficient quantity for listing {listing.id}. "
+                    f"Available: {listing.quantity_kg} kg, requested: {item.quantity_kg} kg"
+                ),
+            )
+
+        price_per_kg = listing.price_per_kg
+        if price_per_kg is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Listing {listing.id} has no price set",
+            )
+
         order_item = OrderItem(
             order_id=order.id,
-            listing_id=item.listing_id,
+            listing_id=listing.id,
             quantity_kg=item.quantity_kg,
-            price_per_kg=item.price_per_kg,
+            price_per_kg=price_per_kg,
         )
         db.add(order_item)
-        total += item.quantity_kg * item.price_per_kg
+        total += item.quantity_kg * float(price_per_kg)
 
     order.total_amount = total
+    await db.commit()
+
+    # Reload the order with its items eagerly loaded so the response can
+    # serialize the nested items without triggering a lazy-load outside the
+    # request session.
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .options(joinedload(Order.items))
+    )
+    order = result.unique().scalar_one()
     return order
 
 
@@ -225,7 +277,7 @@ async def deliver_order(
 @router.post("/{order_id}/allocate-from-listings")
 async def allocate_from_listings(
     order_id: UUID,
-    listing_items: list,
+    payload: AllocationRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -243,9 +295,9 @@ async def allocate_from_listings(
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot allocate from listings")
 
     total_allocated = 0
-    for item in listing_items:
-        listing_id = item["listing_id"]
-        quantity_kg = item["quantity_kg"]
+    for item in payload.items:
+        listing_id = item.listing_id
+        quantity_kg = item.quantity_kg
 
         result = await db.execute(
             select(ProduceListing).where(ProduceListing.id == listing_id)

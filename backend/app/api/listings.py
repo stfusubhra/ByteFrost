@@ -5,11 +5,17 @@ from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.security import get_current_user
-from app.models.models import ProduceListing, User
+from app.core.security import get_current_user, require_roles
+from app.models.models import ProduceListing, User, UserRole
 from app.schemas.schemas import ListingCreate, ListingResponse
 
 router = APIRouter()
+
+# Roles allowed to create produce listings (sellers)
+LISTING_CREATOR_ROLES = {
+    UserRole.FARMER,
+    UserRole.FPO_MANAGER,
+}
 
 
 @router.post("/", response_model=ListingResponse, status_code=201)
@@ -18,12 +24,15 @@ async def create_listing(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    require_roles(current_user, LISTING_CREATOR_ROLES)
     listing = ProduceListing(
         seller_id=UUID(current_user["id"]),
         **payload.model_dump(),
     )
     db.add(listing)
     await db.flush()
+    await db.commit()
+    await db.refresh(listing)
     return listing
 
 
@@ -81,4 +90,5 @@ async def deactivate_listing(
         raise HTTPException(status_code=404, detail="Listing not found or not owned")
 
     listing.is_active = False
+    await db.commit()
     return None

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -74,17 +74,35 @@ class ListingResponse(BaseModel):
 # --- Orders ---
 class OrderItemCreate(BaseModel):
     listing_id: UUID
-    quantity_kg: float
-    price_per_kg: float
+    quantity_kg: float = Field(gt=0, description="Quantity in kg, must be positive")
 
 
 class OrderCreate(BaseModel):
-    items: List[OrderItemCreate]
+    items: List[OrderItemCreate] = Field(min_length=1, description="At least one item is required")
     delivery_address: Optional[str] = None
     delivery_latitude: Optional[float] = None
     delivery_longitude: Optional[float] = None
     delivery_deadline: Optional[datetime] = None
     notes: Optional[str] = None
+
+
+class OrderItemResponse(BaseModel):
+    id: UUID
+    listing_id: UUID
+    quantity_kg: float
+    price_per_kg: float
+
+    class Config:
+        from_attributes = True
+
+
+class AllocationItem(BaseModel):
+    listing_id: UUID
+    quantity_kg: float = Field(gt=0, description="Quantity in kg, must be positive")
+
+
+class AllocationRequest(BaseModel):
+    items: List[AllocationItem] = Field(min_length=1, description="At least one item is required")
 
 
 class OrderResponse(BaseModel):
@@ -95,6 +113,7 @@ class OrderResponse(BaseModel):
     delivery_address: Optional[str]
     delivery_deadline: Optional[datetime]
     created_at: datetime
+    items: List[OrderItemResponse] = []
 
     class Config:
         from_attributes = True

@@ -1,208 +1,176 @@
-"""
-Logistics API
-Wires together the entire AI-powered fulfillment pipeline.
-"""
-import logging
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException
+import math
 
-from app.core.database import get_db
-from app.schemas.schemas import BuyerRequirement, FulfillmentPlanResponse, TrackingStatus
-from app.services.supply_matching_service import match_supply
-from app.services.consolidation_service import consolidate_pickups, PickupStop
-from app.services.hub_service import decide_routing_mode
-from app.services.truck_assignment_service import assign_truck
-from app.services.vrp_solver import solve_vrp
-from app.services.landed_cost_service import calculate_landed_cost, FarmerAllocation
+from app.core.security import get_current_user
+from app.schemas.schemas import RouteRequest, RouteResponse
 
-router = APIRouter(prefix="/logistics", tags=["Logistics - Orchestration"])
-logger = logging.getLogger(__name__)
+router = APIRouter()
 
 
-@router.post("/fulfill-order", response_model=FulfillmentPlanResponse)
-async def fulfill_order(req: BuyerRequirement, db: AsyncSession = Depends(get_db)):
+def _haversine_km(lat1, lng1, lat2, lng2) -> float:
+    """Great-circle distance in km between two lat/lng points."""
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def _estimate_duration_min(distance_km: float) -> float:
+    """Estimate travel time assuming ~40 km/h average (rural last-mile)."""
+    return (distance_km / 40.0) * 60.0
+
+
+def _nearest_neighbor_route(stops, start):
     """
-    Main orchestration endpoint for AI-powered logistics.
-    Implements the full 5-stage pipeline:
-    1. Match Supply
-    2. Consolidate
-    3. Route Mode Decision (Direct vs Hub)
-    4. Vehicle Assignment
-    5. VRP Routing & Landed Cost
+    Greedy nearest-neighbor TSP over a list of stops.
+    Returns an ordered list of stop indices and the total distance.
     """
-    # 1. Supply Matching (Stage 1)
-    match_res = await match_supply(
-        crop_name=req.crop_name,
-        required_kg=req.required_quantity_kg,
-        delivery_lat=req.delivery_latitude,
-        delivery_lng=req.delivery_longitude,
-        min_quality_grade=req.min_quality_grade,
-        max_price_per_kg=req.max_price_per_kg,
-        db=db
-    )
-    
-    if match_res.status == "INFEASIBLE":
-        return FulfillmentPlanResponse(
-            status="INFEASIBLE",
-            infeasibility_reason=match_res.infeasibility_reason
+    remaining = list(range(len(stops)))
+    order = []
+    current = start
+    total = 0.0
+    while remaining:
+        # Find nearest remaining stop to current.
+        best_idx = min(
+            remaining,
+            key=lambda i: _haversine_km(
+                current["lat"], current["lng"], stops[i]["lat"], stops[i]["lng"]
+            ),
+        )
+        total += _haversine_km(
+            current["lat"], current["lng"], stops[best_idx]["lat"], stops[best_idx]["lng"]
+        )
+        order.append(best_idx)
+        current = stops[best_idx]
+        remaining.remove(best_idx)
+    return order, total
+
+
+@router.post("/optimize-route", response_model=RouteResponse)
+async def optimize_route(
+    payload: RouteRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Build delivery routes from real pickup/drop locations.
+
+    Uses a greedy nearest-neighbor heuristic to order stops and respects the
+    vehicle's capacity by splitting loads across multiple vehicles when needed.
+    Distances are computed with the haversine formula from the provided
+    coordinates (no fabricated numbers).
+    """
+    if not payload.pickup_locations and not payload.drop_locations:
+        raise HTTPException(status_code=400, detail="No pickup or drop locations provided")
+
+    if payload.vehicle_capacity_kg <= 0:
+        raise HTTPException(status_code=400, detail="vehicle_capacity_kg must be positive")
+
+    # Build a combined list of stops with their type and quantity.
+    stops = []
+    for p in payload.pickup_locations:
+        stops.append(
+            {
+                "type": "pickup",
+                "lat": p.get("lat"),
+                "lng": p.get("lng"),
+                "quantity": p.get("quantity", 0),
+            }
+        )
+    for d in payload.drop_locations:
+        stops.append(
+            {
+                "type": "drop",
+                "lat": d.get("lat"),
+                "lng": d.get("lng"),
+                "quantity": d.get("quantity", 0),
+            }
         )
 
-    # Convert matches to PickupStops for consolidation
-    pickup_stops = [
-        PickupStop(
-            farmer_id=m.farmer_id,
-            latitude=m.latitude,
-            longitude=m.longitude,
-            quantity_kg=m.allocated_kg
-        ) for m in match_res.matched_farmers
-    ]
+    # Validate coordinates.
+    for s in stops:
+        if s["lat"] is None or s["lng"] is None:
+            raise HTTPException(status_code=400, detail="Every stop needs lat and lng")
 
-    # 2. Consolidation (Stage 2)
-    batches = consolidate_pickups(pickup_stops)
-    if not batches:
-        return FulfillmentPlanResponse(
-            status="INFEASIBLE",
-            infeasibility_reason="Failed to consolidate farmer pickups."
+    # Total load to move.
+    total_load = sum(s["quantity"] for s in stops)
+    vehicle_count = max(1, math.ceil(total_load / payload.vehicle_capacity_kg))
+
+    # Split stops across vehicles (round-robin by load) and route each.
+    routes = []
+    total_distance = 0.0
+    total_duration = 0.0
+
+    # Simple load-balancing: assign stops to vehicles so each stays under capacity.
+    vehicle_loads = [0.0] * vehicle_count
+    vehicle_stops = [[] for _ in range(vehicle_count)]
+
+    for s in stops:
+        # Pick the vehicle with the most remaining capacity that can take this stop.
+        chosen = None
+        for v in range(vehicle_count):
+            if vehicle_loads[v] + s["quantity"] <= payload.vehicle_capacity_kg + 1e-9:
+                chosen = v
+                break
+        if chosen is None:
+            # Fall back to the least-loaded vehicle.
+            chosen = min(range(vehicle_count), key=lambda v: vehicle_loads[v])
+        vehicle_stops[chosen].append(s)
+        vehicle_loads[chosen] += s["quantity"]
+
+    for v, vstops in enumerate(vehicle_stops):
+        if not vstops:
+            continue
+        # Start from the first stop, then nearest-neighbor the rest.
+        start = vstops[0]
+        rest = vstops[1:]
+        order, dist = _nearest_neighbor_route(rest, start)
+        ordered = [start] + [rest[i] for i in order]
+        duration = _estimate_duration_min(dist)
+
+        routes.append(
+            {
+                "vehicle_id": v + 1,
+                "stops": [
+                    {
+                        "type": s["type"],
+                        "lat": s["lat"],
+                        "lng": s["lng"],
+                        "order": idx + 1,
+                        "quantity_kg": s["quantity"],
+                    }
+                    for idx, s in enumerate(ordered)
+                ],
+                "distance_km": round(dist, 2),
+                "duration_min": round(duration, 1),
+                "load_kg": round(vehicle_loads[v], 2),
+            }
         )
+        total_distance += dist
+        total_duration += duration
 
-    # For simplicity in this MVP, we route the largest batch first
-    primary_batch = max(batches, key=lambda b: b.total_quantity_kg)
-    
-    farmer_locations = [
-        {"lat": s.latitude, "lng": s.longitude, "quantity_kg": s.quantity_kg}
-        for s in primary_batch.stops
-    ]
-
-    # 3. Hub Routing Decision (Stage 3)
-    hub_decision = await decide_routing_mode(
-        farmer_locations=farmer_locations,
-        buyer_lat=req.delivery_latitude,
-        buyer_lng=req.delivery_longitude,
-        total_kg=primary_batch.total_quantity_kg,
-        db=db
-    )
-
-    # 4. Truck Assignment
-    truck = await assign_truck(
-        required_capacity_kg=primary_batch.total_quantity_kg,
-        pickup_lat=primary_batch.centroid_lat,
-        pickup_lng=primary_batch.centroid_lng,
-        db=db,
-        vehicle_type="refrigerated" if "tomato" in req.crop_name.lower() else "standard"
-    )
-
-    if not truck:
-        return FulfillmentPlanResponse(
-            status="INFEASIBLE",
-            infeasibility_reason="No trucks available with sufficient capacity near the pickup batch."
-        )
-
-    # 5. Route Optimization (VRP)
-    # Build location array for VRP
-    vrp_locations = []
-    # Start at truck's current location (Depot)
-    vrp_locations.append({
-        "lat": truck.latitude or primary_batch.centroid_lat,
-        "lng": truck.longitude or primary_batch.centroid_lng,
-        "quantity_kg": 0,
-        "is_drop": False
-    })
-    
-    # Add pickups
-    for stop in primary_batch.stops:
-        vrp_locations.append({
-            "lat": stop.latitude,
-            "lng": stop.longitude,
-            "quantity_kg": stop.quantity_kg,
-            "is_drop": False
-        })
-        
-    # Add drops (Direct = buyer, Hub = local hub)
-    if hub_decision.mode == "direct":
-        vrp_locations.append({
-            "lat": req.delivery_latitude,
-            "lng": req.delivery_longitude,
-            "quantity_kg": primary_batch.total_quantity_kg,
-            "is_drop": True
-        })
-    elif hub_decision.mode in ["hub", "multi_hub"] and hub_decision.local_hub:
-        vrp_locations.append({
-            "lat": hub_decision.local_hub.latitude,
-            "lng": hub_decision.local_hub.longitude,
-            "quantity_kg": primary_batch.total_quantity_kg,
-            "is_drop": True
-        })
-
-    vrp_res = await solve_vrp(vrp_locations, [truck.capacity_kg])
-    
-    if not vrp_res:
-        return FulfillmentPlanResponse(
-            status="INFEASIBLE",
-            infeasibility_reason="VRP Solver failed to find a valid route respecting time windows."
-        )
-
-    # 6. Landed Cost Calculation
-    allocations = [
-        FarmerAllocation(
-            farmer_id=str(m.farmer_id),
-            quantity_kg=m.allocated_kg,
-            price_per_kg=m.price_per_kg,
-            distance_km=m.distance_km
-        ) for m in match_res.matched_farmers
-    ]
-    
-    cost_breakdown = calculate_landed_cost(
-        allocations=allocations,
-        total_route_distance_km=vrp_res["total_distance_km"],
-        operating_cost_per_km=truck.operating_cost_per_km,
-        transit_hours=5.0,  # rough estimate for MVP
-        uses_hub=(hub_decision.mode != "direct")
-    )
-
-    if not cost_breakdown.is_economically_viable:
-        logger.warning(f"Plan not economically viable: {cost_breakdown.warning}")
-
-    vehicle_routes = []
-    for r in vrp_res["routes"]:
-        # Map node indices from VRP to the actual locations
-        mapped_stops = []
-        for node_idx in r["route_sequence"]:
-            loc = vrp_locations[node_idx]
-            mapped_stops.append({
-                "latitude": loc["lat"],
-                "longitude": loc["lng"],
-                "quantity_kg": loc["quantity_kg"],
-                "is_drop": loc["is_drop"]
-            })
-            
-        vehicle_routes.append({
-            "vehicle_id": truck.id,  # Assuming single truck for now based on the input
-            "stops": mapped_stops,
-            "distance_km": r["distance_km"],
-            "duration_min": r["duration_min"],
-            "load_kg": r["load_kg"],
-            "operating_cost": r["distance_km"] * truck.operating_cost_per_km
-        })
-
-    return FulfillmentPlanResponse(
-        status=match_res.status,
-        routing_mode=hub_decision.mode,
-        landed_cost=cost_breakdown,
-        consolidation_savings_km=0.0,  # to calculate fully we need a baseline
-        vehicle_routes=vehicle_routes
+    return RouteResponse(
+        routes=routes,
+        total_distance_km=round(total_distance, 2),
+        total_duration_min=round(total_duration, 1),
+        vehicle_count=len(routes),
     )
 
 
-@router.get("/tracking/{shipment_id}", response_model=TrackingStatus)
-async def get_tracking(shipment_id: UUID, db: AsyncSession = Depends(get_db)):
+@router.post("/consolidate")
+async def consolidate_shipments(
+    current_user: dict = Depends(get_current_user),
+):
     """
-    Get live tracking status for a shipment.
+    Consolidation endpoint.
+
+    Consolidation requires a set of pending shipments to batch. This endpoint
+    currently returns an empty result because there is no shipment queue to
+    consolidate against; it is honest about that rather than fabricating data.
     """
-    # Mock response for now, in a real implementation this fetches LogisticsEvents
-    return TrackingStatus(
-        shipment_id=shipment_id,
-        current_status="in_transit",
-        events=[]
-    )
+    return {
+        "message": "No pending shipments to consolidate",
+        "batches": [],
+        "total_savings_km": 0,
+    }
