@@ -11,6 +11,7 @@ env/
 .env.local
 *.egg-info/
 dist/
+dist-server/
 build/
 .eggs/
 
