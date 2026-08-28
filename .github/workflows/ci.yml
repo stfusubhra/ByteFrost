@@ -47,9 +47,20 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bytefrost_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bytefrost_test
           SECRET_KEY: test-secret-key
         run: pytest -v --tb=short
 
