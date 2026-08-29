@@ -413,11 +413,6 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {selected && (
-        <div className="market-detail-backdrop" onClick={() => setSelected(null)}>
-          <aside
-            
-
       {toast && <div className="public-toast">{toast}</div>}
     </PublicLayout>
   );

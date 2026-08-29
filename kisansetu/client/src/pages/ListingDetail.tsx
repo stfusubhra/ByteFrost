@@ -161,11 +161,11 @@ export default function ListingDetail() {
         <div className="row" style={{ gap: 16, alignItems: "start" }}>
           {/* Image */}
           <div className="detail-image">
-            <img
-              src={getImage(listing.crop_name)}
-              alt={`${listing.crop_name} listing`}
-              style={{ width: 100%, maxWidth: 400, borderRadius: 8 }}
-            />
+<img
+                src={getImage(listing.crop_name)}
+                alt={`${listing.crop_name} listing`}
+                style={{ width: "100%", maxWidth: 400, borderRadius: 8 }}
+              />
             <span
               className="badge badge-neutral"
               style={{ position: "absolute", top: 12, left: 12 }}
@@ -190,7 +190,7 @@ export default function ListingDetail() {
                 <small>Quantity Available</small><strong>{listing.quantity_kg.toLocaleString()} kg</strong>
               </div>
               <div className="detail-stat">
-                <small>Price per kg</strong>{listing.price_per_kg !== null ? `₹${listing.price_per_kg.toFixed(2)}/kg` : "Price on request"}
+                <small>Price per kg</small>{listing.price_per_kg !== null ? `₹${listing.price_per_kg.toFixed(2)}/kg` : "Price on request"}
               </div>
               <div className="detail-stat">
                 <small>Harvest Date</small><strong>{listing.harvest_date || "TBA"}</strong>
