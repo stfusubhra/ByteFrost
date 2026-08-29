@@ -150,7 +150,6 @@ export default function Marketplace() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState("All produce");
   const [sort, setSort] = useState("Recommended");
-  const [selected, setSelected] = useState<MarketListing | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -379,38 +378,36 @@ export default function Marketplace() {
             </div>
           ) : (
             filtered.map((item) => (
-              <article
-                className="market-card expanded"
-                key={item.id}
-                onClick={() => setSelected(item)}
-              >
-                <div className="market-card-image">
-                  <img
-                    src={item.image}
-                    alt={`${item.crop} listing`}
-                  />
-                  <span className="market-status">{item.status}</span>
-                  <span className="market-match">{item.match} match</span>
-                </div>
-                <div className="market-card-meta">
-                  <div>
-                    <strong>{item.crop}</strong>
-                    <span>{item.grade} · {item.freshness}</span>
+              <Link href={`/listing/${item.id}`} key={item.id}>
+                <article className="market-card expanded">
+                  <div className="market-card-image">
+                    <img
+                      src={item.image}
+                      alt={`${item.crop} listing`}
+                    />
+                    <span className="market-status">{item.status}</span>
+                    <span className="market-match">{item.match} match</span>
                   </div>
-                  <div>
-                    <span>
-                      <MapPin size={11} /> {item.place}
-                    </span>
-                    <span>{item.quantity}</span>
+                  <div className="market-card-meta">
+                    <div>
+                      <strong>{item.crop}</strong>
+                      <span>{item.grade} · {item.freshness}</span>
+                    </div>
+                    <div>
+                      <span>
+                        <MapPin size={11} /> {item.place}
+                      </span>
+                      <span>{item.quantity}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="market-card-bottom">
-                  <strong>{item.price}</strong>
-                  <button aria-label={`View ${item.crop}`}>
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
-              </article>
+                  <div className="market-card-bottom">
+                    <strong>{item.price}</strong>
+                    <button aria-label={`Contact about ${item.crop}`}>
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                </article>
+              </Link>
             ))
           )}
         </div>
@@ -419,70 +416,7 @@ export default function Marketplace() {
       {selected && (
         <div className="market-detail-backdrop" onClick={() => setSelected(null)}>
           <aside
-            className="market-detail"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              className="market-detail-close"
-              onClick={() => setSelected(null)}
-              aria-label="Close listing"
-            >
-              <X size={19} />
-            </button>
-            <div className="market-detail-image">
-              <img
-                src={selected.image}
-                alt={`${selected.crop} detail`}
-              />
-            </div>
-            <div className="market-detail-content">
-              <span>
-                {selected.status} · {selected.match} buyer match
-              </span>
-              <h2>{selected.crop}</h2>
-              <p className="market-detail-place">
-                <MapPin size={14} /> {selected.place}
-              </p>
-              <div className="market-detail-stats">
-                <div>
-                  <small>Quantity</small><strong>{selected.quantity}</strong>
-                </div>
-                <div>
-                  <small>Indicative price</small><strong>{selected.price}</strong>
-                </div>
-                <div>
-                  <small>Route</small><strong>{selected.route}</strong>
-                </div>
-<div>
-  <small>Freshness</small>{selected.freshness}</div>
-              </div>
-              <p className="market-detail-copy">
-                This listing is shown with a connected market context so buyers
-                can understand the supply before making an inquiry.
-              </p>
-              <div className="market-detail-actions">
-                <button
-                  className="public-pill"
-                  onClick={() =>
-                    action(
-                      "Buyer inquiry captured for the connected flow."
-                    )
-                  }
-                >
-                  Contact about this listing <ArrowRight size={15} />
-                </button>
-                <button
-                  className="text-button"
-                  onClick={() =>
-                    action("Listing saved for later in the connected flow.")}
-                >
-                  Save listing
-                </button>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
+            
 
       {toast && <div className="public-toast">{toast}</div>}
     </PublicLayout>

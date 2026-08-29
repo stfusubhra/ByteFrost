@@ -95,12 +95,56 @@ export interface PriceRecommendation {
 
 // --- Public endpoints (no auth) ---
 export async function fetchListings(params?: {
-  crop_name?: string;
-  max_price?: number;
-  limit?: number;
-}): Promise<Listing[]> {
-  const { data } = await client.get<Listing[]>("/listings/", { params });
-  return data;
+   crop_name?: string;
+   max_price?: number;
+   limit?: number;
+ }): Promise<Listing[]> {
+   const { data } = await client.get<Listing[]>("/listings/", { params });
+   return data;
+ }
+
+export async function fetchListing(id: string): Promise<Listing> {
+   const { data } = await client.get<Listing>(`/listings/${id}`);
+   return data;
+ }
+
+// --- Order types ---
+export interface OrderItemCreate {
+   listing_id: string;
+   quantity_kg: number;
+}
+
+export interface OrderCreate {
+   items: OrderItemCreate[];
+   delivery_address?: string;
+   delivery_latitude?: number;
+   delivery_longitude?: number;
+   delivery_deadline?: string; // ISO string
+   notes?: string;
+}
+
+export interface OrderItemResponse {
+   id: string;
+   listing_id: string;
+   quantity_kg: number;
+   price_per_kg: number;
+}
+
+export interface OrderResponse {
+   id: string;
+   buyer_id: string;
+   status: string;
+   total_amount?: number;
+   delivery_address?: string;
+   delivery_deadline?: string;
+   created_at: string;
+   items: OrderItemResponse[];
+}
+
+// --- Authenticated endpoint for creating an order ---
+export async function createOrder(orderData: OrderCreate): Promise<OrderResponse> {
+   const { data } = await client.post<OrderResponse>("/orders/", orderData);
+   return data;
 }
 
 // --- Authenticated endpoints ---

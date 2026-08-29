@@ -14,6 +14,7 @@ import Story from "./pages/Story";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
 import DashboardEntry from "./pages/DashboardEntry";
+import ListingDetail from "./pages/ListingDetail";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/market-match" component={MarketMatch} />
+      <Route path="/listing/:id" component={ListingDetail} />
       <Route path="/story" component={Story} />
       <Route path="/faq" component={Faq} />
       <Route path="/contact" component={Contact} />
