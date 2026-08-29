@@ -68,6 +68,7 @@ type MarketListing = {
   image: string; // fallback image based on crop type
   status: string; // is_active ? "Ready to move" : "Inactive"
   harvest: string; // derived or placeholder
+  seller: string; // seller identity (farm / producer name)
 };
 
 /**
@@ -88,6 +89,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     image: "/manus-storage/kisan-story-tomatoes_128fdb50.jpg",
     status: "Ready to move",
     harvest: "Today",
+    seller: "GreenValley Farms",
   },
   {
     id: "demo-2",
@@ -102,6 +104,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     image: "/manus-storage/kisan-story-crates_8ebf1895.jpg",
     status: "Matched supply",
     harvest: "Yesterday",
+    seller: "Sahaja Agro Co-op",
   },
   {
     id: "demo-3",
@@ -116,6 +119,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     image: "/manus-storage/kisan-story-waiting_e345d9da.jpg",
     status: "Awaiting buyer",
     harvest: "2 days ago",
+    seller: "Satara Fresh Collective",
   },
   {
     id: "demo-4",
@@ -130,6 +134,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     image: "/manus-storage/kisan-story-farmer_581c0db7.jpg",
     status: "New listing",
     harvest: "Today",
+    seller: "Ahmednagar Growers",
   },
 ];
 
@@ -180,6 +185,7 @@ function mapBackendListing(listing: any): MarketListing {
     image,
     status: listing.is_active ? "Ready to move" : "Inactive",
     harvest: listing.harvest_date || "Harvest date TBA",
+    seller: listing.farm_name || listing.producer_name || "Verified producer",
   };
 }
 
@@ -444,9 +450,18 @@ export default function Marketplace() {
                     <span className="badge badge-primary">{item.match} match</span>
                   </div>
                   <div className="market-card-meta">
+                    <span className="market-card-seller">
+                      <span className="seller-avatar">{item.seller.charAt(0)}</span>
+                      {item.seller}
+                    </span>
                     <span><MapPin size={12} /> {item.place}</span>
-                    <span>{item.grade} · {item.freshness}</span>
-                    <span>{item.quantity}</span>
+                    <span className="market-card-specs">
+                      <b>{item.quantity}</b>
+                      <span className="dot" aria-hidden="true" />
+                      {item.grade}
+                      <span className="dot" aria-hidden="true" />
+                      {item.freshness}
+                    </span>
                   </div>
                   <div className="market-card-bottom">
                     <span className="market-card-price">{item.price}</span>
@@ -498,6 +513,10 @@ export default function Marketplace() {
               <h2>{selected.crop}</h2>
               <p className="row" style={{ color: "var(--ink-soft)", fontSize: 14 }}>
                 <MapPin size={14} /> {selected.place}
+              </p>
+              <p className="row" style={{ color: "var(--ink-soft)", fontSize: 14, marginTop: 4 }}>
+                <span className="seller-avatar" style={{ width: 18, height: 18, fontSize: 11 }}>{selected.seller.charAt(0)}</span>
+                {selected.seller}
               </p>
               <div className="detail-stats">
                 <div className="detail-stat">

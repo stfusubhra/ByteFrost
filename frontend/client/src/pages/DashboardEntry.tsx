@@ -28,16 +28,27 @@ export default function DashboardEntry() {
             <BarChart3 size={20} />
             <span>Demand</span>
             <h2>Know what the market needs.</h2>
+            <p className="entry-card-p">
+              Live price signals and demand trends for the crops you grow.
+            </p>
           </article>
           <article className="card entry-card">
             <Users size={20} />
             <span>Matching</span>
             <h2>Find the right buyer.</h2>
+            <p className="entry-card-p">
+              Explainable buyer matches scored on fit, price, distance, and
+              reliability.
+            </p>
           </article>
           <article className="card entry-card">
             <MapPin size={20} />
             <span>Logistics</span>
             <h2>Move it smarter.</h2>
+            <p className="entry-card-p">
+              From match to allocation to route to delivery — coordinated in
+              one flow.
+            </p>
           </article>
         </section>
 

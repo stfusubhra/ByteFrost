@@ -1283,6 +1283,49 @@ img {
   gap: 6px;
 }
 
+.market-card-seller {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.seller-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 650;
+  flex-shrink: 0;
+}
+
+.market-card-specs {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.market-card-specs b {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.market-card-specs .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  flex-shrink: 0;
+}
+
 .market-card-bottom {
   display: flex;
   align-items: center;
@@ -2299,6 +2342,13 @@ img {
 
 .entry-card h2 {
   font-size: 20px;
+}
+
+.entry-card-p {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
 }
 
 .entry-note {
