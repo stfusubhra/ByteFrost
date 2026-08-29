@@ -939,3 +939,31 @@ h1 { font-family: "DM Serif Display", Georgia, serif; font-size: clamp(31px, 3vw
   .public-drawer-links a { opacity: 1; transform: none; }
 }
 
+/* ── Language Selector ──────────────────────────────────────────────────── */
+.lang-selector { position: relative; }
+.lang-selector-trigger { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 6px; border: 1px solid transparent; background: transparent; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 160ms ease, border-color 160ms ease, color 160ms ease; white-space: nowrap; }
+.lang-selector-trigger svg.rotated { transform: rotate(180deg); transition: transform 200ms ease; }
+.lang-selector-trigger svg { transition: transform 200ms ease; }
+
+/* Dark variant — for the light PublicLayout header */
+.lang-selector--dark .lang-selector-trigger { color: var(--pub-ink, #1a1d19); border-color: transparent; }
+.lang-selector--dark .lang-selector-trigger:hover { background: rgba(35, 92, 69, 0.08); border-color: rgba(35, 92, 69, 0.25); }
+.lang-selector--dark .lang-selector-trigger:focus-visible { outline: 2px solid var(--pub-green, #235c45); outline-offset: 2px; }
+
+/* Light variant — for the dark Home (prem) header */
+.lang-selector--light .lang-selector-trigger { color: var(--pr-paper, #f6f5f0); border-color: transparent; }
+.lang-selector--light .lang-selector-trigger:hover { background: rgba(246, 245, 240, 0.12); border-color: rgba(246, 245, 240, 0.25); }
+.lang-selector--light .lang-selector-trigger:focus-visible { outline: 2px solid var(--pr-paper, #f6f5f0); outline-offset: 2px; }
+
+/* Dropdown panel */
+.lang-selector-dropdown { position: absolute; top: calc(100% + 6px); right: 0; z-index: 200; min-width: 140px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06); list-style: none; margin: 0; padding: 5px; overflow: hidden; animation: lang-drop-in 160ms cubic-bezier(.23,1,.32,1) both; }
+@keyframes lang-drop-in { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+
+.lang-selector-dropdown li { margin: 0; }
+.lang-selector-dropdown li button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 9px 11px; border: none; border-radius: 7px; background: transparent; text-align: left; cursor: pointer; transition: background 140ms ease; }
+.lang-selector-dropdown li button:hover { background: #f3f7f3; }
+.lang-selector-dropdown li button.active { background: #eaf2ea; }
+.lang-selector-dropdown .lang-native { font-size: 13px; font-weight: 600; color: #1a1d19; }
+.lang-selector-dropdown .lang-label { font-size: 10px; color: #7a8c7e; }
+
+

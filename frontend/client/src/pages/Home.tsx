@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Menu, Search, Sprout, X } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import LanguageSelector from "../components/LanguageSelector";
 
 const img = {
   hero: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600&q=80",
@@ -14,10 +16,11 @@ const img = {
 
 function Header({ onMenu }: { onMenu: () => void }) {
   const [token, setToken] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
-    const t = localStorage.getItem("kisansetu_token");
-    setToken(t);
+    const stored = localStorage.getItem("kisansetu_token");
+    setToken(stored);
   }, []);
 
   const handleLogout = () => {
@@ -27,28 +30,29 @@ function Header({ onMenu }: { onMenu: () => void }) {
 
   return (
     <>
-      <div className="prem-announce">Direct market intelligence for everyday farming</div>
+      <div className="prem-announce">{t("announce.default")}</div>
       <header className="prem-header">
-        <button onClick={onMenu} aria-label="Open menu" className="prem-menu-btn">
-          <Menu size={18} /> <span>Menu</span>
+        <button onClick={onMenu} aria-label={t("common.openMenu")} className="prem-menu-btn">
+          <Menu size={18} /> <span>{t("common.openMenu")}</span>
         </button>
         <Link href="/" className="prem-wordmark">
           <span><Sprout size={15} /></span>KisanSetu
         </Link>
         <div className="prem-actions">
           <button aria-label="Search"><Search size={17} /></button>
-          <Link href="/marketplace">Marketplace</Link>
+          <Link href="/marketplace">{t("nav.marketplace")}</Link>
+          <LanguageSelector variant="light" />
           {token ? (
             <>
-              <span className="prem-user">Welcome</span>
+              <span className="prem-user">{t("nav.welcome")}</span>
               <button onClick={handleLogout} className="prem-auth-btn outline">
-                Logout
+                {t("nav.logout")}
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="prem-auth-btn outline">Sign in</Link>
-              <Link href="/signup" className="prem-auth-btn solid">Sign up</Link>
+              <Link href="/login" className="prem-auth-btn outline">{t("nav.signin")}</Link>
+              <Link href="/signup" className="prem-auth-btn solid">{t("nav.signup")}</Link>
             </>
           )}
         </div>
@@ -157,6 +161,7 @@ export default function Home() {
   const [menu, setMenu] = useState(false);
   const progress = useScrollProgress();
   const spotlight = useHeroSpotlight();
+  const { t } = useLanguage();
   useReveal();
 
   return (
@@ -165,15 +170,15 @@ export default function Home() {
       <Header onMenu={() => setMenu(true)} />
       {menu && (
         <div className="prem-menu">
-          <button onClick={() => setMenu(false)} aria-label="Close menu"><X size={21} /></button>
-          <Link href="/" onClick={() => setMenu(false)}>Home</Link>
-          <Link href="/marketplace" onClick={() => setMenu(false)}>Marketplace</Link>
-          <Link href="/market-match" onClick={() => setMenu(false)}>Find your market match</Link>
-          <Link href="/story" onClick={() => setMenu(false)}>Our story</Link>
-          <Link href="/faq" onClick={() => setMenu(false)}>FAQ</Link>
-          <Link href="/contact" onClick={() => setMenu(false)}>Contact</Link>
-          <Link href="/login" onClick={() => setMenu(false)}>Sign in</Link>
-          <Link href="/signup" onClick={() => setMenu(false)} style={{ color: "#d59a39" }}>Create free account →</Link>
+          <button onClick={() => setMenu(false)} aria-label={t("common.closeMenu")}><X size={21} /></button>
+          <Link href="/" onClick={() => setMenu(false)}>{t("home.menu.home")}</Link>
+          <Link href="/marketplace" onClick={() => setMenu(false)}>{t("home.menu.marketplace")}</Link>
+          <Link href="/market-match" onClick={() => setMenu(false)}>{t("home.menu.findmatch")}</Link>
+          <Link href="/story" onClick={() => setMenu(false)}>{t("home.menu.story")}</Link>
+          <Link href="/faq" onClick={() => setMenu(false)}>{t("home.menu.faq")}</Link>
+          <Link href="/contact" onClick={() => setMenu(false)}>{t("home.menu.contact")}</Link>
+          <Link href="/login" onClick={() => setMenu(false)}>{t("home.menu.signin")}</Link>
+          <Link href="/signup" onClick={() => setMenu(false)} style={{ color: "#d59a39" }}>{t("home.menu.createAccount")}</Link>
         </div>
       )}
 
@@ -188,15 +193,15 @@ export default function Home() {
 
           <div className="prem-hero-inner">
             <div className="prem-hero-copy">
-              <span className="prem-eyebrow">From farm to market</span>
+              <span className="prem-eyebrow">{t("home.hero.eyebrow")}</span>
               <h1>
-                <span className="prem-line"><span>A clearer market</span></span>
-                <span className="prem-line"><span>for every harvest.</span></span>
+                <span className="prem-line"><span>{t("home.hero.h1a")}</span></span>
+                <span className="prem-line"><span>{t("home.hero.h1b")}</span></span>
               </h1>
-              <p>KisanSetu connects farmers, buyers, and logistics in one calmer way to move produce.</p>
+              <p>{t("home.hero.p")}</p>
               <div className="prem-hero-cta">
-                <Link className="prem-pill" href="/marketplace">Explore the marketplace <ArrowRight size={14} /></Link>
-                <Link className="prem-pill ghost" href="/market-match">Find your market match</Link>
+                <Link className="prem-pill" href="/marketplace">{t("home.hero.cta1")} <ArrowRight size={14} /></Link>
+                <Link className="prem-pill ghost" href="/market-match">{t("home.hero.cta2")}</Link>
               </div>
             </div>
 
@@ -211,30 +216,30 @@ export default function Home() {
                 <div className="prem-spotlight" aria-hidden="true" />
                 <div className="prem-shade" aria-hidden="true" />
               </div>
-              <div className="prem-float prem-float-1"><strong>₹2,400</strong><small>tomato / quintal</small></div>
-              <div className="prem-float prem-float-2"><strong>28 km</strong><small>to nearest buyer</small></div>
+              <div className="prem-float prem-float-1"><strong>₹2,400</strong><small>{t("home.hero.float1.label")}</small></div>
+              <div className="prem-float prem-float-2"><strong>28 km</strong><small>{t("home.hero.float2.label")}</small></div>
             </div>
           </div>
 
           <div className="prem-hero-foot">
-            <span>Scroll to explore</span>
+            <span>{t("home.hero.foot.scroll")}</span>
             <span className="prem-scroll-line"><i /></span>
-            <span>KisanSetu · 2026</span>
+            <span>{t("home.hero.foot.year")}</span>
           </div>
         </section>
 
         {/* INTRO — masked line reveal */}
         <section className="prem-intro prem-reveal" id="story">
-          <div className="prem-section-label">01 / OUR APPROACH</div>
+          <div className="prem-section-label">{t("home.intro.label")}</div>
           <div className="prem-intro-copy">
             <h2>
-              <span className="prem-line"><span>Less distance</span></span>
-              <span className="prem-line"><span>between harvest</span></span>
-              <span className="prem-line"><span>and home.</span></span>
+              <span className="prem-line"><span>{t("home.intro.h2a")}</span></span>
+              <span className="prem-line"><span>{t("home.intro.h2b")}</span></span>
+              <span className="prem-line"><span>{t("home.intro.h2c")}</span></span>
             </h2>
             <div>
-              <p>Every harvest begins with a farmer. The right buyer should not feel like another long journey.</p>
-              <Link className="prem-link" href="/story">Our story <ArrowRight size={14} /></Link>
+              <p>{t("home.intro.p")}</p>
+              <Link className="prem-link" href="/story">{t("home.intro.link")} <ArrowRight size={14} /></Link>
             </div>
           </div>
         </section>
@@ -243,22 +248,22 @@ export default function Home() {
         <section className="prem-collection prem-reveal" id="marketplace">
           <div className="prem-collection-head">
             <div>
-              <span>02 / FARMER FAVORITES</span>
-              <h2>Ready to move.</h2>
+              <span>{t("home.collection.label")}</span>
+              <h2>{t("home.collection.h2")}</h2>
             </div>
             <div>
-              <p>Produce with a buyer in view, not waiting in the dark.</p>
-              <Link className="prem-link" href="/marketplace">Shop all produce <ArrowRight size={14} /></Link>
+              <p>{t("home.collection.p")}</p>
+              <Link className="prem-link" href="/marketplace">{t("home.collection.link")} <ArrowRight size={14} /></Link>
             </div>
           </div>
           <div className="prem-product-grid">
             <Link href="/marketplace" className="prem-product">
               <div className="prem-product-image"><img src={img.tomatoes} alt="Fresh tomatoes ready for market" /></div>
-              <div><strong>Freshly harvested</strong><span>Tomatoes · Grade A</span></div>
+              <div><strong>{t("home.collection.p1.title")}</strong><span>{t("home.collection.p1.sub")}</span></div>
             </Link>
             <Link href="/marketplace" className="prem-product">
               <div className="prem-product-image"><img src={img.crates} alt="Harvest crates ready to move" /></div>
-              <div><strong>Ready to route</strong><span>500 kg · Matched supply</span></div>
+              <div><strong>{t("home.collection.p2.title")}</strong><span>{t("home.collection.p2.sub")}</span></div>
             </Link>
           </div>
         </section>
@@ -267,44 +272,44 @@ export default function Home() {
         <section className="prem-feature prem-reveal">
           <div className="prem-feature-image"><img src={img.market} alt="Produce waiting at a market" /></div>
           <div className="prem-feature-copy">
-            <span>03 / NEW CONNECTIONS</span>
+            <span>{t("home.feature.label")}</span>
             <h2>
-              <span className="prem-line"><span>Supply exists.</span></span>
-              <span className="prem-line"><span>Demand exists.</span></span>
-              <span className="prem-line"><span><em>They should meet.</em></span></span>
+              <span className="prem-line"><span>{t("home.feature.h2a")}</span></span>
+              <span className="prem-line"><span>{t("home.feature.h2b")}</span></span>
+              <span className="prem-line"><span><em>{t("home.feature.h2c")}</em></span></span>
             </h2>
-            <p>KisanSetu brings the market into view: demand, price, buyer, location, and timing in one connected flow.</p>
-            <Link className="prem-link" href="/market-match">See how it works <ArrowRight size={14} /></Link>
+            <p>{t("home.feature.p")}</p>
+            <Link className="prem-link" href="/market-match">{t("home.feature.link")} <ArrowRight size={14} /></Link>
           </div>
         </section>
 
         {/* MATCH — count-up stats */}
         <section className="prem-match prem-reveal" id="match">
-          <div className="prem-section-label">04 / FIND YOUR MARKET MATCH</div>
+          <div className="prem-section-label">{t("home.match.label")}</div>
           <div className="prem-match-copy">
             <h2>
-              <span className="prem-line"><span>The right market</span></span>
-              <span className="prem-line"><span>is closer than it feels.</span></span>
+              <span className="prem-line"><span>{t("home.match.h2a")}</span></span>
+              <span className="prem-line"><span>{t("home.match.h2b")}</span></span>
             </h2>
-            <p>Answer a few simple questions. Get a clearer next move for what you grow.</p>
-            <Link className="prem-pill" href="/market-match">Find my market match <ArrowRight size={14} /></Link>
+            <p>{t("home.match.p")}</p>
+            <Link className="prem-pill" href="/market-match">{t("home.match.cta")} <ArrowRight size={14} /></Link>
           </div>
           <div className="prem-match-stats">
-            <Stat value={92} suffix="%" label="buyer match" />
-            <Stat value={28} suffix=" km" label="efficient route" />
-            <Stat value={700} suffix=" kg" label="demo load" />
+            <Stat value={92} suffix="%" label={t("home.match.stat1.label")} />
+            <Stat value={28} suffix=" km" label={t("home.match.stat2.label")} />
+            <Stat value={700} suffix=" kg" label={t("home.match.stat3.label")} />
           </div>
         </section>
 
         {/* CLOSING — parallax landscape */}
         <section className="prem-closing prem-reveal">
           <div>
-            <span>KISANSETU</span>
+            <span>{t("home.closing.label")}</span>
             <h2>
-              <span className="prem-line"><span>From farm to market,</span></span>
-              <span className="prem-line"><span><em>directly.</em></span></span>
+              <span className="prem-line"><span>{t("home.closing.h2a")}</span></span>
+              <span className="prem-line"><span><em>{t("home.closing.h2b")}</em></span></span>
             </h2>
-            <Link className="prem-link" href="/dashboard">Get started <ArrowRight size={14} /></Link>
+            <Link className="prem-link" href="/dashboard">{t("home.closing.link")} <ArrowRight size={14} /></Link>
           </div>
           <div className="prem-closing-image"><img src={img.landscape} alt="Vast farm landscape at sunset" /></div>
         </section>
@@ -312,11 +317,11 @@ export default function Home() {
 
       <footer className="prem-footer">
         <Link href="/" className="prem-wordmark"><span><Sprout size={14} /></span>KisanSetu</Link>
-        <span>Market, made clearer.</span>
+        <span>{t("footer.tagline")}</span>
         <div>
-          <Link href="/story">About</Link>
-          <Link href="/faq">FAQ</Link>
-          <Link href="/contact">Contact</Link>
+          <Link href="/story">{t("footer.about")}</Link>
+          <Link href="/faq">{t("nav.faq")}</Link>
+          <Link href="/contact">{t("nav.contact")}</Link>
         </div>
       </footer>
     </div>

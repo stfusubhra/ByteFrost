@@ -1,23 +1,8 @@
-/* KisanSetu Contact: public contact surface with honest submission states.
- *
- * This form demonstrates honest data handling:
- *   - Client-side validation (required fields, email format)
- *   - Clear submission states (idle, loading, success, error)
- *   - Demo backend submission (clearly labeled as such)
- *   - No fake success messages or fabricated backend responses
- *
- * In a production system, this would submit to a real contact endpoint
- * (e.g., POST /api/v1/contact/) that stores messages and triggers
- * notifications/email to the KisanSetu team.
- */
+/* KisanSetu Contact: public contact surface with honest submission states. */
 import { useState } from "react";
-import { Mail, Phone, MapPin } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { useLanguage } from "../contexts/LanguageContext";
 
-/**
- * Shape of a contact form submission.
- * This matches what would be sent to a real backend contact endpoint.
- */
 type ContactFormData = {
   name: string;
   email: string;
@@ -25,49 +10,23 @@ type ContactFormData = {
   message: string;
 };
 
-/**
- * Demo submission handler that simulates what a real backend would do.
- * In reality, this would be: await fetch("/api/v1/contact/", { method: "POST", ... })
- *
- * For honesty and scope preservation, this implementation:
- *   1. Clearly labels itself as demo
- *   2. Shows the submitted data in a toast
- *   3. Stores the submission in localStorage (clearly marked as demo)
- *   4. Returns a promise that resolves after a realistic delay
- */
 async function submitContactDemo(data: ContactFormData): Promise<void> {
-  // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // In a real app, this would be an actual API call.
-  // For demo purposes, we'll show what would be sent and store it transparently.
-  const demoSubmission = {
-    ...data,
-    submittedAt: new Date().toISOString(),
-    demo: true, // Clear flag that this is demo data
-  };
-
-  // Store demo submissions in localStorage for transparency
+  const demoSubmission = { ...data, submittedAt: new Date().toISOString(), demo: true };
   const existing = JSON.parse(localStorage.getItem("kisansetu_demo_contacts") || "[]");
-  localStorage.setItem(
-    "kisansetu_demo_contacts",
-    JSON.stringify([...existing, demoSubmission])
-  );
+  localStorage.setItem("kisansetu_demo_contacts", JSON.stringify([...existing, demoSubmission]));
 }
 
 export default function Contact() {
-  const [formData, setFormData] = useState<ContactFormData>({
-    name: "",
-    email: "",
-    inquiryType: "",
-    message: "",
-  });
+  const { t } = useLanguage();
+  const [formData, setFormData] = useState<ContactFormData>({ name: "", email: "", inquiryType: "", message: "" });
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange =
-    (field: keyof ContactFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (field: keyof ContactFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
@@ -75,72 +34,34 @@ export default function Contact() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-
-    // Basic client-side validation
-    if (!formData.name.trim()) {
-      setError("Name is required");
-      setSubmitting(false);
-      return;
-    }
-    if (!formData.email.trim()) {
-      setError("Email is required");
-      setSubmitting(false);
-      return;
-    }
-    // Simple email format check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Please enter a valid email address");
-      setSubmitting(false);
-      return;
-    }
-    if (!formData.inquiryType) {
-      setError("Please select how we can help");
-      setSubmitting(false);
-      return;
-    }
-    if (!formData.message.trim()) {
-      setError("Message is required");
-      setSubmitting(false);
-      return;
-    }
+    if (!formData.name.trim()) { setError(t("contact.err.name")); setSubmitting(false); return; }
+    if (!formData.email.trim()) { setError(t("contact.err.email")); setSubmitting(false); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError(t("contact.err.emailFormat")); setSubmitting(false); return; }
+    if (!formData.inquiryType) { setError(t("contact.err.inquiryType")); setSubmitting(false); return; }
+    if (!formData.message.trim()) { setError(t("contact.err.message")); setSubmitting(false); return; }
 
     try {
       await submitContactDemo(formData);
       setSent(true);
-      // Reset form after successful submission
-      setFormData({
-        name: "",
-        email: "",
-        inquiryType: "",
-        message: "",
-      });
+      setFormData({ name: "", email: "", inquiryType: "", message: "" });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to submit your note. Please try again."
-      );
+      setError(err instanceof Error ? err.message : t("contact.err.submit"));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <PublicLayout eyebrow="Contact / KisanSetu">
+    <PublicLayout eyebrow={t("contact.eyebrow")}>
       <section className="public-hero contact-hero">
-        <span>05 / CONTACT</span>
+        <span>{t("contact.section")}</span>
         <h1>
-          Let’s make<br />
-          <em>the market clearer.</em>
+          {t("contact.h1a")}<br />
+          <em>{t("contact.h1b")}</em>
         </h1>
-        <p>
-          Talk to us about a pilot, a buyer network, a farmer group, or the
-          next step for KisanSetu.
-        </p>
+        <p>{t("contact.p")}</p>
       </section>
 
-      {/* Status bar showing submission state */}
       {error && (
         <div className="contact-status public-reveal">
           <div className="contact-status-error">⚠️ {error}</div>
@@ -148,112 +69,73 @@ export default function Contact() {
       )}
       {sent && !submitting && (
         <div className="contact-status public-reveal">
-          <div className="contact-status-success">
-            ✅ Thank you. Your note has been recorded (demo submission).
-          </div>
+          <div className="contact-status-success">{t("contact.status.success")}</div>
         </div>
       )}
       {submitting && (
         <div className="contact-status public-reveal">
-          <div className="contact-status-loading">Submitting your note…</div>
+          <div className="contact-status-loading">{t("contact.status.submitting")}</div>
         </div>
       )}
 
       <section className="contact-layout public-reveal">
         <div className="contact-details">
-          <span>DIRECT CONTACT</span>
+          <span>{t("contact.direct.label")}</span>
           <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
-          <p>Nashik · Pune · Remote</p>
+          <p>{t("contact.direct.location")}</p>
           <div>
-            <span>For farmers</span>
-            <span>For buyers</span>
-            <span>For partners</span>
+            <span>{t("contact.direct.forFarmers")}</span>
+            <span>{t("contact.direct.forBuyers")}</span>
+            <span>{t("contact.direct.forPartners")}</span>
           </div>
         </div>
         <form className="contact-form" onSubmit={handleSubmit}>
           {sent ? (
             <div className="contact-success">
-              <strong>Thank you.</strong>
+              <strong>{t("contact.success.h")}</strong>
               <p>
-                Your note is ready for the KisanSetu team to follow up.
-                <br />
-                <em>(This is a demo submission. In production, this would
-                trigger an email/notification to the team.)</em>
+                {t("contact.success.p")}<br />
+                <em>{t("contact.success.demo")}</em>
               </p>
-              <button
-                type="button"
-                className="public-text-link"
-                onClick={() => setSent(false)}
-              >
-                Send another note →
+              <button type="button" className="public-text-link" onClick={() => setSent(false)}>
+                {t("contact.success.again")}
               </button>
             </div>
           ) : (
             <>
               <label>
-                Name
-                <input
-                  required
-                  value={formData.name}
-                  onChange={handleChange("name")}
-                  placeholder="Your name"
-                />
+                {t("contact.form.name")}
+                <input required value={formData.name} onChange={handleChange("name")} placeholder={t("contact.form.name.placeholder")} />
               </label>
               <label>
-                Email
-                <input
-                  required
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange("email")}
-                  placeholder="you@example.com"
-                />
+                {t("contact.form.email")}
+                <input required type="email" value={formData.email} onChange={handleChange("email")} placeholder={t("contact.form.email.placeholder")} />
               </label>
               <label>
-                How can we help?
-                <select
-                  required
-                  value={formData.inquiryType}
-                  onChange={handleChange("inquiryType")}
-                >
-                  <option value="" disabled>
-                    Select one
-                  </option>
-                  <option>Farmer or farmer group</option>
-                  <option>Buyer or retailer</option>
-                  <option>Pilot or partnership</option>
-                  <option>General question</option>
+                {t("contact.form.help")}
+                <select required value={formData.inquiryType} onChange={handleChange("inquiryType")}>
+                  <option value="" disabled>{t("contact.form.selectOne")}</option>
+                  <option>{t("contact.form.opt1")}</option>
+                  <option>{t("contact.form.opt2")}</option>
+                  <option>{t("contact.form.opt3")}</option>
+                  <option>{t("contact.form.opt4")}</option>
                 </select>
               </label>
               <label>
-                Message
-                <textarea
-                  required
-                  value={formData.message}
-                  onChange={handleChange("message")}
-                  placeholder="Tell us a little about what you are building or looking for."
-                  rows={5}
-                />
+                {t("contact.form.message")}
+                <textarea required value={formData.message} onChange={handleChange("message")} placeholder={t("contact.form.message.placeholder")} rows={5} />
               </label>
-              <button
-                className="public-pill"
-                type="submit"
-                disabled={submitting}
-              >
-                {submitting ? "Sending…" : "Send your note →"}
+              <button className="public-pill" type="submit" disabled={submitting}>
+                {submitting ? t("contact.form.submitting") : t("contact.form.submit")}
               </button>
             </>
           )}
         </form>
       </section>
 
-      {/* Demo data transparency section */}
       {sent && (
         <div className="contact-demo-note public-reveal">
-          <small>
-            💡 Demo submission stored in localStorage as
-            "kisansetu_demo_contacts". Clear localStorage to reset.
-          </small>
+          <small>💡 Demo submission stored in localStorage as "kisansetu_demo_contacts". Clear localStorage to reset.</small>
         </div>
       )}
     </PublicLayout>

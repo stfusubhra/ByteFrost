@@ -1,7 +1,9 @@
 /* KisanSetu public shell: editorial navigation shared by public pages. Includes auth links, drawer, progress indicator, and responsive footer. */
 import { Link } from "wouter";
-import { ArrowUpRight, Mail, MapPin, Menu, Sprout, X, LogOut, User } from "lucide-react";
+import { ArrowUpRight, Mail, MapPin, Menu, Sprout, X, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
+import LanguageSelector from "./LanguageSelector";
 
 function useScrollProgress() {
   const [progress, setProgress] = useState(0);
@@ -42,7 +44,7 @@ function useReveal() {
 
 export default function PublicLayout({
   children,
-  eyebrow = "Direct market intelligence for everyday farming",
+  eyebrow,
 }: {
   children: React.ReactNode;
   eyebrow?: string;
@@ -50,6 +52,7 @@ export default function PublicLayout({
   const [open, setOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
   const progress = useScrollProgress();
+  const { t } = useLanguage();
   useReveal();
 
   useEffect(() => {
@@ -63,17 +66,17 @@ export default function PublicLayout({
   };
 
   const menuLinks = [
-    { href: "/", label: "Home", index: "01" },
-    { href: "/marketplace", label: "Marketplace", index: "02" },
-    { href: "/market-match", label: "Find your market match", index: "03" },
-    { href: "/story", label: "Our story", index: "04" },
-    { href: "/faq", label: "FAQ", index: "05" },
-    { href: "/contact", label: "Contact", index: "06" },
+    { href: "/", label: t("nav.home"), index: "01" },
+    { href: "/marketplace", label: t("nav.marketplace"), index: "02" },
+    { href: "/market-match", label: t("nav.findmatchFull"), index: "03" },
+    { href: "/story", label: t("nav.story"), index: "04" },
+    { href: "/faq", label: t("nav.faq"), index: "05" },
+    { href: "/contact", label: t("nav.contact"), index: "06" },
     ...(hasToken
-      ? [{ href: "/dashboard", label: "Product Dashboard", index: "07" }]
+      ? [{ href: "/dashboard", label: t("nav.productDashboard"), index: "07" }]
       : [
-          { href: "/login", label: "Sign in", index: "07" },
-          { href: "/signup", label: "Create account", index: "08" },
+          { href: "/login", label: t("nav.signin"), index: "07" },
+          { href: "/signup", label: t("nav.createAccount"), index: "08" },
         ]),
   ];
 
@@ -84,16 +87,16 @@ export default function PublicLayout({
         style={{ transform: `scaleX(${progress})` }}
         aria-hidden="true"
       />
-      <div className="public-announcement">{eyebrow}</div>
+      <div className="public-announcement">{eyebrow ?? t("announce.default")}</div>
 
       <header className="public-header">
         <button
           className="public-menu-trigger"
           onClick={() => setOpen(true)}
-          aria-label="Open menu"
+          aria-label={t("common.openMenu")}
         >
           <Menu size={18} />
-          <span>Menu</span>
+          <span>{t("common.openMenu")}</span>
         </button>
 
         <Link href="/" className="public-wordmark">
@@ -104,26 +107,27 @@ export default function PublicLayout({
         </Link>
 
         <nav className="public-nav" style={{ alignItems: "center", gap: "14px" }}>
-          <Link href="/marketplace">Marketplace</Link>
-          <Link href="/market-match">Find your match</Link>
+          <Link href="/marketplace">{t("nav.marketplace")}</Link>
+          <Link href="/market-match">{t("nav.findmatch")}</Link>
+          <LanguageSelector variant="dark" />
           {hasToken ? (
             <>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">{t("nav.dashboard")}</Link>
               <button
                 onClick={handleLogout}
                 className="public-auth-btn outline"
                 style={{ cursor: "pointer" }}
               >
-                Logout
+                {t("nav.logout")}
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className="public-auth-btn outline">
-                Sign in
+                {t("nav.signin")}
               </Link>
               <Link href="/signup" className="public-auth-btn solid">
-                Sign up
+                {t("nav.signup")}
               </Link>
             </>
           )}
@@ -136,7 +140,7 @@ export default function PublicLayout({
             <button
               className="public-drawer-close"
               onClick={() => setOpen(false)}
-              aria-label="Close menu"
+              aria-label={t("common.closeMenu")}
             >
               <X size={22} />
             </button>
@@ -173,13 +177,13 @@ export default function PublicLayout({
                 }}
               >
                 <span className="public-drawer-index">08</span>
-                <span className="public-drawer-label">Sign out</span>
+                <span className="public-drawer-label">{t("nav.signout")}</span>
                 <LogOut className="public-drawer-arrow" size={20} />
               </button>
             )}
           </div>
           <div className="public-drawer-foot">
-            <span>Market, made clearer.</span>
+            <span>{t("footer.tagline")}</span>
             <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
           </div>
         </div>
@@ -195,13 +199,10 @@ export default function PublicLayout({
             </span>
             KisanSetu
           </Link>
-          <p>
-            Direct market intelligence for everyday farming. We bring supply,
-            demand, and the route between them into one clearer view.
-          </p>
+          <p>{t("footer.brand.p")}</p>
           <div className="public-footer-contact">
             <span>
-              <MapPin size={13} /> Nashik · Pune · Remote
+              <MapPin size={13} /> {t("footer.contact.locations")}
             </span>
             <a href="mailto:hello@kisansetu.in">
               <Mail size={13} /> hello@kisansetu.in
@@ -210,17 +211,17 @@ export default function PublicLayout({
         </div>
 
         <div className="public-footer-col">
-          <span className="public-footer-head">Explore</span>
-          <Link href="/marketplace">Marketplace</Link>
-          <Link href="/market-match">Market match</Link>
-          <Link href="/dashboard">Product</Link>
+          <span className="public-footer-head">{t("footer.explore")}</span>
+          <Link href="/marketplace">{t("nav.marketplace")}</Link>
+          <Link href="/market-match">{t("footer.marketMatch")}</Link>
+          <Link href="/dashboard">{t("footer.product")}</Link>
         </div>
 
         <div className="public-footer-col">
-          <span className="public-footer-head">Account</span>
+          <span className="public-footer-head">{t("footer.account")}</span>
           {hasToken ? (
             <>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">{t("nav.dashboard")}</Link>
               <a
                 href="#"
                 onClick={(e) => {
@@ -228,28 +229,28 @@ export default function PublicLayout({
                   handleLogout();
                 }}
               >
-                Sign out
+                {t("nav.signout")}
               </a>
             </>
           ) : (
             <>
-              <Link href="/login">Sign in</Link>
-              <Link href="/signup">Create account</Link>
+              <Link href="/login">{t("nav.signin")}</Link>
+              <Link href="/signup">{t("nav.createAccount")}</Link>
             </>
           )}
         </div>
 
         <div className="public-footer-cta">
-          <span className="public-footer-head">Get started</span>
-          <p>See what a clearer market looks like for your produce.</p>
+          <span className="public-footer-head">{t("footer.getStarted")}</span>
+          <p>{t("footer.cta.p")}</p>
           <Link className="public-pill" href="/market-match">
-            Find your match <ArrowUpRight size={14} />
+            {t("footer.cta.link")} <ArrowUpRight size={14} />
           </Link>
         </div>
 
         <div className="public-footer-bottom">
-          <span>© {new Date().getFullYear()} KisanSetu. Market, made clearer.</span>
-          <span>Built for farmers, buyers, and the people between them.</span>
+          <span>© {new Date().getFullYear()} {t("footer.copyright")}</span>
+          <span>{t("footer.built")}</span>
         </div>
       </footer>
     </div>

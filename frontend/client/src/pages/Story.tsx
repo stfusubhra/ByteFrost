@@ -1,67 +1,58 @@
 /* KisanSetu Story: concise public explanation of the farmer-to-market problem and connected approach. */
 import PublicLayout from "@/components/PublicLayout";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Story() {
+  const { t } = useLanguage();
   return (
-    <PublicLayout eyebrow="Our story / KisanSetu">
+    <PublicLayout eyebrow={t("story.eyebrow")}>
       <section className="public-hero story-hero">
-        <span>03 / OUR STORY</span>
+        <span>{t("story.section")}</span>
         <h1>
-          Less distance
+          {t("story.h1a")}
           <br />
-          <em>between harvest and home.</em>
+          <em>{t("story.h1b")}</em>
         </h1>
-        <p>
-          Every harvest begins with a farmer. The right buyer should not feel
-          like another long journey.
-        </p>
+        <p>{t("story.p")}</p>
       </section>
 
       <section className="story-flow public-reveal">
         <div>
-          <span>THE PROBLEM</span>
+          <span>{t("story.problem.label")}</span>
           <h2>
-            Supply exists.
+            {t("story.problem.h2a")}
             <br />
-            Demand exists.
+            {t("story.problem.h2b")}
             <br />
-            <em>They should meet.</em>
+            <em>{t("story.problem.h2c")}</em>
           </h2>
         </div>
         <div className="story-copy">
-          <p>
-            Farmers, buyers, price signals, timing, and transport often sit in
-            different places. That makes a good harvest harder to move than it
-            should be.
-          </p>
-          <p>
-            KisanSetu brings those signals into one shared market view. The
-            result is a simpler connection from what is ready to sell to who is
-            ready to buy.
-          </p>
+          <p>{t("story.problem.p1")}</p>
+          <p>{t("story.problem.p2")}</p>
           <a className="public-text-link" href="/market-match">
-            Find your market match →
+            {t("story.problem.link")}
           </a>
         </div>
       </section>
 
       <section className="story-steps public-reveal">
-        <span>THE KISANSETU APPROACH</span>
+        <span>{t("story.approach.label")}</span>
         <div>
           <article>
             <b>01</b>
-            <h3>See demand.</h3>
-            <p>Know what the market needs next.</p>
+            <h3>{t("story.step1.title")}</h3>
+            <p>{t("story.step1.p")}</p>
           </article>
           <article>
             <b>02</b>
-            <h3>Match supply.</h3>
-            <p>Find the right buyer for what is ready.</p>
+            <h3>{t("story.step2.title")}</h3>
+            <p>{t("story.step2.p")}</p>
           </article>
           <article>
             <b>03</b>
-            <h3>Move smarter.</h3>
-            <p>Coordinate the route, load, and timing.</p>
+            <h3>{t("story.step3.title")}</h3>
+            <p>{t("story.step3.p")}</p>
           </article>
         </div>
       </section>
