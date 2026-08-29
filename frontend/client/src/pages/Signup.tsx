@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Sparkles, User, AlertCircle, CheckCircle2 } from "lucide-react";
-import PublicLayout from "@/components/PublicLayout";
+import { Eye, EyeOff } from "lucide-react";
+import AuthLayout from "@/components/AuthLayout";
 import { api } from "../lib/api";
 
 export default function Signup() {
@@ -19,13 +19,20 @@ export default function Signup() {
     e.preventDefault();
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match. Please verify.");
+    if (!fullName.trim()) {
+      setError("Full name is required.");
       return;
     }
-
+    if (!email.trim()) {
+      setError("Email address is required.");
+      return;
+    }
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
@@ -43,175 +50,162 @@ export default function Signup() {
       }
       window.location.href = "/";
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Registration failed. Please try again.");
+      const status = err.response?.status;
+      if (status === 409) {
+        setError("An account with this email already exists.");
+      } else if (status === 429) {
+        setError("Too many attempts. Please try again shortly.");
+      } else {
+        setError("Unable to create your account. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <PublicLayout eyebrow="Registration · KisanSetu Direct Market Ledger">
-      <div className="auth-wrapper">
-        <div className="auth-card-container">
-          <div className="auth-brand-side">
-            <div className="auth-brand-content">
-              <div className="auth-brand-badge">
-                <Sparkles size={14} /> Join the Direct Network
-              </div>
-              <h1 className="auth-brand-title">Transforming farm-to-table economics</h1>
-              <p className="auth-brand-desc">
-                Create your verified profile to list produce, discover buyers, and access real-time price intelligence.
-              </p>
-            </div>
+    <AuthLayout
+      tagline="Join the people who grow and the people who need."
+      support="Verified profiles. Direct markets. Clearer decisions."
+    >
+      <div className="auth-form">
+        <header className="auth-form-head">
+          <h1>Create account</h1>
+          <p>Join KisanSetu to buy or sell fresh produce directly.</p>
+        </header>
 
-            <div className="auth-brand-stats">
-              <div className="auth-stat-item">
-                <strong>+24%</strong>
-                <span>Avg Earnings Increase</span>
-              </div>
-              <div className="auth-stat-item">
-                <strong>0%</strong>
-                <span>Middleman Commission</span>
-              </div>
-            </div>
+        {error && (
+          <div className="auth-error" role="alert">
+            {error}
           </div>
+        )}
 
-          <div className="auth-form-side sm:w-full">
-            <div className="auth-header">
-              <h2>Create account</h2>
-              <p>Join KisanSetu to buy or sell fresh produce directly.</p>
-            </div>
-
-            {error && (
-              <div className="auth-error-box" role="alert">
-                <AlertCircle size={16} />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="auth-form-group">
-                <label>I am registering as a</label>
-                <div className="role-selector">
-                  <div
-                    className={`role-card ${role === "farmer" ? "active" : ""}`}
-                    onClick={() => setRole("farmer")} tabIndex={0}
-                  >
-                    <strong>🌾 Farmer</strong>
-                    <span>Sell produce</span>
-                  </div>
-                  <div
-                    className={`role-card ${role === "buyer" ? "active" : ""}`}
-                    onClick={() => setRole("buyer")} tabIndex={0}
-                  >
-                    <strong>🏬 Buyer</strong>
-                    <span>Order crops</span>
-                  </div>
-                  <div
-                    className={`role-card ${role === "fpo" ? "active" : ""}`}
-                    onClick={() => setRole("fpo")}
-                  >
-                    <strong>🤝 FPO</strong>
-                    <span>Aggregate</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="auth-form-group">
-                <label htmlFor="fullName">Full Name</label>
-                <div className="auth-input-wrapper">
-                  <User size={16} className="auth-input-icon" />
-                  <input
-                    type="text"
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="auth-input"
-                    placeholder="Subhra Dey"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="auth-form-group">
-                <label htmlFor="email">Email address</label>
-                <div className="auth-input-wrapper">
-                  <Mail size={16} className="auth-input-icon" />
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="auth-input"
-                    placeholder="name@farmco.in"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="auth-form-group">
-                <label htmlFor="password">Password</label>
-                <div className="auth-input-wrapper">
-                  <Lock size={16} className="auth-input-icon" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="auth-input"
-                    placeholder="At least 6 characters"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    className="auth-input-toggle focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="auth-form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <div className="auth-input-wrapper">
-                  <Lock size={16} className="auth-input-icon" />
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="auth-input"
-                    placeholder="Repeat password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="auth-input-toggle focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="auth-submit-btn focus-visible:ring-2 focus-visible:ring-indigo-500" disabled={loading}>
-                {loading ? "Creating Account..." : "Create Free Account"}
-                <ArrowRight size={16} />
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="auth-field">
+            <label>I am registering as</label>
+            <div className="auth-role" role="radiogroup" aria-label="Account type">
+              <button
+                type="button"
+                className={`auth-role-opt ${role === "farmer" ? "active" : ""}`}
+                onClick={() => setRole("farmer")}
+                aria-pressed={role === "farmer"}
+              >
+                <strong>Farmer</strong>
+                <span>Sell produce</span>
               </button>
-            </form>
-
-            <div className="auth-footer">
-              <p>
-                Already registered? <Link href="/login">Sign in here</Link>
-              </p>
+              <button
+                type="button"
+                className={`auth-role-opt ${role === "buyer" ? "active" : ""}`}
+                onClick={() => setRole("buyer")}
+                aria-pressed={role === "buyer"}
+              >
+                <strong>Buyer</strong>
+                <span>Order crops</span>
+              </button>
+              <button
+                type="button"
+                className={`auth-role-opt ${role === "fpo" ? "active" : ""}`}
+                onClick={() => setRole("fpo")}
+                aria-pressed={role === "fpo"}
+              >
+                <strong>FPO</strong>
+                <span>Aggregate</span>
+              </button>
             </div>
           </div>
+
+          <div className="auth-field">
+            <label htmlFor="fullName">Full name</label>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="auth-input"
+              placeholder="Your full name"
+              autoComplete="name"
+              autoFocus
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="email">Email address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="auth-input"
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="password">Password</label>
+            <div className="auth-input-wrap">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
+                placeholder="At least 6 characters"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className="auth-input-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="confirmPassword">Confirm password</label>
+            <div className="auth-input-wrap">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="auth-input"
+                placeholder="Repeat your password"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className="auth-input-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                aria-pressed={showConfirmPassword}
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? "Creating account…" : "Create account"}
+          </button>
+        </form>
+
+        <div className="auth-divider">
+          <span>or</span>
         </div>
+
+        <p className="auth-switch">
+          Already registered? <Link href="/login">Sign in</Link>
+        </p>
       </div>
-    </PublicLayout>
+    </AuthLayout>
   );
 }

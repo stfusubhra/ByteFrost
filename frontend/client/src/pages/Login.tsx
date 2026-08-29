@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
-import PublicLayout from "@/components/PublicLayout";
+import { Eye, EyeOff } from "lucide-react";
+import AuthLayout from "@/components/AuthLayout";
 import { api } from "../lib/api";
 
 export default function Login() {
@@ -10,10 +10,21 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!email.trim()) {
+      setError("Email address is required.");
+      return;
+    }
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await api.post("/auth/login", { email, password });
@@ -22,7 +33,14 @@ export default function Login() {
       }
       window.location.href = "/";
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Sign in failed. Please check credentials.");
+      const status = err.response?.status;
+      if (status === 401) {
+        setError("Incorrect email or password.");
+      } else if (status === 429) {
+        setError("Too many attempts. Please try again shortly.");
+      } else {
+        setError("Unable to sign in. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -34,122 +52,100 @@ export default function Login() {
   };
 
   return (
-    <PublicLayout eyebrow="Secure Access · KisanSetu Direct Market Ledger">
-      <div className="auth-wrapper">
-        <div className="auth-card-container">
-          <div className="auth-brand-side">
-            <div className="auth-brand-content">
-              <div className="auth-brand-badge">
-                <Sparkles size={14} /> AI-Powered Supply Chain
-              </div>
-              <h1 className="auth-brand-title">Direct farm-to-market intelligence</h1>
-              <p className="auth-brand-desc">
-                Connect directly with buyers, eliminate intermediary margin stacking, and optimize produce routing.
-              </p>
-            </div>
+    <AuthLayout>
+      <div className="auth-form">
+        <header className="auth-form-head">
+          <h1>Welcome back</h1>
+          <p>Sign in to your KisanSetu account.</p>
+        </header>
 
-            <div className="auth-brand-stats">
-              <div className="auth-stat-item">
-                <strong>4.8/5</strong>
-                <span>Farmer Trust Score</span>
-              </div>
-              <div className="auth-stat-item">
-                <strong>100%</strong>
-                <span>Verifiable Provenance</span>
-              </div>
+        {error && (
+          <div className="auth-error" role="alert">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="auth-field">
+            <label htmlFor="email">Email address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="auth-input"
+              placeholder="you@example.com"
+              autoComplete="email"
+              autoFocus
+              aria-invalid={!!error && !email.trim()}
+            />
+          </div>
+
+          <div className="auth-field">
+            <div className="auth-field-label-row">
+              <label htmlFor="password">Password</label>
+              <a href="#" className="auth-forgot" onClick={(e) => e.preventDefault()}>
+                Forgot password?
+              </a>
+            </div>
+            <div className="auth-input-wrap">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                aria-invalid={!!error && !password}
+              />
+              <button
+                type="button"
+                className="auth-input-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
-          <div className="auth-form-side sm:w-full">
-            <div className="auth-header">
-              <h2>Welcome back</h2>
-              <p>Sign in to manage listings, track shipments, and view market matches.</p>
-            </div>
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
 
-            {error && (
-              <div className="auth-error-box" role="alert">
-                <AlertCircle size={16} />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="auth-form-group">
-                <label htmlFor="email">Email address</label>
-                <div className="auth-input-wrapper">
-                  <Mail size={16} className="auth-input-icon" />
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="auth-input"
-                    placeholder="name@farmco.in"
-                    required
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="auth-form-group">
-                <label htmlFor="password">Password</label>
-                <div className="auth-input-wrapper">
-                  <Lock size={16} className="auth-input-icon" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="auth-input"
-                    placeholder="••••••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="auth-input-toggle focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="auth-submit-btn focus-visible:ring-2 focus-visible:ring-indigo-500" disabled={loading}>
-                {loading ? "Signing in..." : "Sign in to Account"}
-                <ArrowRight size={16} />
-              </button>
-            </form>
-
-            <div className="demo-login-divider">
-              <span>OR DEMO QUICK SIGN-IN</span>
-            </div>
-
-            <div className="demo-quick-btns">
-              <button
-                type="button"
-                className="demo-quick-btn focus-visible:ring-2 focus-visible:ring-indigo-500"
-                onClick={() => handleDemoFill("farmer.demo@kisansetu.in")}
-              >
-                🌾 Demo Farmer
-              </button>
-              <button
-                type="button"
-                className="demo-quick-btn focus-visible:ring-2 focus-visible:ring-indigo-500"
-                onClick={() => handleDemoFill("buyer.demo@kisansetu.in")}
-              >
-                🏬 Demo Buyer
-              </button>
-            </div>
-
-            <div className="auth-footer">
-              <p>
-                Don't have an account? <Link href="/signup">Create account</Link>
-              </p>
-            </div>
-          </div>
+        <div className="auth-divider">
+          <span>or</span>
         </div>
+
+        <p className="auth-switch">
+          Don't have an account? <Link href="/signup">Create account</Link>
+        </p>
+
+        <button
+          type="button"
+          className="auth-demo-toggle"
+          onClick={() => setShowDemo(!showDemo)}
+          aria-expanded={showDemo}
+        >
+          {showDemo ? "Hide demo access" : "Demo access"}
+        </button>
+
+        {showDemo && (
+          <div className="auth-demo">
+            <button type="button" onClick={() => handleDemoFill("farmer.demo@kisansetu.in")}>
+              Farmer demo
+            </button>
+            <button type="button" onClick={() => handleDemoFill("buyer.demo@kisansetu.in")}>
+              Buyer demo
+            </button>
+          </div>
+        )}
       </div>
-    </PublicLayout>
+    </AuthLayout>
   );
 }
