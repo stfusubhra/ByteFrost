@@ -60,7 +60,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="auth-form-side">
+          <div className="auth-form-side sm:w-full">
             <div className="auth-header">
               <h2>Welcome back</h2>
               <p>Sign in to manage listings, track shipments, and view market matches.</p>
@@ -106,7 +106,7 @@ export default function Login() {
                   />
                   <button
                     type="button"
-                    className="auth-input-toggle"
+                    className="auth-input-toggle focus-visible:ring-2 focus-visible:ring-indigo-500"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -115,7 +115,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <button type="submit" className="auth-submit-btn" disabled={loading}>
+              <button type="submit" className="auth-submit-btn focus-visible:ring-2 focus-visible:ring-indigo-500" disabled={loading}>
                 {loading ? "Signing in..." : "Sign in to Account"}
                 <ArrowRight size={16} />
               </button>
@@ -128,14 +128,14 @@ export default function Login() {
             <div className="demo-quick-btns">
               <button
                 type="button"
-                className="demo-quick-btn"
+                className="demo-quick-btn focus-visible:ring-2 focus-visible:ring-indigo-500"
                 onClick={() => handleDemoFill("farmer.demo@kisansetu.in")}
               >
                 🌾 Demo Farmer
               </button>
               <button
                 type="button"
-                className="demo-quick-btn"
+                className="demo-quick-btn focus-visible:ring-2 focus-visible:ring-indigo-500"
                 onClick={() => handleDemoFill("buyer.demo@kisansetu.in")}
               >
                 🏬 Demo Buyer
