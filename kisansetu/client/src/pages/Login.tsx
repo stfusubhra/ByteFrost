@@ -33,12 +33,15 @@ export default function Login() {
         password,
         ...(isEmail ? { email: trimmed } : { phone: trimmed })
       };
+      console.log('Login payload:', payload); // Debug log
       const response = await api.post("/auth/login", payload);
+      console.log('Login response:', response); // Debug log
       if (response.data?.access_token) {
         localStorage.setItem("kisansetu_token", response.data.access_token);
       }
       window.location.href = "/";
     } catch (err: any) {
+      console.error('Login error:', err); // Debug log
       const status = err.response?.status;
       if (status === 401) setError(t("login.err.invalid"));
       else if (status === 429) setError(t("login.err.tooMany"));
@@ -47,7 +50,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
   const handleDemoFill = (demoIdentifier: string) => {
     setIdentifier(demoIdentifier);
     setPassword("demo1234");
