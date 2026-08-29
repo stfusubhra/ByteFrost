@@ -154,11 +154,6 @@ function Stat({ value, suffix, label }: { value: number; suffix: string; label: 
 }
 
 export default function Home() {
-  const token = localStorage.getItem("kisansetu_token")
-  if (!token) {
-    window.location.href = "/login";
-    return null;
-  }
   const [menu, setMenu] = useState(false);
   const progress = useScrollProgress();
   const spotlight = useHeroSpotlight();
