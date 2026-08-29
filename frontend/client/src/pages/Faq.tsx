@@ -19,17 +19,17 @@ export default function Faq() {
 
   return (
     <PublicLayout eyebrow={t("faq.eyebrow")}>
-      <section className="public-hero faq-hero">
-        <span>{t("faq.section")}</span>
-        <h1>
-          {t("faq.h1a")}
-          <br />
-          <em>{t("faq.h1b")}</em>
-        </h1>
-        <p>{t("faq.p")}</p>
+      <section className="page-hero">
+        <div className="container">
+          <span className="eyebrow">{t("faq.section")}</span>
+          <h1>
+            {t("faq.h1a")} <em>{t("faq.h1b")}</em>
+          </h1>
+          <p>{t("faq.p")}</p>
+        </div>
       </section>
 
-      <section className="faq-list public-reveal">
+      <section className="faq-list">
         {faqs.map(([question, answer], index) => (
           <div
             className={`faq-item ${open === index ? "open" : ""}`}
