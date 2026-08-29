@@ -185,6 +185,7 @@ function mapBackendListing(listing: any): MarketListing {
 
 export default function Marketplace() {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [active, setActive] = useState("All produce");
   const [sort, setSort] = useState("Recommended");
   const [selected, setSelected] = useState<MarketListing | null>(null);
@@ -197,7 +198,15 @@ export default function Marketplace() {
   const [error, setError] = useState<string | null>(null);
   const [usingDemoData, setUsingDemoData] = useState(false);
 
-  // Fetch listings from backend on mount and when filters change
+  // Debounce the search query so typing does not fire an API request per
+  // keystroke. The client-side filter below still uses the live `query` for
+  // instant feedback while the backend call waits for the user to pause.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Fetch listings from backend on mount and when the debounced search changes
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -206,7 +215,7 @@ export default function Marketplace() {
       setError(null);
       try {
         const backendListings = await fetchListings({
-          crop_name: query || undefined,
+          crop_name: debouncedQuery || undefined,
           limit: 20, // Reasonable limit for marketplace view
         });
 
@@ -240,7 +249,7 @@ export default function Marketplace() {
     return () => {
       isMounted = false;
     };
-  }, [query]); // Re-fetch when search query changes
+  }, [debouncedQuery]); // Re-fetch when the debounced search query changes
 
   // Filter listings based on search, active tab, and sort
   const filtered = listings
@@ -422,9 +431,10 @@ export default function Marketplace() {
                 onClick={() => setSelected(item)}
               >
                 <div className="market-card-image">
-                  <img
+                  <ListingImage
                     src={item.image}
                     alt={`${item.crop} listing`}
+                    crop={item.crop}
                   />
                   <span className="market-status">{item.status}</span>
                   <span className="market-match">{item.match} match</span>
@@ -467,9 +477,10 @@ export default function Marketplace() {
               <X size={19} />
             </button>
             <div className="market-detail-image">
-              <img
+              <ListingImage
                 src={selected.image}
                 alt={`${selected.crop} detail`}
+                crop={selected.crop}
               />
             </div>
             <div className="market-detail-content">

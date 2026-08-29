@@ -449,6 +449,7 @@ h1 { font-family: "DM Serif Display", Georgia, serif; font-size: clamp(31px, 3vw
 .market-card:hover { transform: translateY(-6px); box-shadow: 0 26px 50px -28px rgba(37,37,34,.5); }
 .market-card-image img { transition: transform 700ms cubic-bezier(.23,1,.32,1), filter 700ms ease; }
 .market-card:hover .market-card-image img { transform: scale(1.05); filter: saturate(.95); }
+.market-image-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #d8dfd2, #c3cdbb); color: var(--pub-green); font-family: "DM Serif Display", Georgia, serif; font-size: 46px; line-height: 1; }
 .market-card-bottom button { transition: background-color 180ms ease, color 180ms ease, transform 160ms cubic-bezier(.23,1,.32,1), border-radius 180ms ease; }
 .market-card-bottom button:hover { background: var(--pub-ink); color: var(--pub-paper); transform: translateY(-2px); border-radius: 8px; }
 .market-card-bottom button:active { transform: scale(.92); }
