@@ -190,13 +190,12 @@ function mapBackendListing(listing: any): MarketListing {
 }
 
 export default function Marketplace() {
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [active, setActive] = useState("All produce");
-  const [sort, setSort] = useState("Recommended");
-  const [selected, setSelected] = useState<MarketListing | null>(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [toast, setToast] = useState("");
+const [query, setQuery] = useState("");
+   const [debouncedQuery, setDebouncedQuery] = useState("");
+   const [active, setActive] = useState("All produce");
+   const [sort, setSort] = useState("Recommended");
+   const [filtersOpen, setFiltersOpen] = useState(false);
+   const [toast, setToast] = useState("");
 
   // Data fetching state
   const [listings, setListings] = useState<MarketListing[]>([]);
@@ -418,139 +417,68 @@ export default function Marketplace() {
                 </div>
               ))}
             </>
-          ) : filtered.length === 0 ? (
-            <div className="state" style={{ gridColumn: "1 / -1" }}>
-              <div className="state-icon"><Search size={20} /></div>
-              <div className="state-title">No matching produce yet</div>
-              <div className="state-body">
-                Try another crop or location, or reset your filters.
-              </div>
-            </div>
-          ) : (
-            filtered.map((item) => (
-              <article
-                className="card market-card"
-                key={item.id}
-                onClick={() => setSelected(item)}
-                style={{ cursor: "pointer", padding: 0, overflow: "hidden" }}
-              >
-                <div className="market-card-image">
-                  <ListingImage
-                    src={item.image}
-                    alt={`${item.crop} listing`}
-                    crop={item.crop}
-                  />
-                  <span className="badge badge-neutral" style={{ position: "absolute", top: 12, left: 12 }}>
-                    {item.status}
-                  </span>
-                </div>
-                <div className="market-card-body">
-                  <div className="market-card-top">
-                    <h3>{item.crop}</h3>
-                    <span className="badge badge-primary">{item.match} match</span>
-                  </div>
-                  <div className="market-card-meta">
-                    <span className="market-card-seller">
-                      <span className="seller-avatar">{item.seller.charAt(0)}</span>
-                      {item.seller}
-                    </span>
-                    <span><MapPin size={12} /> {item.place}</span>
-                    <span className="market-card-specs">
-                      <b>{item.quantity}</b>
-                      <span className="dot" aria-hidden="true" />
-                      {item.grade}
-                      <span className="dot" aria-hidden="true" />
-                      {item.freshness}
-                    </span>
-                  </div>
-                  <div className="market-card-bottom">
-                    <span className="market-card-price">{item.price}</span>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      aria-label={`View ${item.crop}`}
-                      onClick={(e) => { e.stopPropagation(); setSelected(item); }}
-                    >
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))
-          )}
+) : filtered.length === 0 ? (
+             <div className="state" style={{ gridColumn: "1 / -1" }}>
+               <div className="state-icon"><Search size={20} /></div>
+               <div className="state-title">No matching produce yet</div>
+               <div className="state-body">
+                 Try another crop or location, or reset your filters.
+               </div>
+             </div>
+           ) : (
+             filtered.map((item) => (
+               <Link href={`/listing/${item.id}`} key={item.id}>
+                 <article
+                   className="card market-card"
+                   style={{ padding: 0, overflow: "hidden" }}
+                 >
+                   <div className="market-card-image">
+                     <ListingImage
+                       src={item.image}
+                       alt={`${item.crop} listing`}
+                       crop={item.crop}
+                     />
+                     <span className="badge badge-neutral" style={{ position: "absolute", top: 12, left: 12 }}>
+                       {item.status}
+                     </span>
+                   </div>
+                   <div className="market-card-body">
+                     <div className="market-card-top">
+                       <h3>{item.crop}</h3>
+                       <span className="badge badge-primary">{item.match} match</span>
+                     </div>
+                     <div className="market-card-meta">
+                       <span className="market-card-seller">
+                         <span className="seller-avatar">{item.seller.charAt(0)}</span>
+                         {item.seller}
+                       </span>
+                       <span><MapPin size={12} /> {item.place}</span>
+                       <span className="market-card-specs">
+                         <b>{item.quantity}</b>
+                         <span className="dot" aria-hidden="true" />
+                         {item.grade}
+                         <span className="dot" aria-hidden="true" />
+                         {item.freshness}
+                       </span>
+                     </div>
+                     <div className="market-card-bottom">
+                       <span className="market-card-price">{item.price}</span>
+                       <button
+                         className="btn btn-ghost btn-sm"
+                         aria-label={`Contact about ${item.crop}`}
+                       >
+                         <ArrowRight size={16} />
+                       </button>
+                     </div>
+                   </div>
+                 </article>
+               </Link>
+             ))
+           )}
         </div>
       </section>
 
-      {/* Detail modal */}
-      {selected && (
-        <div className="detail-backdrop" onClick={() => setSelected(null)}>
-          <aside
-            className="detail"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`${selected.crop} listing details`}
-          >
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => setSelected(null)}
-              aria-label="Close listing"
-              style={{ position: "absolute", top: 12, right: 12, zIndex: 2, background: "var(--surface)" }}
-            >
-              <X size={18} />
-            </button>
-            <div className="detail-image">
-              <ListingImage
-                src={selected.image}
-                alt={`${selected.crop} detail`}
-                crop={selected.crop}
-              />
-            </div>
-            <div className="detail-content">
-              <div className="row" style={{ gap: 8 }}>
-                <span className="badge badge-neutral">{selected.status}</span>
-                <span className="badge badge-primary">{selected.match} buyer match</span>
-              </div>
-              <h2>{selected.crop}</h2>
-              <p className="row" style={{ color: "var(--ink-soft)", fontSize: 14 }}>
-                <MapPin size={14} /> {selected.place}
-              </p>
-              <p className="row" style={{ color: "var(--ink-soft)", fontSize: 14, marginTop: 4 }}>
-                <span className="seller-avatar" style={{ width: 18, height: 18, fontSize: 11 }}>{selected.seller.charAt(0)}</span>
-                {selected.seller}
-              </p>
-              <div className="detail-stats">
-                <div className="detail-stat">
-                  <small>Quantity</small><strong>{selected.quantity}</strong>
-                </div>
-                <div className="detail-stat">
-                  <small>Indicative price</small><strong>{selected.price}</strong>
-                </div>
-                <div className="detail-stat">
-                  <small>Route</small><strong>{selected.route}</strong>
-                </div>
-              </div>
-              <p className="state-body">
-                This listing is shown with a connected market context so buyers
-                can understand the supply before making an inquiry.
-              </p>
-              <div className="detail-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => action("Buyer inquiry captured for the connected flow.")}
-                >
-                  Contact about this listing <ArrowRight size={15} />
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => action("Listing saved for later in the connected flow.")}
-                >
-                  Save listing
-                </button>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
+
 
       {toast && <div className="public-toast">{toast}</div>}
     </PublicLayout>

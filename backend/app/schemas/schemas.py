@@ -22,6 +22,8 @@ class UserLogin(BaseModel):
     def check_email_or_phone(self):
         if not self.email and not self.phone:
             raise ValueError('Either email or phone must be provided')
+        if self.email and self.phone:
+            raise ValueError('Provide either email or phone, not both')
         return self
 class TokenResponse(BaseModel):
     access_token: str

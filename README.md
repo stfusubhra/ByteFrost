@@ -151,15 +151,31 @@ python3 seed_demo_data.py
 ```
 
 This will create:
-- **Demo Farmer**: phone `+919999999999`, password `demo1234`
-- **Demo Buyer**: phone `+918888888888`, password `demo1234`
-- **Demo Produce Listing**: 100 kg of Grade A Cherry Tomatoes from the demo farmer
+- **Demo Farmer**: phone `+919999999999`, password `demo1234` (Nashik, Maharashtra)
+- **Demo Buyer**: phone `+918888888888`, password `demo1234` (Mumbai, Maharashtra)  
+- **Demo Logistics Partner**: phone `+917777777777`, password `demo1234` (Pune, Maharashtra)
+- **Demo FPO**: Nashik Agro Producer Company Ltd
+- **Vehicles**: 2 (1 refrigerated truck, 1 standard truck)
+- **Hubs**: 2 (Nashik local hub, Mumbai regional hub)
+- **Produce Listings**: 3
+  - **Tomato Cherry**: 500 kg @ ₹45/kg (Grade A) - *[Matches hackathon requirement]*
+  - Onion Red: 300 kg @ ₹25/kg (Grade A)
+  - Potato White: 400 kg @ ₹18/kg (Grade B)
+- **Complete Flow Demo**: 
+  1. Farmer creates 500kg tomato listing
+  2. AI price recommendation (₹45/kg based on market data)
+  3. Buyer discovers listing and places order
+  4. System allocates order with 92% match score
+  5. Logistics provider assigned with refrigerated vehicle
+  6. Route optimized: Nashik → Mumbai (165km, 2.5hrs)
+  7. Shipment created with tracking readiness
 
 ### Usage
 1. Start the backend server: `uvicorn app.main:app --reload`
 2. Start the frontend: `cd frontend && pnpm dev`
 3. Use the demo phone numbers to log in via the login page (either email or phone login).
-4. Explore the marketplace to see the demo listing.
+4. Explore the marketplace to see all demo listings.
+5. Follow the 6-step hackathon demo flow using the demo accounts.
 
 ### Notes
 - The seed script is idempotent: running it again will not create duplicate users or listings.

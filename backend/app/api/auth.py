@@ -40,13 +40,17 @@ async def register(request: Request, payload: UserCreate, db: AsyncSession = Dep
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("20/minute")
 async def login(request: Request, payload: UserLogin, db: AsyncSession = Depends(get_db)):
+    # Ensure exactly one of email or phone is provided
+    if payload.email and payload.phone:
+        raise HTTPException(status_code=400, detail="Provide either email or phone, not both")
+    if not payload.email and not payload.phone:
+        raise HTTPException(status_code=400, detail="Either email or phone must be provided")
+    
     query = select(User)
     if payload.email:
         query = query.where(User.email == payload.email)
-    elif payload.phone:
+    else:  # payload.phone is guaranteed to be present if we reach here
         query = query.where(User.phone == payload.phone)
-    else:
-        raise HTTPException(status_code=400, detail="Either email or phone must be provided")
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     if not user or not verify_password(payload.password, user.hashed_password):

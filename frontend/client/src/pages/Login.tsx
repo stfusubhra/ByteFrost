@@ -7,8 +7,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Login() {
   const { t } = useLanguage();
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +17,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email.trim() && !phone.trim()) { 
+    if (!identifier.trim()) { 
       setError(t("login.err.emailOrPhoneRequired")); 
       return; 
     }
@@ -28,7 +27,12 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, phone, password });
+      const isEmail = identifier.includes('@') && identifier.includes('.');
+      const payload = {
+        password,
+        ...(isEmail ? { email: identifier } : { phone: identifier })
+      };
+      const response = await api.post("/auth/login", payload);
       if (response.data?.access_token) {
         localStorage.setItem("kisansetu_token", response.data.access_token);
       }
@@ -43,8 +47,8 @@ export default function Login() {
     }
   };
 
-  const handleDemoFill = (demoEmail: string) => {
-    setEmail(demoEmail);
+  const handleDemoFill = (demoIdentifier: string) => {
+    setIdentifier(demoIdentifier);
     setPassword("demo123456");
   };
 
@@ -60,32 +64,17 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="auth-field">
-            <label htmlFor="email">{t("login.email.label")}</label>
+            <label>{t("login.email.label")}</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="identifier"
+              name="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="auth-input"
-              placeholder={t("login.email.placeholder")}
-              autoComplete="email"
-              aria-invalid={!!error && !email.trim() && !phone.trim()}
-            />
-          </div>
-
-          <div className="auth-field">
-            <label htmlFor="phone">{t("login.phone.label")}</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="auth-input"
-              placeholder={t("login.phone.placeholder")}
-              autoComplete="tel"
-              aria-invalid={!!error && !email.trim() && !phone.trim()}
+              placeholder={t("login.email.placeholder") + " / " + t("login.phone.placeholder")}
+              autoComplete="username"
+              aria-invalid={!!error && !identifier.trim()}
             />
           </div>
 

@@ -1,0 +1,3 @@
+# Landing slow-reveal verification
+
+The public landing page keeps the current Cocoon/Yestalgia-inspired composition while using slower reveal timing. The viewport observer now waits until content is further into the viewport, and sections enter with a 1350ms editorial ease from a deeper offset. Inner copy, market stats, closing image, and collection items use staged secondary reveals with deliberate delays. The hero retains parallax and its headline/CTA animation now eases in more slowly. Desktop and mobile captures remain legible, and reduced-motion overrides disable transform/opacity motion. TypeScript checks pass.
