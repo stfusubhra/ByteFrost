@@ -134,3 +134,33 @@ docker-compose up -d
 ## 📜 License
 
 Private Repository — **SIH 2026**
+
+## 🌱 Seeding Demo Data (for Hackathon)
+
+To quickly populate the database with demo users and a produce listing for hackathon demonstrations, run the seed script:
+
+### Prerequisites
+- Ensure you have a PostgreSQL database running (local or remote) and the `DATABASE_URL` environment variable points to it.
+- The backend dependencies must be installed (`pip install -r backend/requirements.txt`).
+
+### Run the Seed Script
+```bash
+# From the project root
+cd backend
+python3 seed_demo_data.py
+```
+
+This will create:
+- **Demo Farmer**: phone `+919999999999`, password `demo1234`
+- **Demo Buyer**: phone `+918888888888`, password `demo1234`
+- **Demo Produce Listing**: 100 kg of Grade A Cherry Tomatoes from the demo farmer
+
+### Usage
+1. Start the backend server: `uvicorn app.main:app --reload`
+2. Start the frontend: `cd frontend && pnpm dev`
+3. Use the demo phone numbers to log in via the login page (either email or phone login).
+4. Explore the marketplace to see the demo listing.
+
+### Notes
+- The seed script is idempotent: running it again will not create duplicate users or listings.
+- For the deployed Render backend, you will need to obtain the production `DATABASE_URL` from the Render dashboard and set it as an environment variable before running the script.
