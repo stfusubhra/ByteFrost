@@ -4,7 +4,7 @@
 > **SIH 2026 — Problem Statement 26033**
 
 [![Repository](https://img.shields.io/badge/GitHub-stfusubhra%2FByteFrost-181717?logo=github)](https://github.com/stfusubhra/ByteFrost)
-[![Live Web Application](https://img.shields.io/badge/Vercel-KisanSetu%20App-000000?logo=vercel)](https://kisansetu-7yx46ynxd-la-masia1.vercel.app/)
+[![Live Web Application](https://img.shields.io/badge/Vercel-KisanSetu%20App-000000?logo=vercel)](https://kisansetu-bay.vercel.app/)
 [![Backend API Status](https://img.shields.io/badge/Render-FastAPI%20Backend-46E3B7?logo=render)](https://bytefrost-backend.onrender.com/health)
 
 ---
@@ -53,7 +53,7 @@ ByteFrost/
 │   ├── tests/                   # Pytest test suite (10/10 tests passing)
 │   ├── alembic/                 # Database migrations
 │   └── Dockerfile & requirements.txt
-├── kisansetu/                    # Primary Frontend Web Application
+├── frontend/                     # Primary Frontend Web Application (Vite + React)
 │   ├── client/src/
 │   │   ├── pages/               # Home, Marketplace, MarketMatch, Login, Signup, Story, Faq, Contact
 │   │   ├── components/          # PublicLayout shell, glassmorphic UI components
@@ -61,9 +61,7 @@ ByteFrost/
 │   │   └── index.css            # Custom design system tokens, animations & responsive styling
 │   ├── server/                  # Node Express preview server
 │   ├── package.json & vite.config.ts
-│   └── vercel.json              # Vercel SPA build configuration
-├── frontend/                     # Secondary Vercel build target & fallback proxy
-├── vercel.json & package.json    # Root multi-target Vercel configuration
+│   └── vercel.json              # Vercel SPA build configuration (root directory for Vercel)
 ├── docker-compose.yml            # Local multi-container Docker setup
 └── render.yaml                   # Production Render blueprint
 ```
@@ -91,7 +89,7 @@ uvicorn app.main:app --reload --port 8000
 
 ### 3. Run Frontend (KisanSetu React App)
 ```bash
-cd kisansetu
+cd frontend
 pnpm install               # or npm install
 pnpm dev                   # or npm run dev
 ```
