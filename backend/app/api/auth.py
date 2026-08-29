@@ -12,13 +12,27 @@ router = APIRouter()
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Check existing
-    existing = await db.execute(select(User).where(User.email == payload.email))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+    # Check existing email (if provided)
+    if payload.email:
+        existing = await db.execute(select(User).where(User.email == payload.email))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Check existing phone (if provided)
+    if payload.phone:
+        existing_phone = await db.execute(select(User).where(User.phone == payload.phone))
+        if existing_phone.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Mobile number already registered")
+
+    # The DB requires a non-null email. For phone-only signups, derive a
+    # placeholder email so the constraint holds while still allowing login
+    # by mobile number.
+    email = payload.email
+    if not email and payload.phone:
+        email = f"phone_{payload.phone.replace('+', '').replace(' ', '')}@bytefrost.local"
 
     user = User(
-        email=payload.email,
+        email=email,
         full_name=payload.full_name,
         phone=payload.phone,
         hashed_password=hash_password(payload.password),
@@ -37,7 +51,12 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == payload.email))
+    # Allow login by either email or mobile number
+    result = await db.execute(
+        select(User).where(
+            (User.email == payload.email) | (User.phone == payload.email)
+        )
+    )
     user = result.scalar_one_or_none()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")

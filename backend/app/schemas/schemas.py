@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -6,15 +6,22 @@ from uuid import UUID
 
 # --- Auth ---
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: Optional[EmailStr] = None
     password: str
     full_name: str
     phone: Optional[str] = None
     role: str  # UserRole value
 
+    @model_validator(mode="after")
+    def _require_email_or_phone(self):
+        if not self.email and not self.phone:
+            raise ValueError("Provide at least an email or a mobile number")
+        return self
+
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    # Accept either an email or a mobile number
+    email: str
     password: str
 
 

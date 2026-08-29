@@ -16,16 +16,26 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"farmer" | "buyer">("farmer");
+  const [contactMethod, setContactMethod] = useState<"email" | "phone">(
+    "email"
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Require at least one of email / mobile number
+    if (!email && !phone) {
+      setError("Please provide an email or a mobile number.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await auth.register({
-        email,
+        email: email || undefined,
         password,
         full_name: fullName,
         phone: phone || undefined,
@@ -82,39 +92,75 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="email"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-            />
+            <span className="mb-1 block text-sm font-medium text-gray-700">
+              Sign up with
+            </span>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setContactMethod("email")}
+                className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                  contactMethod === "email"
+                    ? "border-green-600 bg-green-50 text-green-700"
+                    : "border-gray-300 text-gray-600 hover:border-green-300"
+                }`}
+              >
+                📧 Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setContactMethod("phone")}
+                className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                  contactMethod === "phone"
+                    ? "border-green-600 bg-green-50 text-green-700"
+                    : "border-gray-300 text-gray-600 hover:border-green-300"
+                }`}
+              >
+                📱 Mobile
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              You can also fill in both fields if you have both.
+            </p>
           </div>
 
-          <div>
-            <label
-              htmlFor="phone"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Phone <span className="text-gray-400">(optional)</span>
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+91 98765 43210"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-            />
-          </div>
+          {contactMethod === "email" && (
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+          )}
+
+          {contactMethod === "phone" && (
+            <div>
+              <label
+                htmlFor="phone"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Mobile number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+          )}
 
           <div>
             <label
