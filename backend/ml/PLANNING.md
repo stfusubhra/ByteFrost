@@ -153,7 +153,7 @@ CSV: [date, crop, mandi, price_per_quintal, quantity]
 ## 5. Next Steps (Phase 2 — Prototyping, Aug 29+)
 
 1. Generate synthetic mandi price data (unblock price prediction).
-2. Build Jupyter notebook: `ml/notebooks/price_prediction.ipynb` — train + evaluate XGBoost.
+2. Build Jupyter notebook: `backend/ml/notebooks/price_prediction.ipynb` — train + evaluate XGBoost.
 3. Build demand forecasting notebook (if time permits).
 4. Build buyer matching scoring module.
 5. Plug trained models into `backend/app/api/matching.py` (replace stubs).

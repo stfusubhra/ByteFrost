@@ -24,9 +24,11 @@ import joblib
 import numpy as np
 import pandas as pd
 
-# Paths relative to this module (backend/app/ml/serve.py -> repo root ml/models)
+# Paths relative to this module (backend/app/ml/serve.py -> backend/ml/models)
+# The ml/ directory lives inside backend/ so it is included in the Docker build
+# context (dockerContext: ./backend) and the models ship in the image.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.join(BASE_DIR, "..", "..", "..", "ml", "models")
+MODEL_DIR = os.path.join(BASE_DIR, "..", "..", "ml", "models")
 
 _price_model = None
 _price_meta = None

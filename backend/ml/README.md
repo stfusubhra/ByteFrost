@@ -8,23 +8,25 @@ This directory contains the AI/ML work for ByteFrost: planning, data generation,
 ## Directory layout
 
 ```
-ml/
+backend/ml/
 ├── PLANNING.md                    # Task 1 planning deliverable (stack, data, architecture, compute)
 ├── generate_synthetic_data.py     # Synthetic mandi price data generator
 ├── train_price_prediction.py      # XGBoost price prediction training + evaluation
 ├── generate_synthetic_demand.py   # Synthetic demand data generator (crop-region-time)
 ├── train_demand_forecast.py       # XGBoost demand forecasting training + evaluation
-├── data/
+├── data/                          # Generated synthetic CSVs (gitignored, regenerable)
 │   ├── synthetic_mandi_prices.csv # Generated synthetic data (200k rows)
 │   └── synthetic_demand.csv       # Generated synthetic demand data (100k rows)
-├── models/
+├── models/                        # Trained artifacts (committed so they ship in the Docker image)
 │   ├── price_prediction_xgb.joblib  # Trained XGBoost price model
 │   ├── price_prediction_meta.json   # Price feature + label mappings, metrics
 │   ├── demand_forecast_xgb.joblib   # Trained XGBoost demand model
 │   └── demand_forecast_meta.json    # Demand feature + label mappings, metrics
-├── notebooks/                     # Jupyter notebooks (prototyping)
-└── .venv/                         # Python virtual environment (Python 3.13)
+└── notebooks/                     # Jupyter notebooks (prototyping)
 ```
+
+The `ml/` directory lives inside `backend/` so it is included in the Docker build
+context (`dockerContext: ./backend`) and the trained models ship in the image.
 
 The serving module lives in the backend so FastAPI can call it:
 ```
