@@ -1,0 +1,57 @@
+{
+  "feature_cols": [
+    "crop_encoded",
+    "region_encoded",
+    "month",
+    "week_of_year",
+    "day_of_week",
+    "is_weekend",
+    "is_festival",
+    "lag_1",
+    "lag_7",
+    "lag_30",
+    "rolling_mean_7",
+    "rolling_std_7",
+    "rolling_mean_30"
+  ],
+  "crop_map": {
+    "0": "apple",
+    "1": "banana",
+    "2": "brinjal",
+    "3": "cabbage",
+    "4": "cauliflower",
+    "5": "chilli",
+    "6": "ginger",
+    "7": "grapes",
+    "8": "groundnut",
+    "9": "maize",
+    "10": "mango",
+    "11": "onion",
+    "12": "orange",
+    "13": "pomegranate",
+    "14": "potato",
+    "15": "rice",
+    "16": "soybean",
+    "17": "tomato",
+    "18": "turmeric",
+    "19": "wheat"
+  },
+  "region_map": {
+    "0": "Central India",
+    "1": "East India",
+    "2": "North India",
+    "3": "South India",
+    "4": "West India"
+  },
+  "metrics": {
+    "rmse": 116315.947020836,
+    "mae": 71525.26834118926,
+    "mape": 40.15671446548568
+  },
+  "trained_on": "synthetic_demand.csv",
+  "test_months": 3,
+  "horizons": [
+    7,
+    30
+  ]
+}
