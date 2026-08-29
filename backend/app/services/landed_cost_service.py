@@ -51,8 +51,10 @@ def calculate_landed_cost(
     - #26: Transport cost > produce value → flag ECONOMICALLY_INFEASIBLE
     - #14: Spoilage estimation based on transit time
     """
-    # Produce cost: sum of qty × price across all farmers
-    produce_cost = sum(a.quantity_kg * a.price_per_kg for a in allocations)
+    # Produce cost: sum of qty × price across all farmers.
+    # price_per_kg may arrive as a Decimal (from a Numeric DB column), so coerce
+    # to float to keep the whole computation in float space.
+    produce_cost = sum(a.quantity_kg * float(a.price_per_kg) for a in allocations)
 
     # Transport cost: total route km × operating cost per km
     transport_cost = total_route_distance_km * operating_cost_per_km

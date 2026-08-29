@@ -44,7 +44,9 @@ async def find_available_trucks(
     # Filter by type and distance
     eligible = []
     for v in vehicles:
-        if v.vehicle_type.value != vehicle_type:
+        # Compare case-insensitively: enum values are uppercase (e.g. "STANDARD")
+        # while callers may pass lowercase ("standard").
+        if v.vehicle_type.value.lower() != vehicle_type.lower():
             continue
             
         if v.latitude and v.longitude:

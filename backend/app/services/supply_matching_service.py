@@ -117,8 +117,8 @@ async def match_supply(
         for r in reliability_result.scalars().all()
     }
 
-    # Compute average price for price scoring
-    prices = [l.price_per_kg for l, _ in listings_with_users if l.price_per_kg]
+    # Compute average price for price scoring (coerce Decimals to float)
+    prices = [float(l.price_per_kg) for l, _ in listings_with_users if l.price_per_kg]
     avg_price = sum(prices) / len(prices) if prices else 1.0
 
     # Score and sort all candidates
@@ -149,7 +149,7 @@ async def match_supply(
         if listing.harvest_date:
             days_since = (datetime.now(timezone.utc) - listing.harvest_date.replace(tzinfo=timezone.utc)).days
             freshness_score = max(0.0, 1.0 - days_since / 14.0)  # 2-week freshness window
-        price_score = 1.0 / (1.0 + (listing.price_per_kg or avg_price) / avg_price) if avg_price > 0 else 0.5
+        price_score = 1.0 / (1.0 + (float(listing.price_per_kg) if listing.price_per_kg else avg_price) / avg_price) if avg_price > 0 else 0.5
         reliability = reliability_map.get(user.id, 0.7)
 
         composite = (
@@ -168,7 +168,7 @@ async def match_supply(
             crop_name=listing.crop_name,
             available_kg=listing.quantity_kg,
             allocated_kg=0.0,
-            price_per_kg=listing.price_per_kg or 0.0,
+            price_per_kg=float(listing.price_per_kg) if listing.price_per_kg else 0.0,
             quality_grade=listing.quality_grade or "C",
             distance_km=round(dist, 2),
             latitude=farmer_lat,

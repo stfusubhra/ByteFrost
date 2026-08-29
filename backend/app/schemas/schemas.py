@@ -398,3 +398,27 @@ class RouteRequest(BaseModel):
     vehicle_capacity_kg: float
     deadline: Optional[datetime] = None
 
+
+# == Route Optimization (OR-Tools VRP response) ==
+class RouteStopOptimization(BaseModel):
+    type: str  # pickup / drop
+    lat: float
+    lng: float
+    order: int
+    quantity_kg: float
+
+
+class VehicleRouteOptimization(BaseModel):
+    vehicle_id: int
+    stops: List[RouteStopOptimization]
+    distance_km: float
+    duration_min: float
+    load_kg: float
+
+
+class RouteOptimizationResponse(BaseModel):
+    routes: List[VehicleRouteOptimization]
+    total_distance_km: float
+    total_duration_min: float
+    vehicle_count: int
+

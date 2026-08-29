@@ -136,7 +136,11 @@ async def solve_vrp(
         "PickupCapacity"
     )
 
-    # Delivery capacity dimension (load decreases as drops are made)
+    # Delivery capacity dimension (load decreases as drops are made).
+    # This dimension exists only to keep cumulative load non-negative (so a drop
+    # is not visited before its pickup). It must NOT constrain a drop by its
+    # total quantity, because a single drop can legitimately receive goods from
+    # multiple vehicles. We therefore give it a very large capacity.
     def delivery_callback(from_index):
         from_node = manager.IndexToNode(from_index)
         return data["delivery_demands"][from_node]
@@ -145,7 +149,7 @@ async def solve_vrp(
     routing.AddDimensionWithVehicleCapacity(
         delivery_callback_index,
         0,  # null capacity slack
-        data["vehicle_capacities"],  # vehicle maximum capacities
+        [10**9] * data["num_vehicles"],  # effectively unconstrained
         True,  # start cumul to zero
         "DeliveryCapacity"
     )

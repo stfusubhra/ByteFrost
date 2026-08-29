@@ -54,6 +54,34 @@ class HubStatus(str, enum.Enum):
     INACTIVE = "INACTIVE"
 
 
+class RouteStatus(str, enum.Enum):
+    PLANNED = "PLANNED"
+    ACTIVE = "ACTIVE"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+
+class StopType(str, enum.Enum):
+    PICKUP = "PICKUP"
+    HUB = "HUB"
+    DROP = "DROP"
+
+
+class LogisticsEventType(str, enum.Enum):
+    PLANNED = "PLANNED"
+    TRUCK_ASSIGNED = "TRUCK_ASSIGNED"
+    PICKUP_STARTED = "PICKUP_STARTED"
+    PICKUP_DONE = "PICKUP_DONE"
+    HUB_ARRIVED = "HUB_ARRIVED"
+    HUB_DEPARTED = "HUB_DEPARTED"
+    IN_TRANSIT = "IN_TRANSIT"
+    DELIVERED = "DELIVERED"
+    TRUCK_BREAKDOWN = "TRUCK_BREAKDOWN"
+    REROUTED = "REROUTED"
+    FARMER_CANCELLED = "FARMER_CANCELLED"
+    CANCELLED = "CANCELLED"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -171,13 +199,23 @@ class Shipment(Base):
     __tablename__ = "shipments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    allocation_id = Column(UUID(as_uuid=True), ForeignKey("allocations.id"), nullable=False)
+    # allocation_id is nullable because a shipment can be linked directly to an
+    # order (fulfill-order flow) without going through a single allocation.
+    allocation_id = Column(UUID(as_uuid=True), ForeignKey("allocations.id"), nullable=True)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=True)
+    route_id = Column(UUID(as_uuid=True), ForeignKey("routes.id"), nullable=True)
+    vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True)
     logistics_provider_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     status = Column(String(50), default="pending")
     route_plan = Column(JSON, nullable=True)
+    route_mode = Column(String(20), nullable=True)
     estimated_distance_km = Column(Float, nullable=True)
     estimated_duration_min = Column(Float, nullable=True)
+    landed_cost = Column(Float, nullable=True)
+    consolidation_savings_km = Column(Float, nullable=True)
+    pickup_time = Column(DateTime(timezone=True), nullable=True)
+    delivery_time = Column(DateTime(timezone=True), nullable=True)
     actual_distance_km = Column(Float, nullable=True)
     actual_duration_min = Column(Float, nullable=True)
 
@@ -235,3 +273,88 @@ class Hub(Base):
     status = Column(Enum(HubStatus, name="hubstatus"), default=HubStatus.ACTIVE)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class Route(Base):
+    __tablename__ = "routes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=False)
+    distance_km = Column(Float, nullable=True)
+    duration_minutes = Column(Integer, nullable=True)
+    status = Column(Enum(RouteStatus, name="routestatus"), default=RouteStatus.PLANNED)
+    route_mode = Column(String(20), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    vehicle = relationship("Vehicle")
+    stops = relationship("RouteStop", back_populates="route", cascade="all, delete-orphan")
+
+
+class RouteStop(Base):
+    __tablename__ = "route_stops"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    route_id = Column(UUID(as_uuid=True), ForeignKey("routes.id"), nullable=False)
+    stop_type = Column(Enum(StopType, name="stoptype"), nullable=False)
+    farmer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    hub_id = Column(UUID(as_uuid=True), ForeignKey("hubs.id", ondelete="SET NULL"), nullable=True)
+    buyer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    quantity_kg = Column(Float, nullable=False)
+    sequence = Column(Integer, nullable=False)
+    time_window_earliest = Column(DateTime(timezone=True), nullable=True)
+    time_window_latest = Column(DateTime(timezone=True), nullable=True)
+    max_transit_hours = Column(Float, nullable=True)
+    eta = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    route = relationship("Route", back_populates="stops")
+
+
+class LogisticsEvent(Base):
+    __tablename__ = "logistics_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    shipment_id = Column(UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="CASCADE"), nullable=False)
+    event_type = Column(Enum(LogisticsEventType, name="logisticseventtype"), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class HubInventory(Base):
+    __tablename__ = "hub_inventory"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    hub_id = Column(UUID(as_uuid=True), ForeignKey("hubs.id"), nullable=False)
+    listing_id = Column(UUID(as_uuid=True), ForeignKey("produce_listings.id"), nullable=False)
+    quantity_kg = Column(Float, nullable=False)
+    arrived_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    quality_verified = Column(Boolean, nullable=True)
+    quality_grade_verified = Column(String(50), nullable=True)
+    weighed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+
+class FarmerReliabilityScore(Base):
+    __tablename__ = "farmer_reliability_scores"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    farmer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    reliability_score = Column(Float, nullable=False, default=0.7)
+    total_orders_accepted = Column(Integer, nullable=False, default=0)
+    orders_fulfilled_on_time = Column(Integer, nullable=False, default=0)
+    orders_cancelled = Column(Integer, nullable=False, default=0)
+    average_quantity_accuracy = Column(Float, nullable=True)
+    last_updated = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class ShipmentTemperatureLog(Base):
+    __tablename__ = "shipment_temperature_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    shipment_id = Column(UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="CASCADE"), nullable=False)
+    temperature_celsius = Column(Float, nullable=False)
+    recorded_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
