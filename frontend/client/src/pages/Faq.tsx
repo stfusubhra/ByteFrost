@@ -35,20 +35,18 @@ export default function Faq() {
 
   return (
     <PublicLayout eyebrow="FAQ / KisanSetu">
-      <section className="public-hero faq-hero">
-        <span>04 / FAQ</span>
-        <h1>
-          A few clear
-          <br />
-          <em>answers.</em>
-        </h1>
-        <p>
-          Short answers for the people moving produce, finding buyers, and
-          building a clearer market.
-        </p>
+      <section className="page-hero">
+        <div className="container">
+          <span className="eyebrow">FAQ</span>
+          <h1>A few clear answers.</h1>
+          <p>
+            Short answers for the people moving produce, finding buyers, and
+            building a clearer market.
+          </p>
+        </div>
       </section>
 
-      <section className="faq-list public-reveal">
+      <section className="faq-list">
         {faqs.map(([question, answer], index) => (
           <div
             className={`faq-item ${open === index ? "open" : ""}`}

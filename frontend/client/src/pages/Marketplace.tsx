@@ -1,6 +1,6 @@
 /* KisanSetu Marketplace: public discovery surface for available produce.
  *
- * This page now wires to the real FastAPI backend:
+ * This page wires to the real FastAPI backend:
  *   GET /api/v1/listings/ (public endpoint)
  *
  * The Marketplace shows honest loading/empty/error states and falls back to
@@ -8,6 +8,7 @@
  * the user experience while being transparent about data provenance.
  */
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { ArrowRight, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 import { fetchListings, ApiError } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
@@ -161,7 +162,6 @@ function mapBackendListing(listing: any): MarketListing {
       : "Price on request";
 
   // Freshness: simple heuristic based on creation time
-  // In a real app, this would use harvest_date or more sophisticated logic
   const freshness =
     listing.harvest_date !== null
       ? "Harvested recently"
@@ -264,16 +264,13 @@ export default function Marketplace() {
     })
     .sort((a, b) => {
       if (sort === "Closest route") {
-        // Simple string comparison for demo route values
         return a.route.localeCompare(b.route);
       }
       if (sort === "Highest match") {
-        // Convert match percentage strings to numbers for sorting
         const matchA = parseInt(a.match) || 0;
         const matchB = parseInt(b.match) || 0;
-        return matchB - matchA; // Descending (highest first)
+        return matchB - matchA;
       }
-      // Default: Recommended (no change to original order)
       return 0;
     });
 
@@ -284,151 +281,152 @@ export default function Marketplace() {
 
   return (
     <PublicLayout eyebrow="Marketplace / KisanSetu">
-      <section className="market-hero">
-        <div>
-          <span>01 / MARKETPLACE</span>
-          <h1>
-            Produce with<br />
-            <em>a buyer in view.</em>
-          </h1>
+      <section className="page-hero">
+        <div className="container">
+          <span className="eyebrow">Marketplace</span>
+          <h1>Produce with a buyer in view.</h1>
           <p>
             Browse available supply with market context attached — location,
             freshness, price, route, and match.
           </p>
-        </div>
-        <div className="market-hero-actions">
-          <button
-            className="public-pill"
-            onClick={() =>
-              action(
-                "Listing creation is ready for the connected farmer flow."
-              )
-            }
-          >
-            List your produce <ArrowRight size={15} />
-          </button>
-          <a className="public-pill light" href="/market-match">
-            Find your market match <ArrowRight size={15} />
-          </a>
+          <div className="row" style={{ marginTop: 28 }}>
+            <button
+              className="btn btn-primary"
+              onClick={() =>
+                action("Listing creation is ready for the connected farmer flow.")
+              }
+            >
+              List your produce <ArrowRight size={15} />
+            </button>
+            <Link className="btn btn-secondary" href="/market-match">
+              Find your market match <ArrowRight size={15} />
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Status bar showing data state */}
+      {/* Data source notice */}
       {usingDemoData && (
-        <div className="market-summary public-reveal">
-          <div className="market-summary-note">
-            ⚠️ Showing demo data. Backend connection failed: {error}
+        <div className="container" style={{ paddingTop: 20 }}>
+          <div className="badge badge-warning">
+            Showing demo data — backend connection failed
           </div>
+          <p className="state-body" style={{ marginTop: 8 }}>
+            {error}
+          </p>
         </div>
       )}
       {!usingDemoData && error && (
-        <div className="market-summary public-reveal">
-          <div className="market-summary-note">
-            ⚠️ Backend error: {error}
+        <div className="container" style={{ paddingTop: 20 }}>
+          <div className="badge badge-error">Backend error</div>
+          <p className="state-body" style={{ marginTop: 8 }}>{error}</p>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <section className="container">
+        <div className="market-toolbar">
+          <div className="search">
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search crop, grade, or location"
+              aria-label="Search listings"
+            />
+          </div>
+          <div className="market-toolbar-actions">
+            <label className="row" style={{ gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
+              Sort by
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                aria-label="Sort listings"
+              >
+                <option>Recommended</option>
+                <option>Highest match</option>
+                <option>Closest route</option>
+              </select>
+            </label>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              <SlidersHorizontal size={15} /> Filters
+            </button>
           </div>
         </div>
-      )}
 
-      <section className="market-summary public-reveal">
-        <div>
-          <strong>{filtered.length}</strong><span>available listings</span>
-        </div>
-        <div>
-          <strong>
-            {usingDemoData ? "Demo" : "Live"} data
-          </strong><span>source</span>
-        </div>
-        <div>
-          <strong>{usingDemoData ? "92%" : "Live match"}</strong><span>top buyer
-            match</span>
-        </div>
-        <div className="market-summary-note">
-          {usingDemoData
-            ? "Illustrative demo market state · live data connects here"
-            : "Live data from ByteFrost backend"}
-        </div>
-      </section>
-
-      <section className="market-toolbar expanded public-reveal">
-        <div className="public-search">
-          <Search size={16} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search crop, grade, or location"
-          />
-        </div>
-        <div className="market-toolbar-actions">
-          <label>
-            Sort by{" "}
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option>Recommended</option>
-              <option>Highest match</option>
-              <option>Closest route</option>
-            </select>
-            <ChevronDown size={13} />
-          </label>
-          <button
-            className="filter-button"
-            onClick={() => setFiltersOpen(!filtersOpen)}
-          >
-            <SlidersHorizontal size={15} /> Filters
-          </button>
-        </div>
-      </section>
-
-      {filtersOpen && (
-        <div className="market-filter-panel">
-          <span>FILTERS / {usingDemoData ? "DEMO" : "LIVE"}</span>
-          <button
-            onClick={() => {
-              setActive("All produce");
-              setFiltersOpen(false);
-            }}
-          >
-            Reset filters
-          </button>
-<p>
+        {filtersOpen && (
+          <div className="card" style={{ padding: 20, marginBottom: 8 }}>
+            <div className="row-between">
+              <span className="eyebrow">Filters</span>
+              <button
+                className="text-link"
+                onClick={() => {
+                  setActive("All produce");
+                  setFiltersOpen(false);
+                }}
+              >
+                Reset filters
+              </button>
+            </div>
+            <p className="state-body" style={{ marginTop: 12 }}>
               Current view is optimized for available supply and buyer matching.
               {usingDemoData
-                ? "Connect live inventory to add crop, region, quantity, and freshness filters."
-                : "Live inventory connected via ByteFrost backend."}
+                ? " Connect live inventory to add crop, region, quantity, and freshness filters."
+                : " Live inventory connected via ByteFrost backend."}
             </p>
-        </div>
-      )}
+          </div>
+        )}
+      </section>
 
-      <section className="market-content expanded public-reveal">
-        <div className="market-tabs">
+      {/* Content */}
+      <section className="container">
+        <div className="tabs" role="tablist" aria-label="Filter listings">
           {["All produce", "Tomatoes", "Ready to move", "Matched supply", "Awaiting buyer"].map(
             (tab) => (
               <button
                 className={active === tab ? "active" : ""}
                 key={tab}
                 onClick={() => setActive(tab)}
+                role="tab"
+                aria-selected={active === tab}
               >
                 {tab}
               </button>
             )
           )}
         </div>
-        <div className="market-grid expanded">
+
+        <div className="market-grid">
           {loading ? (
-            <div className="market-loading">
-              Loading marketplace data...
-            </div>
+            <>
+              {[0, 1, 2].map((i) => (
+                <div className="card" key={i} style={{ padding: 0, overflow: "hidden" }}>
+                  <div className="skeleton" style={{ aspectRatio: "4 / 3" }} />
+                  <div style={{ padding: 18 }}>
+                    <div className="skeleton" style={{ height: 16, width: "60%", marginBottom: 10 }} />
+                    <div className="skeleton" style={{ height: 13, width: "80%" }} />
+                  </div>
+                </div>
+              ))}
+            </>
           ) : filtered.length === 0 ? (
-            <div className="public-empty">
-              No matching produce yet. Try another crop or location.
+            <div className="state" style={{ gridColumn: "1 / -1" }}>
+              <div className="state-icon"><Search size={20} /></div>
+              <div className="state-title">No matching produce yet</div>
+              <div className="state-body">
+                Try another crop or location, or reset your filters.
+              </div>
             </div>
           ) : (
             filtered.map((item) => (
               <article
-                className="market-card expanded"
+                className="card market-card"
                 key={item.id}
                 onClick={() => setSelected(item)}
+                style={{ cursor: "pointer", padding: 0, overflow: "hidden" }}
               >
                 <div className="market-card-image">
                   <ListingImage
@@ -436,26 +434,30 @@ export default function Marketplace() {
                     alt={`${item.crop} listing`}
                     crop={item.crop}
                   />
-                  <span className="market-status">{item.status}</span>
-                  <span className="market-match">{item.match} match</span>
+                  <span className="badge badge-neutral" style={{ position: "absolute", top: 12, left: 12 }}>
+                    {item.status}
+                  </span>
                 </div>
-                <div className="market-card-meta">
-                  <div>
-                    <strong>{item.crop}</strong>
-                    <span>{item.grade} · {item.freshness}</span>
+                <div className="market-card-body">
+                  <div className="market-card-top">
+                    <h3>{item.crop}</h3>
+                    <span className="badge badge-primary">{item.match} match</span>
                   </div>
-                  <div>
-                    <span>
-                      <MapPin size={11} /> {item.place}
-                    </span>
+                  <div className="market-card-meta">
+                    <span><MapPin size={12} /> {item.place}</span>
+                    <span>{item.grade} · {item.freshness}</span>
                     <span>{item.quantity}</span>
                   </div>
-                </div>
-                <div className="market-card-bottom">
-                  <strong>{item.price}</strong>
-                  <button aria-label={`View ${item.crop}`}>
-                    <ArrowRight size={16} />
-                  </button>
+                  <div className="market-card-bottom">
+                    <span className="market-card-price">{item.price}</span>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      aria-label={`View ${item.crop}`}
+                      onClick={(e) => { e.stopPropagation(); setSelected(item); }}
+                    >
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
                 </div>
               </article>
             ))
@@ -463,66 +465,65 @@ export default function Marketplace() {
         </div>
       </section>
 
+      {/* Detail modal */}
       {selected && (
-        <div className="market-detail-backdrop" onClick={() => setSelected(null)}>
+        <div className="detail-backdrop" onClick={() => setSelected(null)}>
           <aside
-            className="market-detail"
+            className="detail"
             onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${selected.crop} listing details`}
           >
             <button
-              className="market-detail-close"
+              className="btn btn-ghost btn-sm"
               onClick={() => setSelected(null)}
               aria-label="Close listing"
+              style={{ position: "absolute", top: 12, right: 12, zIndex: 2, background: "var(--surface)" }}
             >
-              <X size={19} />
+              <X size={18} />
             </button>
-            <div className="market-detail-image">
+            <div className="detail-image">
               <ListingImage
                 src={selected.image}
                 alt={`${selected.crop} detail`}
                 crop={selected.crop}
               />
             </div>
-            <div className="market-detail-content">
-              <span>
-                {selected.status} · {selected.match} buyer match
-              </span>
+            <div className="detail-content">
+              <div className="row" style={{ gap: 8 }}>
+                <span className="badge badge-neutral">{selected.status}</span>
+                <span className="badge badge-primary">{selected.match} buyer match</span>
+              </div>
               <h2>{selected.crop}</h2>
-              <p className="market-detail-place">
+              <p className="row" style={{ color: "var(--ink-soft)", fontSize: 14 }}>
                 <MapPin size={14} /> {selected.place}
               </p>
-              <div className="market-detail-stats">
-                <div>
+              <div className="detail-stats">
+                <div className="detail-stat">
                   <small>Quantity</small><strong>{selected.quantity}</strong>
                 </div>
-                <div>
+                <div className="detail-stat">
                   <small>Indicative price</small><strong>{selected.price}</strong>
                 </div>
-                <div>
+                <div className="detail-stat">
                   <small>Route</small><strong>{selected.route}</strong>
                 </div>
-<div>
-  <small>Freshness</small>{selected.freshness}</div>
               </div>
-              <p className="market-detail-copy">
+              <p className="state-body">
                 This listing is shown with a connected market context so buyers
                 can understand the supply before making an inquiry.
               </p>
-              <div className="market-detail-actions">
+              <div className="detail-actions">
                 <button
-                  className="public-pill"
-                  onClick={() =>
-                    action(
-                      "Buyer inquiry captured for the connected flow."
-                    )
-                  }
+                  className="btn btn-primary"
+                  onClick={() => action("Buyer inquiry captured for the connected flow.")}
                 >
                   Contact about this listing <ArrowRight size={15} />
                 </button>
                 <button
-                  className="text-button"
-                  onClick={() =>
-                    action("Listing saved for later in the connected flow.")}
+                  className="btn btn-ghost"
+                  onClick={() => action("Listing saved for later in the connected flow.")}
                 >
                   Save listing
                 </button>

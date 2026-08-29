@@ -8,6 +8,7 @@
  * and returns explainable scores based on real DB data (quantity fit, price, distance, reliability).
  */
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { fetchListings, fetchMatches, ApiError, MatchResult } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
@@ -125,30 +126,29 @@ export default function MarketMatch() {
     const done = step >= demoSteps.length;
     return (
       <PublicLayout eyebrow="Market match / KisanSetu">
-        <section className="match-page">
-          <div className="match-intro">
-            <span>02 / FIND YOUR MARKET MATCH</span>
-            <h1>
-              The right market<br />
-              <em>is closer than it feels.</em>
-            </h1>
+        <section className="page-hero">
+          <div className="container">
+            <span className="eyebrow">Find your market match</span>
+            <h1>The right market is closer than it feels.</h1>
             <p>
               Answer a few simple questions. Get a clearer next move for what
               you grow.
             </p>
-            {/* Demo flow disclaimer */}
-            <div className="match-demo-disclaimer">
-              <strong>DEMO FLOW</strong>: This is a demonstration. Real matching
-              requires authentication and uses live data from the ByteFrost
-              backend.
+            <div className="badge badge-warning" style={{ marginTop: 20 }}>
+              Demo flow — real matching requires sign in
             </div>
           </div>
+        </section>
+
+        <div className="container match-flow">
           {done ? (
             <div className="match-result">
               <div className="match-result-mark">
                 <Check size={24} />
               </div>
-              <span>YOUR DEMO MATCH</span>
+              <span className="eyebrow" style={{ justifyContent: "center" }}>
+                Your demo match
+              </span>
               <h2>Tomatoes · Nashik, MH</h2>
               <div className="match-result-grid">
                 <div>
@@ -164,17 +164,19 @@ export default function MarketMatch() {
                   <small>demo load</small>
                 </div>
               </div>
-              <p>
+              <p className="state-body" style={{ margin: "0 auto 24px" }}>
                 We found a clearer route from your produce to a nearby buyer.
-                <em>This is demo data.</em> Connect the live marketplace when
+                <em> This is demo data.</em> Connect the live marketplace when
                 you are ready.
               </p>
-              <a className="public-pill" href="/marketplace">
-                Explore matching buyers <ArrowRight size={15} />
-              </a>
-              <button className="text-button" onClick={resetFlow}>
-                Start again
-              </button>
+              <div className="match-result-actions">
+                <Link className="btn btn-primary" href="/marketplace">
+                  Explore matching buyers <ArrowRight size={15} />
+                </Link>
+                <button className="btn btn-ghost" onClick={resetFlow}>
+                  Start again
+                </button>
+              </div>
             </div>
           ) : (
             <div className="match-question">
@@ -185,8 +187,8 @@ export default function MarketMatch() {
                   }}
                 />
               </div>
-              <span className="match-count">
-                0{step + 1} <em>/ 04</em>
+              <span className="eyebrow">
+                0{step + 1} / 04
               </span>
               <h2>{demoSteps[step]}</h2>
               <div className="match-options">
@@ -203,7 +205,7 @@ export default function MarketMatch() {
               </div>
               {step > 0 && (
                 <button
-                  className="back-button"
+                  className="btn btn-ghost match-back"
                   onClick={() => setStep((current) => current - 1)}
                 >
                   <ArrowLeft size={14} />
@@ -212,7 +214,7 @@ export default function MarketMatch() {
               )}
             </div>
           )}
-        </section>
+        </div>
       </PublicLayout>
     );
   }
@@ -220,77 +222,86 @@ export default function MarketMatch() {
   // --- REAL FLOW (has auth) ---
   return (
     <PublicLayout eyebrow="Market match / KisanSetu">
-      <section className="match-page">
-        <div className="match-intro">
-          <span>02 / FIND YOUR MARKET MATCH</span>
-          <h1>
-            Find real buyers<br />
-            <em>for your produce.</em>
-          </h1>
+      <section className="page-hero">
+        <div className="container">
+          <span className="eyebrow">Find your market match</span>
+          <h1>Find real buyers for your produce.</h1>
           <p>
             Select an active listing to see real, explainable matches based on
             quantity fit, price, distance, and buyer reliability.
           </p>
-          {/* Auth status */}
-          <div className="match-auth-status">
-            <span>✅ Authenticated</span> <span>Real data flow</span>
+          <div className="row" style={{ marginTop: 20 }}>
+            <span className="badge badge-success">Authenticated</span>
+            <span className="badge badge-neutral">Real data flow</span>
           </div>
         </div>
+      </section>
 
+      <div className="container match-flow">
         {/* Error state */}
         {error && (
-          <div className="match-error public-reveal">
-            ⚠️ {error}
+          <div className="card" style={{ padding: 20, marginBottom: 24, borderColor: "var(--error)" }}>
+            <div className="badge badge-error">Error</div>
+            <p className="state-body" style={{ marginTop: 8 }}>{error}</p>
           </div>
         )}
 
         {/* Loading state for listings */}
         {loading && !listings.length && (
-          <div className="match-loading public-reveal">
-            Loading your listings…
+          <div className="state">
+            <div className="skeleton" style={{ width: 200, height: 16 }} />
+            <div className="skeleton" style={{ width: 160, height: 14 }} />
           </div>
         )}
 
         {/* Step 1: Select listing */}
         {step === 0 && (
-          <form className="match-listing-select" onSubmit={handleRealSubmit}>
-            <div className="match-question">
-              <h2>Select a listing to match</h2>
-              <p>
-                Choose from your active produce listings. The matching engine
-                will score real buyers based on their order history, location,
-                and preferences.
-              </p>
-              {listings.length === 0 ? (
-                <p>
-                  No active listings found. <a href="/marketplace">Create a
-                  listing first</a> to enable real matching.
-                </p>
-              ) : (
-                <div>
-                  <label>
-                    Listing
-                    <select
-                      required
-                      value={listingId || ""}
-                      onChange={(e) => setListingId(e.target.value)}
-                    >
-                      <option value="" disabled>
-                        Select a listing
-                      </option>
-                      {listings.map((listing) => (
-                        <option key={listing.id} value={listing.id}>
-                          {listing.crop_name} — {listing.quantity_kg} kg@{listing.price_per_kg !== null ? `₹${listing.price_per_kg.toFixed(2)}/kg` : "Price TBA"} ({listing.pickup_location})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button className="public-pill" type="submit">
-                    Find matches <ArrowRight size={15} />
-                  </button>
+          <form className="match-question" onSubmit={handleRealSubmit}>
+            <h2>Select a listing to match</h2>
+            <p>
+              Choose from your active produce listings. The matching engine
+              will score real buyers based on their order history, location,
+              and preferences.
+            </p>
+            {listings.length === 0 ? (
+              <div className="state">
+                <div className="state-title">No active listings found</div>
+                <div className="state-body">
+                  <Link className="text-link" href="/marketplace">
+                    Create a listing first
+                  </Link>{" "}
+                  to enable real matching.
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="stack">
+                <label className="field">
+                  <span>Listing</span>
+                  <select
+                    className="select"
+                    required
+                    value={listingId || ""}
+                    onChange={(e) => setListingId(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      Select a listing
+                    </option>
+                    {listings.map((listing) => (
+                      <option key={listing.id} value={listing.id}>
+                        {listing.crop_name} — {listing.quantity_kg} kg@
+                        {listing.price_per_kg !== null
+                          ? `₹${listing.price_per_kg.toFixed(2)}/kg`
+                          : "Price TBA"}{" "}
+                        ({listing.pickup_location})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="btn btn-primary" type="submit">
+                  Find matches <ArrowRight size={15} />
+                </button>
+              </div>
+            )}
           </form>
         )}
 
@@ -299,12 +310,14 @@ export default function MarketMatch() {
           <div className="match-question">
             <h2>Finding your matches…</h2>
             <p>
-              The matching engine is scoring real buyers based on:<br />
-              • Quantity fit: How well buyer order sizes match your listing<br />
-              • Price score: Attractiveness of your price point<br />
-              • Distance score: Geographic proximity to buyer locations<br />
-              • Reliability: Buyer’s order completion history
+              The matching engine is scoring real buyers based on:
             </p>
+            <ul className="match-explanation">
+              <li>Quantity fit: How well buyer order sizes match your listing</li>
+              <li>Price score: Attractiveness of your price point</li>
+              <li>Distance score: Geographic proximity to buyer locations</li>
+              <li>Reliability: Buyer’s order completion history</li>
+            </ul>
           </div>
         )}
 
@@ -313,35 +326,41 @@ export default function MarketMatch() {
           <div className="match-result">
             {matches.length === 0 ? (
               <>
-              <div className="match-result-mark">
-                <Check size={24} />
-              </div>
-              <span>NO MATCHES FOUND</span>
-              <h2>Try adjusting your listing or broadening criteria</h2>
-              <p>
-                No real buyers matched your selected listing. This could be
-                because:
-              </p>
-              <ul className="match-result-list">
-                <li>No active buyers in the system yet</li>
-                <li>Your listing’s price/quantity/location doesn’t align with
-                  current buyer demand</li>
-                <li>Try creating a different listing or waiting for more buyers
-                  to join</li>
-              </ul>
-              <a className="public-pill" href="/marketplace">
-                Explore other listings <ArrowRight size={15} />
-              </a>
-              <button className="text-button" onClick={resetFlow}>
-Try another listing
-               </button>
-               </>
-              ) : (
-                <React.Fragment>
-                 <div className="match-result-mark">
+                <div className="match-result-mark">
                   <Check size={24} />
                 </div>
-                <span>REAL MATCHES</span>
+                <span className="eyebrow" style={{ justifyContent: "center" }}>
+                  No matches found
+                </span>
+                <h2>Try adjusting your listing or broadening criteria</h2>
+                <p className="state-body" style={{ margin: "0 auto 20px" }}>
+                  No real buyers matched your selected listing. This could be
+                  because:
+                </p>
+                <ul className="match-explanation" style={{ textAlign: "left", margin: "0 auto 24px", maxWidth: 420 }}>
+                  <li>No active buyers in the system yet</li>
+                  <li>Your listing’s price/quantity/location doesn’t align with
+                    current buyer demand</li>
+                  <li>Try creating a different listing or waiting for more buyers
+                    to join</li>
+                </ul>
+                <div className="match-result-actions">
+                  <Link className="btn btn-primary" href="/marketplace">
+                    Explore other listings <ArrowRight size={15} />
+                  </Link>
+                  <button className="btn btn-ghost" onClick={resetFlow}>
+                    Try another listing
+                  </button>
+                </div>
+              </>
+            ) : (
+              <React.Fragment>
+                <div className="match-result-mark">
+                  <Check size={24} />
+                </div>
+                <span className="eyebrow" style={{ justifyContent: "center" }}>
+                  Real matches
+                </span>
                 <h2>Top matches for your produce</h2>
                 <div className="match-results-list">
                   {matches.map((match, index) => (
@@ -349,75 +368,61 @@ Try another listing
                       <div className="match-result-rank">
                         #{index + 1}
                       </div>
-                      <div className="match-result-content">
-                        <div className="match-result-score">
-                          <strong>{Math.round(match.score * 100)}%</strong>
-                          <small>match score</small>
+                      <div className="match-result-score">
+                        <strong>{Math.round(match.score * 100)}%</strong>
+                        <small>match score</small>
+                      </div>
+                      <div className="match-result-details">
+                        <div>
+                          <strong>Buyer ID:</strong> {match.buyer_id.substring(0, 8)}…
                         </div>
-                        <div className="match-result-details">
-                          <div>
-                            <strong>Buyer ID:</strong> {match.buyer_id.substring(
-                              0,
-                              8
-                            )}…
-                          </div>
-                          <div>
-                            <strong>Explanation:</strong>
-                          </div>
-                          <ul className="match-explanation">
-                            <li>
-                              Quantity fit:{" "}
-                              {Math.round(match.explanation.quantity_fit * 100)}%
-                            </li>
-                            <li>
-                              Price score:{" "}
-                              {Math.round(match.explanation.price_score * 100)}%
-                            </li>
-                            <li>
-                              Distance:{" "}
-                              {match.explanation.distance_km !== null
-                                ? `${match.explanation.distance_km} km`
-                                : "Location TBA"}
-                              {" "}
-                              ({Math.round(
-                                match.explanation.distance_score * 100
-                              )}% score)
-                            </li>
-                            <li>
-                              Reliability:{" "}
-                              {Math.round(
-                                match.explanation.reliability * 100
-                              )}% ({match.explanation.order_history} orders)
-                            </li>
-                          </ul>
+                        <div>
+                          <strong>Explanation:</strong>
                         </div>
+                        <ul className="match-explanation">
+                          <li>
+                            Quantity fit:{" "}
+                            {Math.round(match.explanation.quantity_fit * 100)}%
+                          </li>
+                          <li>
+                            Price score:{" "}
+                            {Math.round(match.explanation.price_score * 100)}%
+                          </li>
+                          <li>
+                            Distance:{" "}
+                            {match.explanation.distance_km !== null
+                              ? `${match.explanation.distance_km} km`
+                              : "Location TBA"}{" "}
+                            ({Math.round(match.explanation.distance_score * 100)}% score)
+                          </li>
+                          <li>
+                            Reliability:{" "}
+                            {Math.round(match.explanation.reliability * 100)}% (
+                            {match.explanation.order_history} orders)
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="match-result-note">
+                <p className="state-body" style={{ margin: "0 auto 24px" }}>
                   These scores are derived from real data in the ByteFrost
                   backend. Each component is explainable and based on actual
                   buyer behavior, location, and order history.
                 </p>
                 <div className="match-result-actions">
-                  <a
-                    className="public-pill"
-                    href="/marketplace"
-                    ><ArrowLeft size={15} /> Back to marketplace</a
-                  >
-                  <button
-                    className="text-button"
-                    onClick={resetFlow}
-                  >
+                  <Link className="btn btn-primary" href="/marketplace">
+                    <ArrowLeft size={15} /> Back to marketplace
+                  </Link>
+                  <button className="btn btn-ghost" onClick={resetFlow}>
                     Match another listing
                   </button>
-</div>
-               </React.Fragment>
+                </div>
+              </React.Fragment>
             )}
           </div>
         )}
-      </section>
+      </div>
     </PublicLayout>
   );
 }

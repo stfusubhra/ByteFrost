@@ -11,7 +11,7 @@
  * notifications/email to the KisanSetu team.
  */
 import { useState } from "react";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 
 /**
@@ -128,134 +128,144 @@ export default function Contact() {
 
   return (
     <PublicLayout eyebrow="Contact / KisanSetu">
-      <section className="public-hero contact-hero">
-        <span>05 / CONTACT</span>
-        <h1>
-          Let’s make<br />
-          <em>the market clearer.</em>
-        </h1>
-        <p>
-          Talk to us about a pilot, a buyer network, a farmer group, or the
-          next step for KisanSetu.
-        </p>
+      <section className="page-hero">
+        <div className="container">
+          <span className="eyebrow">Contact</span>
+          <h1>Let’s make the market clearer.</h1>
+          <p>
+            Talk to us about a pilot, a buyer network, a farmer group, or the
+            next step for KisanSetu.
+          </p>
+        </div>
       </section>
 
-      {/* Status bar showing submission state */}
-      {error && (
-        <div className="contact-status public-reveal">
-          <div className="contact-status-error">⚠️ {error}</div>
-        </div>
-      )}
-      {sent && !submitting && (
-        <div className="contact-status public-reveal">
-          <div className="contact-status-success">
-            ✅ Thank you. Your note has been recorded (demo submission).
+      <div className="container">
+        {/* Status bar showing submission state */}
+        {error && (
+          <div className="card" style={{ padding: 16, marginBottom: 8, borderColor: "var(--error)" }}>
+            <div className="badge badge-error">Error</div>
+            <p className="state-body" style={{ marginTop: 6 }}>{error}</p>
           </div>
-        </div>
-      )}
-      {submitting && (
-        <div className="contact-status public-reveal">
-          <div className="contact-status-loading">Submitting your note…</div>
-        </div>
-      )}
+        )}
+        {sent && !submitting && (
+          <div className="card" style={{ padding: 16, marginBottom: 8, borderColor: "var(--success)" }}>
+            <div className="badge badge-success">Thank you</div>
+            <p className="state-body" style={{ marginTop: 6 }}>
+              Your note has been recorded (demo submission).
+            </p>
+          </div>
+        )}
+        {submitting && (
+          <div className="card" style={{ padding: 16, marginBottom: 8 }}>
+            <div className="badge badge-neutral">Submitting your note…</div>
+          </div>
+        )}
 
-      <section className="contact-layout public-reveal">
-        <div className="contact-details">
-          <span>DIRECT CONTACT</span>
-          <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
-          <p>Nashik · Pune · Remote</p>
-          <div>
-            <span>For farmers</span>
-            <span>For buyers</span>
-            <span>For partners</span>
-          </div>
-        </div>
-        <form className="contact-form" onSubmit={handleSubmit}>
-          {sent ? (
-            <div className="contact-success">
-              <strong>Thank you.</strong>
-              <p>
-                Your note is ready for the KisanSetu team to follow up.
-                <br />
-                <em>(This is a demo submission. In production, this would
-                trigger an email/notification to the team.)</em>
-              </p>
-              <button
-                type="button"
-                className="public-text-link"
-                onClick={() => setSent(false)}
-              >
-                Send another note →
-              </button>
+        <section className="contact-layout">
+          <div className="contact-details">
+            <span className="eyebrow">Direct contact</span>
+            <a href="mailto:hello@kisansetu.in">
+              <Mail size={16} /> hello@kisansetu.in
+            </a>
+            <p className="row" style={{ color: "var(--ink-soft)" }}>
+              <MapPin size={14} /> Nashik · Pune · Remote
+            </p>
+            <div className="stack" style={{ gap: 8, marginTop: 12 }}>
+              <span className="badge badge-neutral">For farmers</span>
+              <span className="badge badge-neutral">For buyers</span>
+              <span className="badge badge-neutral">For partners</span>
             </div>
-          ) : (
-            <>
-              <label>
-                Name
-                <input
-                  required
-                  value={formData.name}
-                  onChange={handleChange("name")}
-                  placeholder="Your name"
-                />
-              </label>
-              <label>
-                Email
-                <input
-                  required
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange("email")}
-                  placeholder="you@example.com"
-                />
-              </label>
-              <label>
-                How can we help?
-                <select
-                  required
-                  value={formData.inquiryType}
-                  onChange={handleChange("inquiryType")}
-                >
-                  <option value="" disabled>
-                    Select one
-                  </option>
-                  <option>Farmer or farmer group</option>
-                  <option>Buyer or retailer</option>
-                  <option>Pilot or partnership</option>
-                  <option>General question</option>
-                </select>
-              </label>
-              <label>
-                Message
-                <textarea
-                  required
-                  value={formData.message}
-                  onChange={handleChange("message")}
-                  placeholder="Tell us a little about what you are building or looking for."
-                  rows={5}
-                />
-              </label>
-              <button
-                className="public-pill"
-                type="submit"
-                disabled={submitting}
-              >
-                {submitting ? "Sending…" : "Send your note →"}
-              </button>
-            </>
-          )}
-        </form>
-      </section>
+          </div>
 
-      {/* Demo data transparency section */}
-      {sent && (
-        <div className="contact-demo-note public-reveal">
-          <small>
-            💡 Demo submission stored in localStorage as
-            "kisansetu_demo_contacts". Clear localStorage to reset.
-          </small>
-        </div>
-      )}
+          <form className="contact-form" onSubmit={handleSubmit}>
+            {sent ? (
+              <div className="contact-success">
+                <strong>Thank you.</strong>
+                <p>
+                  Your note is ready for the KisanSetu team to follow up.
+                  <br />
+                  <em>(This is a demo submission. In production, this would
+                  trigger an email/notification to the team.)</em>
+                </p>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setSent(false)}
+                >
+                  Send another note →
+                </button>
+              </div>
+            ) : (
+              <>
+                <label className="field">
+                  <span>Name</span>
+                  <input
+                    className="input"
+                    required
+                    value={formData.name}
+                    onChange={handleChange("name")}
+                    placeholder="Your name"
+                  />
+                </label>
+                <label className="field">
+                  <span>Email</span>
+                  <input
+                    className="input"
+                    required
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange("email")}
+                    placeholder="you@example.com"
+                  />
+                </label>
+                <label className="field">
+                  <span>How can we help?</span>
+                  <select
+                    className="select"
+                    required
+                    value={formData.inquiryType}
+                    onChange={handleChange("inquiryType")}
+                  >
+                    <option value="" disabled>
+                      Select one
+                    </option>
+                    <option>Farmer or farmer group</option>
+                    <option>Buyer or retailer</option>
+                    <option>Pilot or partnership</option>
+                    <option>General question</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Message</span>
+                  <textarea
+                    className="textarea"
+                    required
+                    value={formData.message}
+                    onChange={handleChange("message")}
+                    placeholder="Tell us a little about what you are building or looking for."
+                    rows={5}
+                  />
+                </label>
+                <button
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={submitting}
+                >
+                  {submitting ? "Sending…" : "Send your note"}
+                </button>
+              </>
+            )}
+          </form>
+        </section>
+
+        {/* Demo data transparency section */}
+        {sent && (
+          <p className="state-body" style={{ marginBottom: 48 }}>
+            Demo submission stored in localStorage as "kisansetu_demo_contacts".
+            Clear localStorage to reset.
+          </p>
+        )}
+      </div>
     </PublicLayout>
   );
 }
