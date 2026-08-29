@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -14,10 +14,15 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     password: str
 
-
+    @model_validator(mode='after')
+    def check_email_or_phone(self):
+        if not self.email and not self.phone:
+            raise ValueError('Either email or phone must be provided')
+        return self
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
