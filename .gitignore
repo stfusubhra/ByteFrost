@@ -50,3 +50,5 @@ htmlcov/
 # Scripts
 backend/check_logistics.py
 opencode.json
+.vercel
+.env*
