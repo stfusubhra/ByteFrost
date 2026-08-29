@@ -204,6 +204,11 @@ const hi: Record<LocaleKeys, string> = {
   "login.err.invalid": "गलत ईमेल या पासवर्ड।",
   "login.err.tooMany": "बहुत अधिक प्रयास। कृपया थोड़ी देर बाद कोशिश करें।",
   "login.err.generic": "लॉग इन नहीं हो सका। कृपया पुनः प्रयास करें।",
+  "login.err.emailOrPhoneRequired": "Please enter your email or phone number.",
+  "login.emailOrPhone.label": "Email or phone",
+  "login.emailOrPhone.placeholder": "you@example.com or +91xxxxxxxxxx",
+  "login.phone.label": "Phone number",
+  "login.phone.placeholder": "+91xxxxxxxxxx"
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "उगाने वालों और ज़रूरत वालों से जुड़ें।",
@@ -220,7 +225,9 @@ const hi: Record<LocaleKeys, string> = {
   "signup.fullName.label": "पूरा नाम",
   "signup.fullName.placeholder": "आपका पूरा नाम",
   "signup.email.label": "ईमेल पता",
-  "signup.email.placeholder": "you@example.com",
+  "signup.email.placeholder": "you@example.com",,
+  "signup.phone.label": "Phone number",
+  "signup.phone.placeholder": "+91xxxxxxxxxx"
   "signup.password.label": "पासवर्ड",
   "signup.password.placeholder": "कम से कम 6 अक्षर",
   "signup.confirmPassword.label": "पासवर्ड की पुष्टि करें",

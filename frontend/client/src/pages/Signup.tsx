@@ -8,6 +8,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 export default function Signup() {
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -27,7 +28,7 @@ export default function Signup() {
     setLoading(true);
     try {
       const response = await api.post("/auth/register", {
-        email, password, full_name: fullName || email.split("@")[0], role,
+        email, phone, password, full_name: fullName || email.split("@")[0], role,
       });
       if (response.data?.access_token) {
         localStorage.setItem("kisansetu_token", response.data.access_token);
@@ -77,6 +78,11 @@ export default function Signup() {
           <div className="auth-field">
             <label htmlFor="email">{t("signup.email.label")}</label>
             <input type="email" id="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} className="auth-input" placeholder={t("signup.email.placeholder")} autoComplete="email" />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="phone">{t("signup.phone.label")}</label>
+            <input type="tel" id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="auth-input" placeholder={t("signup.phone.placeholder")} autoComplete="tel" />
           </div>
 
           <div className="auth-field">

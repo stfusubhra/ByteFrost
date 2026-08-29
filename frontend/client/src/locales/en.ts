@@ -202,6 +202,11 @@ const en = {
   "login.err.invalid": "Incorrect email or password.",
   "login.err.tooMany": "Too many attempts. Please try again shortly.",
   "login.err.generic": "Unable to sign in. Please try again.",
+  "login.err.emailOrPhoneRequired": "Please enter your email or phone number.",
+  "login.emailOrPhone.label": "Email or phone",
+  "login.emailOrPhone.placeholder": "you@example.com or +91xxxxxxxxxx",
+  "login.phone.label": "Phone number",
+  "login.phone.placeholder": "+91xxxxxxxxxx"
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "Join the people who grow and the people who need.",
@@ -218,7 +223,9 @@ const en = {
   "signup.fullName.label": "Full name",
   "signup.fullName.placeholder": "Your full name",
   "signup.email.label": "Email address",
-  "signup.email.placeholder": "you@example.com",
+  "signup.email.placeholder": "you@example.com",,
+  "signup.phone.label": "Phone number",
+  "signup.phone.placeholder": "+91xxxxxxxxxx"
   "signup.password.label": "Password",
   "signup.password.placeholder": "At least 6 characters",
   "signup.confirmPassword.label": "Confirm password",

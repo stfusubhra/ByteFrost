@@ -8,6 +8,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 export default function Login() {
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +18,17 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email.trim()) { setError(t("login.err.emailRequired")); return; }
-    if (!password) { setError(t("login.err.passwordRequired")); return; }
+    if (!email.trim() && !phone.trim()) { 
+      setError(t("login.err.emailOrPhoneRequired")); 
+      return; 
+    }
+    if (!password) { 
+      setError(t("login.err.passwordRequired")); 
+      return; 
+    }
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, password });
+      const response = await api.post("/auth/login", { email, phone, password });
       if (response.data?.access_token) {
         localStorage.setItem("kisansetu_token", response.data.access_token);
       }
@@ -55,10 +62,30 @@ export default function Login() {
           <div className="auth-field">
             <label htmlFor="email">{t("login.email.label")}</label>
             <input
-              type="email" id="email" name="email"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-              className="auth-input" placeholder={t("login.email.placeholder")}
-              autoComplete="email" autoFocus aria-invalid={!!error && !email.trim()}
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="auth-input"
+              placeholder={t("login.email.placeholder")}
+              autoComplete="email"
+              aria-invalid={!!error && !email.trim() && !phone.trim()}
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="phone">{t("login.phone.label")}</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="auth-input"
+              placeholder={t("login.phone.placeholder")}
+              autoComplete="tel"
+              aria-invalid={!!error && !email.trim() && !phone.trim()}
             />
           </div>
 
@@ -71,13 +98,19 @@ export default function Login() {
             </div>
             <div className="auth-input-wrap">
               <input
-                type={showPassword ? "text" : "password"} id="password" name="password"
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                className="auth-input" placeholder={t("login.password.placeholder")}
-                autoComplete="current-password" aria-invalid={!!error && !password}
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
+                placeholder={t("login.password.placeholder")}
+                autoComplete="current-password"
+                aria-invalid={!!error && !password}
               />
               <button
-                type="button" className="auth-input-toggle"
+                type="button"
+                className="auth-input-toggle"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? t("login.password.hide") : t("login.password.show")}
                 aria-pressed={showPassword}
