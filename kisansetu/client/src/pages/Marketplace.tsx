@@ -13,6 +13,43 @@ import { fetchListings, ApiError } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
 
 /**
+ * ListingImage renders the listing photo with a clean KisanSetu-styled
+ * placeholder fallback. If the image fails to load (missing asset, network
+ * error, etc.) we swap to a colored placeholder showing the crop initial
+ * instead of leaving a raw broken-image icon or ugly alt text on screen.
+ */
+function ListingImage({
+  src,
+  alt,
+  crop,
+  className,
+}: {
+  src: string;
+  alt: string;
+  crop: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed || !src) {
+    return (
+      <div className={`market-image-fallback ${className || ""}`} aria-label={alt}>
+        <span>{crop ? crop.charAt(0).toUpperCase() : "P"}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className={className || ""}
+      src={src}
+      alt={alt}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/**
  * Shape of a listing as used by the Marketplace UI.
  * This is a view-model that maps from the backend Listing schema
  * to the fields needed by the card/detail rendering.
