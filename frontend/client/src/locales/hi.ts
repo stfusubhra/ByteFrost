@@ -208,7 +208,7 @@ const hi: Record<LocaleKeys, string> = {
   "login.emailOrPhone.label": "Email or phone",
   "login.emailOrPhone.placeholder": "you@example.com or +91xxxxxxxxxx",
   "login.phone.label": "Phone number",
-  "login.phone.placeholder": "+91xxxxxxxxxx"
+  "login.phone.placeholder": "+91xxxxxxxxxx",
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "उगाने वालों और ज़रूरत वालों से जुड़ें।",
@@ -225,9 +225,9 @@ const hi: Record<LocaleKeys, string> = {
   "signup.fullName.label": "पूरा नाम",
   "signup.fullName.placeholder": "आपका पूरा नाम",
   "signup.email.label": "ईमेल पता",
-  "signup.email.placeholder": "you@example.com",,
+  "signup.email.placeholder": "you@example.com",
   "signup.phone.label": "Phone number",
-  "signup.phone.placeholder": "+91xxxxxxxxxx"
+  "signup.phone.placeholder": "+91xxxxxxxxxx",
   "signup.password.label": "पासवर्ड",
   "signup.password.placeholder": "कम से कम 6 अक्षर",
   "signup.confirmPassword.label": "पासवर्ड की पुष्टि करें",

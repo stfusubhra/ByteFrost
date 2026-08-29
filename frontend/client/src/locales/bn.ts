@@ -208,7 +208,7 @@ const bn: Record<LocaleKeys, string> = {
   "login.emailOrPhone.label": "Email or phone",
   "login.emailOrPhone.placeholder": "you@example.com or +91xxxxxxxxxx",
   "login.phone.label": "Phone number",
-  "login.phone.placeholder": "+91xxxxxxxxxx"
+  "login.phone.placeholder": "+91xxxxxxxxxx",
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "যারা উৎপাদন করেন এবং যাদের প্রয়োজন তাদের সাথে যোগ দিন।",
@@ -225,9 +225,9 @@ const bn: Record<LocaleKeys, string> = {
   "signup.fullName.label": "পূর্ণ নাম",
   "signup.fullName.placeholder": "আপনার পূর্ণ নাম",
   "signup.email.label": "ইমেল ঠিকানা",
-  "signup.email.placeholder": "you@example.com",,
+  "signup.email.placeholder": "you@example.com",
   "signup.phone.label": "Phone number",
-  "signup.phone.placeholder": "+91xxxxxxxxxx"
+  "signup.phone.placeholder": "+91xxxxxxxxxx",
   "signup.password.label": "পাসওয়ার্ড",
   "signup.password.placeholder": "কমপক্ষে ৬টি অক্ষর",
   "signup.confirmPassword.label": "পাসওয়ার্ড নিশ্চিত করুন",
