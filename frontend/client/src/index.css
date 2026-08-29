@@ -183,7 +183,8 @@ h1 { font-family: "DM Serif Display", Georgia, serif; font-size: clamp(31px, 3vw
 .prem-wordmark { display: inline-flex; align-items: center; gap: 8px; font-family: "DM Serif Display", Georgia, serif; font-size: 21px; text-decoration: none; }
 .prem-wordmark span { width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
 .prem-actions { display: flex; align-items: center; justify-self: end; gap: 14px; font-size: 11px; }
-.prem-actions button { display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--pr-ink); cursor: pointer; }
+.prem-actions button:not(.lang-selector-trigger) { display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--pr-ink); cursor: pointer; }
+
 .prem-actions a { text-decoration: none; }
 
 /* Auth button styling */
