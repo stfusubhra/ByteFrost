@@ -56,7 +56,7 @@ export default function Home() {
     <div className="app-shell">
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="brand-lockup">
-          <div className="brand-mark"><img src="/manus-storage/kisansetu-mark_d9c5b84c.png" alt="" /></div>
+          <div className="brand-mark"><img src="/manus-storage/kisansetu-mark_d9c5b84c.png" alt="KisanSetu logotype" /></div>
           <div><div className="brand-name">KisanSetu</div><div className="brand-caption">Market, made clearer.</div></div>
           <button className="icon-btn close-sidebar" onClick={() => setSidebarOpen(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>

@@ -76,7 +76,7 @@ export default function Signup() {
             </div>
           </div>
 
-          <div className="auth-form-side">
+          <div className="auth-form-side sm:w-full">
             <div className="auth-header">
               <h2>Create account</h2>
               <p>Join KisanSetu to buy or sell fresh produce directly.</p>
@@ -95,14 +95,14 @@ export default function Signup() {
                 <div className="role-selector">
                   <div
                     className={`role-card ${role === "farmer" ? "active" : ""}`}
-                    onClick={() => setRole("farmer")}
+                    onClick={() => setRole("farmer")} tabIndex={0}
                   >
                     <strong>🌾 Farmer</strong>
                     <span>Sell produce</span>
                   </div>
                   <div
                     className={`role-card ${role === "buyer" ? "active" : ""}`}
-                    onClick={() => setRole("buyer")}
+                    onClick={() => setRole("buyer")} tabIndex={0}
                   >
                     <strong>🏬 Buyer</strong>
                     <span>Order crops</span>
@@ -165,7 +165,7 @@ export default function Signup() {
                   />
                   <button
                     type="button"
-                    className="auth-input-toggle"
+                    className="auth-input-toggle focus-visible:ring-2 focus-visible:ring-indigo-500"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -189,7 +189,7 @@ export default function Signup() {
                   />
                   <button
                     type="button"
-                    className="auth-input-toggle"
+                    className="auth-input-toggle focus-visible:ring-2 focus-visible:ring-indigo-500"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
@@ -198,7 +198,7 @@ export default function Signup() {
                 </div>
               </div>
 
-              <button type="submit" className="auth-submit-btn" disabled={loading}>
+              <button type="submit" className="auth-submit-btn focus-visible:ring-2 focus-visible:ring-indigo-500" disabled={loading}>
                 {loading ? "Creating Account..." : "Create Free Account"}
                 <ArrowRight size={16} />
               </button>
