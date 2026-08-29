@@ -37,7 +37,7 @@ const Section01Problem = () => {
   return (
     <section ref={ref} className="py-32 bg-[var(--bg)] min-h-screen flex items-center">
       <div className="container">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 flex flex-col items-center">
           <span className="eyebrow">01 / The Problem</span>
           <h2 className="h2 mt-4">Fragmented supply chains waste value.</h2>
           <p className="body mt-4 max-w-2xl mx-auto">Traditional models rely on multiple disconnected intermediaries, resulting in unnecessary movement, lost time, and unclear pricing.</p>
@@ -74,7 +74,7 @@ const Section02Network = () => {
   return (
     <section className="py-32 bg-[var(--surface)] border-y border-[var(--line)]">
       <div className="container max-w-5xl">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 flex flex-col items-center">
           <span className="eyebrow">02 / The KisanSetu Network</span>
           <h2 className="h2 mt-4">A living, connected ecosystem.</h2>
           <p className="body mt-4 max-w-2xl mx-auto">Farmers, buyers, and logistics are no longer isolated. They operate within a single intelligent network.</p>
@@ -107,7 +107,7 @@ const Section03SupplyMeet = () => {
   return (
     <section className="py-32 bg-[var(--bg)]">
       <div className="container">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 flex flex-col items-center">
           <span className="eyebrow">03 / Supply Meets Demand</span>
           <h2 className="h2 mt-4">Fulfilling large orders through aggregation.</h2>
           <p className="body mt-4 max-w-2xl mx-auto">When a buyer places an order, the system identifies the best combination of nearby farmers to fulfill it.</p>
@@ -176,7 +176,7 @@ const Section0405LogisticsEngine = () => {
   return (
     <section className="py-32 bg-[var(--surface)] border-y border-[var(--line)] relative overflow-hidden">
       <div className="container">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 flex flex-col items-center">
           <span className="eyebrow">04 & 05 / KisanSetu Thinks & Routes</span>
           <h2 className="h2 mt-4">Intelligent logistics optimization.</h2>
           <p className="body mt-4 max-w-2xl mx-auto">KisanSetu evaluates quantity, distance, capacity, and cost to determine the most efficient fulfillment path. Hubs are an optional strategic tool, not a mandatory step.</p>
@@ -328,7 +328,7 @@ const Section06SmartHub = () => {
   return (
     <section className="py-32 bg-[var(--bg)]">
       <div className="container max-w-4xl">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 flex flex-col items-center">
           <span className="eyebrow">06 / Strategic Consolidation</span>
           <h2 className="h2 mt-4">Hubs multiply efficiency.</h2>
           <p className="body mt-4 max-w-2xl mx-auto">When activated by the logistics engine, hubs combine small local supplies into a single, optimized long-distance shipment.</p>
@@ -369,7 +369,7 @@ const Section07DataStory = () => {
   return (
     <section className="py-32 bg-[var(--surface)] border-y border-[var(--line)]">
       <div className="container">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 flex flex-col items-center">
           <span className="eyebrow">07 / Data Story</span>
           <h2 className="h2 mt-4">The value of a direct connection.</h2>
         </div>
