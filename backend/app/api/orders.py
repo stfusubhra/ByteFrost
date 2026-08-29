@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.orm import joinedload
@@ -21,7 +21,7 @@ ORDER_CREATOR_ROLES = {
 }
 
 
-@router.post("/", response_model=OrderResponse, status_code=201)
+@router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(
     payload: OrderCreate,
     current_user: dict = Depends(get_current_user),
@@ -42,30 +42,32 @@ async def create_order(
 
     total = 0
     for item in payload.items:
-        # Load the listing server-side; NEVER trust the client for price.
-        result = await db.execute(
-            select(ProduceListing).where(
+        # Atomic decrement: ensure sufficient quantity and active listing
+        stmt = (
+            update(ProduceListing)
+            .where(
                 ProduceListing.id == item.listing_id,
                 ProduceListing.is_active == True,
+                ProduceListing.quantity_kg >= item.quantity_kg,
             )
+            .values(quantity_kg=ProduceListing.quantity_kg - item.quantity_kg)
         )
-        listing = result.scalar_one_or_none()
-        if not listing:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Listing {item.listing_id} not found or inactive",
-            )
-
-        # Oversell prevention: the listing must have enough available quantity.
-        if listing.quantity_kg < item.quantity_kg:
+        result = await db.execute(stmt)
+        if result.rowcount == 0:
+            # Either listing not found, inactive, or insufficient quantity
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    f"Insufficient quantity for listing {listing.id}. "
-                    f"Available: {listing.quantity_kg} kg, requested: {item.quantity_kg} kg"
+                    f"Insufficient quantity for listing {item.listing_id}. "
+                    f"Check if listing exists, is active, and has enough stock."
                 ),
             )
 
+        # Fetch the listing to get price_per_kg (now that we know it exists and quantity sufficient)
+        listing_result = await db.execute(
+            select(ProduceListing).where(ProduceListing.id == item.listing_id)
+        )
+        listing = listing_result.scalar_one()
         price_per_kg = listing.price_per_kg
         if price_per_kg is None:
             raise HTTPException(
@@ -178,20 +180,25 @@ async def allocate_order(
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot allocate")
 
     for order_item in order.items:
-        result = await db.execute(
-            select(ProduceListing).where(ProduceListing.id == order_item.listing_id)
+        # Atomic decrement for each item
+        stmt = (
+            update(ProduceListing)
+            .where(
+                ProduceListing.id == order_item.listing_id,
+                ProduceListing.is_active == True,
+                ProduceListing.quantity_kg >= order_item.quantity_kg,
+            )
+            .values(quantity_kg=ProduceListing.quantity_kg - order_item.quantity_kg)
         )
-        listing = result.scalar_one_or_none()
-        if not listing:
-            raise HTTPException(status_code=404, detail=f"Listing {order_item.listing_id} not found")
-
-        if listing.quantity_kg < order_item.quantity_kg:
+        result = await db.execute(stmt)
+        if result.rowcount == 0:
             raise HTTPException(
                 status_code=400,
-                detail=f"Insufficient quantity in listing {listing.id}. Available: {listing.quantity_kg}, Required: {order_item.quantity_kg}"
+                detail=f"Insufficient quantity in listing {order_item.listing_id}. Available stock may have changed.",
             )
 
-        listing.quantity_kg -= order_item.quantity_kg
+        # We could optionally fetch the listing to confirm, but not necessary for allocation.
+        # However, we need to ensure the listing still exists and is active; the update already checked.
 
     order.status = OrderStatus.ALLOCATED
     await db.commit()
@@ -215,7 +222,7 @@ async def dispatch_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    if order.status != OrderStatus.ALLOCATED:
+    if order.status != OrderStatus.DISPATCHED:
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot dispatch")
 
     order.status = OrderStatus.DISPATCHED
@@ -296,24 +303,23 @@ async def allocate_from_listings(
 
     total_allocated = 0
     for item in payload.items:
-        listing_id = item.listing_id
-        quantity_kg = item.quantity_kg
-
-        result = await db.execute(
-            select(ProduceListing).where(ProduceListing.id == listing_id)
+        # Atomic decrement
+        stmt = (
+            update(ProduceListing)
+            .where(
+                ProduceListing.id == item.listing_id,
+                ProduceListing.is_active == True,
+                ProduceListing.quantity_kg >= item.quantity_kg,
+            )
+            .values(quantity_kg=ProduceListing.quantity_kg - item.quantity_kg)
         )
-        listing = result.scalar_one_or_none()
-        if not listing:
-            raise HTTPException(status_code=404, detail=f"Listing {listing_id} not found")
-
-        if listing.quantity_kg < quantity_kg:
+        result = await db.execute(stmt)
+        if result.rowcount == 0:
             raise HTTPException(
                 status_code=400,
-                detail=f"Insufficient quantity in listing {listing.id}. Available: {listing.quantity_kg}, Required: {quantity_kg}"
+                detail=f"Insufficient quantity in listing {item.listing_id}. Available stock may have changed.",
             )
-
-        listing.quantity_kg -= quantity_kg
-        total_allocated += quantity_kg
+        total_allocated += item.quantity_kg
 
     if total_allocated == 0:
         raise HTTPException(status_code=400, detail="No items allocated")

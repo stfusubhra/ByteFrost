@@ -5,11 +5,15 @@ from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.security import get_current_user
-from app.models.models import User
+from app.core.security import get_current_user, require_roles
+from app.models.models import User, UserRole
 from app.schemas.schemas import UserResponse
 
 router = APIRouter()
+
+USER_LIST_ROLES = {
+    UserRole.ADMIN,
+}
 
 
 @router.get("/", response_model=List[UserResponse])
@@ -22,6 +26,7 @@ async def list_users(
     """List users with pagination (skip/limit)."""
     if skip < 0 or limit < 1 or limit > 100:
         raise HTTPException(status_code=400, detail="skip >= 0 and 1 <= limit <= 100")
+    require_roles(current_user, USER_LIST_ROLES)
 
     result = await db.execute(select(User).offset(skip).limit(limit))
     return result.scalars().all()
@@ -34,6 +39,7 @@ async def get_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Get a single user by ID."""
+    require_roles(current_user, USER_LIST_ROLES)
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
