@@ -494,8 +494,14 @@ h1 { font-family: "DM Serif Display", Georgia, serif; font-size: clamp(31px, 3vw
 .dashboard-entry-grid article:hover > svg { transform: translateY(-3px) scale(1.08); }
 
 /* ---- FAQ ---- */
-.faq-item button { transition: color 180ms ease, padding-left 180ms ease; }
+.faq-item { border-bottom: 1px solid var(--pub-line); }
+.faq-item button { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border: none; background: transparent; color: var(--pub-ink); font-size: 20px; font-weight: 500; cursor: pointer; text-align: left; transition: color 180ms ease, padding-left 180ms ease; }
 .faq-item button:hover { color: var(--pub-green); padding-left: 6px; }
+.faq-item button svg { color: var(--pub-muted); transition: color 180ms ease; }
+.faq-item.open button svg { color: var(--pub-ink); }
+.faq-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 300ms cubic-bezier(.23,1,.32,1); overflow: hidden; }
+.faq-item.open .faq-answer { grid-template-rows: 1fr; }
+.faq-answer-inner { min-height: 0; padding-bottom: 24px; color: var(--pub-muted); font-size: 15px; line-height: 1.6; }
 
 /* ---- Contact form fields ---- */
 .contact-form input, .contact-form select, .contact-form textarea { transition: border-color 200ms ease, padding-left 200ms ease; }

@@ -1,6 +1,6 @@
 /* KisanSetu FAQ: compact public answers for farmers, buyers, and first-time visitors. */
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 
 const faqs = [
@@ -59,10 +59,12 @@ export default function Faq() {
               aria-expanded={open === index}
             >
               <span>{question}</span>
-              <Plus size={18} />
+              {open === index ? <Minus size={22} strokeWidth={1.5} /> : <Plus size={22} strokeWidth={1.5} />}
             </button>
             <div className="faq-answer">
-              <p>{answer}</p>
+              <div className="faq-answer-inner">
+                <p>{answer}</p>
+              </div>
             </div>
           </div>
         ))}
