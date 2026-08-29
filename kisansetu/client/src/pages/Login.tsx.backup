@@ -27,11 +27,10 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const trimmed = identifier.trim();
-      const isEmail = trimmed.includes("@") && trimmed.includes(".");
+      const isEmail = identifier.includes('@') && identifier.includes('.');
       const payload = {
         password,
-        ...(isEmail ? { email: trimmed } : { phone: trimmed })
+        ...(isEmail ? { email: identifier } : { phone: identifier })
       };
       const response = await api.post("/auth/login", payload);
       if (response.data?.access_token) {
@@ -50,7 +49,7 @@ export default function Login() {
 
   const handleDemoFill = (demoIdentifier: string) => {
     setIdentifier(demoIdentifier);
-    setPassword("demo1234");
+    setPassword("demo123456");
   };
 
   return (
