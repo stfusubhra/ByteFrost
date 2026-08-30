@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState, type FC, type ReactNode } from "react";
 
 const LanguageContext = createContext({
   t: (key: string) => key, // fallback: return the key itself
@@ -8,8 +8,8 @@ const LanguageContext = createContext({
 
 export const useLanguage = () => useContext(LanguageContext);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-   const [lang, setLang] = React.useState("en");
+export const LanguageProvider: FC<{ children: ReactNode }> = ({ children }) => {
+   const [lang, setLang] = useState("en");
    
    const t = (key: string) => {
      // Simple fallback - in a real app, this would look up translations
