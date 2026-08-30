@@ -8,6 +8,7 @@
  * the user experience while being transparent about data provenance.
  */
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { ArrowRight, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 import { fetchListings, ApiError } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
