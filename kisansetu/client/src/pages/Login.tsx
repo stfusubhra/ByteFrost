@@ -14,42 +14,39 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!identifier.trim()) { 
-      setError(t("login.err.emailOrPhoneRequired")); 
-      return; 
-    }
-    if (!password) { 
-      setError(t("login.err.passwordRequired")); 
-      return; 
-    }
-    setLoading(true);
-    try {
-      const trimmed = identifier.trim();
-      const isEmail = trimmed.includes("@") && trimmed.includes(".");
-      const payload = {
-        password,
-        ...(isEmail ? { email: trimmed } : { phone: trimmed })
-      };
-      console.log('Login payload:', payload); // Debug log
-      const response = await api.post("/auth/login", payload);
-      console.log('Login response:', response); // Debug log
-      if (response.data?.access_token) {
-        localStorage.setItem("kisansetu_token", response.data.access_token);
-      }
-      window.location.href = "/";
-    } catch (err: any) {
-      console.error('Login error:', err); // Debug log
-      const status = err.response?.status;
-      if (status === 401) setError(t("login.err.invalid"));
-      else if (status === 429) setError(t("login.err.tooMany"));
-      else setError(t("login.err.generic"));
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setError(null);
+     if (!identifier.trim()) { 
+       setError(t("login.err.emailOrPhoneRequired")); 
+       return; 
+     }
+     if (!password) { 
+       setError(t("login.err.passwordRequired")); 
+       return; 
+     }
+     setLoading(true);
+     try {
+       const trimmed = identifier.trim();
+       const isEmail = trimmed.includes("@") && trimmed.includes(".");
+       const payload = {
+         password,
+         ...(isEmail ? { email: trimmed } : { phone: trimmed })
+       };
+       const response = await api.post("/auth/login", payload);
+       if (response.data?.access_token) {
+         localStorage.setItem("kisansetu_token", response.data.access_token);
+       }
+       window.location.href = "/";
+     } catch (err: any) {
+       const status = err.response?.status;
+       if (status === 401) setError(t("login.err.invalid"));
+       else if (status === 429) setError(t("login.err.tooMany"));
+       else setError(t("login.err.generic"));
+     } finally {
+       setLoading(false);
+     }
+   };
   const handleDemoFill = (demoIdentifier: string) => {
     setIdentifier(demoIdentifier);
     setPassword("demo1234");
@@ -66,20 +63,20 @@ export default function Login() {
         {error && <div className="auth-error" role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className="auth-field">
-            <label>{t("login.email.label")}</label>
-            <input
-              type="text"
-              id="identifier"
-              name="identifier"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="auth-input"
-              placeholder={t("login.email.placeholder") + " / " + t("login.phone.placeholder")}
-              autoComplete="username"
-              aria-invalid={!!error && !identifier.trim()}
-            />
-          </div>
+<div className="auth-field">
+             <label>{t("login.email.label")}</label>
+             <input
+               type="text"
+               id="identifier"
+               name="identifier"
+               value={identifier}
+               onChange={(e) => setIdentifier(e.target.value)}
+               className="auth-input"
+               placeholder={t("login.email.placeholder")}
+               autoComplete="username"
+               aria-invalid={!!error && !identifier.trim()}
+             />
+           </div>
 
           <div className="auth-field">
             <div className="auth-field-label-row">
@@ -126,12 +123,12 @@ export default function Login() {
           {showDemo ? t("login.demo.hide") : t("login.demo.toggle")}
         </button>
 
-        {showDemo && (
-          <div className="auth-demo">
-            <button type="button" onClick={() => handleDemoFill("farmer.demo@kisansetu.in")}>{t("login.demo.farmer")}</button>
-            <button type="button" onClick={() => handleDemoFill("buyer.demo@kisansetu.in")}>{t("login.demo.buyer")}</button>
-          </div>
-        )}
+{showDemo && (
+           <div className="auth-demo">
+             <button type="button" onClick={() => handleDemoFill("+918888888888")}>{t("login.demo.farmer")}</button>
+             <button type="button" onClick={() => handleDemoFill("+919999999999")}>{t("login.demo.buyer")}</button>
+           </div>
+         )}
       </div>
     </AuthLayout>
   );
