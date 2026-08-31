@@ -686,8 +686,7 @@ img {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(250, 249, 246, 0.9);
-  backdrop-filter: blur(10px);
+  background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
 
@@ -1828,8 +1827,7 @@ img {
   justify-content: space-between;
   gap: 20px;
   padding: 0 28px;
-  background: rgba(250, 249, 246, 0.9);
-  backdrop-filter: blur(10px);
+  background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
 
@@ -3250,51 +3248,16 @@ img {
    Story Page Interactive Utilities
    ================================================================ */
 
+/* Glass panels are replaced with solid, disciplined surfaces. The Story page
+   no longer uses translucency/blur; keep the class as a plain surface so any
+   lingering markup degrades gracefully to the design-system baseline. */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 32px rgba(28, 43, 35, 0.05);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(28, 43, 35, 0.06));
 }
 
-.dark .glass-panel {
-  background: rgba(28, 43, 35, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.perspective-container {
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.eco-node-hover {
-  transition: all var(--dur-std) var(--ease-out);
-}
-.eco-node-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 24px rgba(35, 92, 69, 0.15);
-  border-color: var(--primary-soft);
-}
-
-.pulse-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 2px solid var(--primary);
-  animation: pulse-ring-anim 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-}
-
-@keyframes pulse-ring-anim {
-  0% { transform: scale(0.8); opacity: 0.8; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
-
-/* Scroll progress line */
+/* Scroll progress line (kept minimal, non-decorative) */
 .story-scroll-progress {
   position: fixed;
   top: 0;
