@@ -1,12 +1,18 @@
 /* KisanSetu landing: a concise scroll-story from farmer to market. Uses the shared public shell (header/footer) and the unified design system. */
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  MapPin,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const img = {
-  hero: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600&q=80",
   tomatoes: "https://images.unsplash.com/photo-1595855759920-86582396756a?w=1200&q=80",
   market: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200&q=80",
   farmer: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1200&q=80",
@@ -53,13 +59,99 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="home-hero-media">
-            <img
-              src={img.hero}
-              alt="Farmer working in a lush green field at golden hour"
-              loading="eager"
-              fetchPriority="high"
-            />
+
+          {/* Product preview — a real KisanSetu decision, not decoration */}
+          <div className="home-hero-media" aria-label="KisanSetu product preview">
+            <div className="hero-preview">
+              <div className="hero-preview-head">
+                <span className="hero-preview-badge">
+                  <span className="hero-preview-dot" /> {t("home.preview.badge")}
+                </span>
+                <span className="hero-preview-crop">
+                  {t("home.preview.crop")} · {t("home.preview.grade")}
+                </span>
+              </div>
+
+              <div className="hero-preview-price">
+                <span className="hero-preview-price-label">
+                  {t("home.preview.priceLabel")}
+                </span>
+                <span className="hero-preview-price-value">
+                  {t("home.preview.price")}
+                </span>
+                <span className="hero-preview-place">
+                  <MapPin size={13} /> {t("home.preview.place")} ·{" "}
+                  {t("home.preview.qty")}
+                </span>
+              </div>
+
+              <div className="hero-preview-market">
+                <span className="hero-preview-section-title">
+                  <TrendingUp size={13} /> {t("home.preview.marketTitle")}
+                </span>
+                <div className="hero-preview-market-row">
+                  <span>{t("home.preview.market1")}</span>
+                  <span className="hero-preview-market-high">
+                    {t("home.preview.market1p")}
+                  </span>
+                </div>
+                <div className="hero-preview-market-row">
+                  <span>{t("home.preview.market2")}</span>
+                  <span>{t("home.preview.market2p")}</span>
+                </div>
+                <div className="hero-preview-market-row">
+                  <span>{t("home.preview.market3")}</span>
+                  <span>{t("home.preview.market3p")}</span>
+                </div>
+              </div>
+
+              <div className="hero-preview-foot">
+                <div className="hero-preview-demand">
+                  <Users size={14} />
+                  <div>
+                    <span className="hero-preview-section-title">
+                      {t("home.preview.demandTitle")}
+                    </span>
+                    <span className="hero-preview-demand-value">
+                      {t("home.preview.demand")}
+                    </span>
+                  </div>
+                </div>
+                <div className="hero-preview-match">
+                  <BadgeCheck size={14} />
+                  <div>
+                    <span className="hero-preview-section-title">
+                      {t("home.preview.matchTitle")}
+                    </span>
+                    <span className="hero-preview-match-value">
+                      {t("home.preview.match")}
+                    </span>
+                    <span className="hero-preview-match-sub">
+                      {t("home.preview.matchSub")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Link className="hero-preview-cta" href="/marketplace">
+                {t("home.preview.cta")} <ArrowUpRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust / product signal */}
+        <div className="container">
+          <div className="home-trust">
+            <span className="home-trust-item">
+              <BadgeCheck size={15} /> {t("home.trust.1")}
+            </span>
+            <span className="home-trust-item">
+              <TrendingUp size={15} /> {t("home.trust.2")}
+            </span>
+            <span className="home-trust-item">
+              <Users size={15} /> {t("home.trust.3")}
+            </span>
           </div>
         </div>
       </section>
