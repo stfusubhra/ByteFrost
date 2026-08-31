@@ -51,27 +51,26 @@ Set the health check path to `/health` (already configured in `render.yaml`).
 ## 2. Frontend Deployment (Vercel)
 
 ### Step 1: Prepare Vercel
-1. Sign in to Vercell and create a new project
+1. Sign in to Vercel and create a new project
 2. Import the GitHub repo (`stfusubhra/ByteFrost`)
-3. Vercel should auto-detect it's a Next.js app (from `frontend/`)
+3. Vercel should detect a **Vite** project (from `frontend/`)
 
 ### Step 2: Configure Build Settings
-- **Framework**: Next.js
+- **Framework**: Vite
 - **Root Directory**: `frontend` (if not auto-detected)
-- **Build Command**: `npm run build` (or `next build`)
-- **Output Directory**: `frontend/out` (if using static export) or `.next` (for serverless)
+- **Build Command**: `pnpm run build` (or `npm run build` if you use npm)
+- **Output Directory**: `frontend/dist`
 
-> We are using a static export via `@vercel/static-build` (see `vercel.json`).  
-> Ensure `next export` is run during build (handled by the build step).
+> We use Vite's build output. Ensure the `vite.config.ts` `outDir` points to `dist`.
 
 ### Step 3: Environment Variables
 Add under **Settings → Environment Variables**:
 
 | Key | Value |
 |-----|-------|
-| `NEXT_PUBLIC_API_URL` | `https://bytefrost-backend.onrender.com` (your Render backend URL) |
+| `VITE_API_URL` | `https://<your-backend>.onrender.com/api/v1` |
 
-> This variable is exposed to the browser because it starts with `NEXT_PUBLIC_`.
+> This variable is exposed to the browser because it starts with `VITE_`.
 
 ### Step 4: Deploy
 - Vercel will clone the repo, run the build, and deploy.
@@ -93,12 +92,12 @@ docker build -t bytefrost-backend .
 docker run -p 8000:8000 --network sih_project_default bytefrost-backend
 
 # Start frontend
-cd frontend
-npm run dev
+cd ../frontend
+pnpm install
+pnpm run dev
 ```
 
-> The `docker-compose.yml` already defines PostgreSQL and Redis services.  
-> The backend Dockerfile is for production; for dev, you may prefer `uvicorn app.main:app --reload`.
+> The `docker-compose.yml` already defines PostgreSQL and Redis services. The backend Dockerfile is for production; for dev, you may prefer `uvicorn app.main:app --reload`.
 
 ---
 
@@ -140,7 +139,7 @@ alembic upgrade head
 - **Redis connection**: Ensure `REDIS_URL` is like `redis://:password@host:port`
 
 ### Frontend
-- **API calls failing**: Verify `NEXT_PUBLIC_API_URL` is set and reachable
+- **API calls failing**: Verify `VITE_API_URL` is set and reachable
 - **CORS errors**: Backend must allow the frontend origin (update `app/core/security.py` if needed)
 
 ### Docker
@@ -158,7 +157,7 @@ alembic upgrade head
 
 ---
 
-## Support
+## 8. Support
 
 Ask @stfusubhra (Subhra) for help with deployment issues.
 

@@ -1,5 +1,12 @@
-/* KisanSetu Field Ledger direction: asymmetrical operations canvas, warm editorial surfaces, explainable intelligence embedded in the workflow. */
-import { useState } from "react";
+/* KisanSetu Field Ledger – core product dashboard.
+ * This component now fetches real data from the backend:
+ *   - Active listings for the logged-in farmer
+ *   - Price recommendation for the selected listing
+ *   - Buyer matching scores (real API)
+ *   - (Live operations placeholder – can be extended with orders endpoint)
+ * The UI falls back to a friendly empty state when no data is available.
+ */
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowUpRight,
@@ -8,22 +15,26 @@ import {
   Boxes,
   ChevronRight,
   CircleHelp,
-  Clock3,
   CloudSun,
   FilePlus2,
   LayoutDashboard,
   MapPinned,
   Menu,
   PackageCheck,
-  Search,
   Settings2,
   ShieldCheck,
   Sprout,
-  Truck,
   UsersRound,
   X,
   Zap,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  fetchListings,
+  fetchMatches,
+  fetchPriceRecommendation,
+  ApiError,
+} from "@/lib/api";
 
 const navItems = [
   { label: "Overview", icon: LayoutDashboard },
@@ -33,33 +44,115 @@ const navItems = [
   { label: "Routes", icon: MapPinned },
 ];
 
-const matches = [
-  { buyer: "GreenBasket Retail", location: "Bengaluru · 8.4 km", volume: "1,200 kg", price: "₹31/kg", match: "94%", tone: "high" },
-  { buyer: "Sahaja Foods Co.", location: "Mysuru · 42 km", volume: "860 kg", price: "₹32/kg", match: "89%", tone: "mid" },
-  { buyer: "Namma Kitchens", location: "Bengaluru · 12 km", volume: "540 kg", price: "₹33/kg", match: "84%", tone: "low" },
-];
-
 function SignalBars({ value, tone = "green" }: { value: number; tone?: string }) {
-  return <div className={`signal-bars ${tone}`} aria-label={`${value}% match`}><span style={{ height: `${Math.max(28, value * 0.62)}%` }} /><span style={{ height: `${Math.max(35, value * 0.74)}%` }} /><span style={{ height: `${Math.max(45, value * 0.86)}%` }} /><span style={{ height: `${value}%` }} /></div>;
+  return (
+    <div className={`signal-bars ${tone}`} aria-label={`${value}% match`}>
+      <span style={{ height: `${Math.max(28, value * 0.62)}%` }} />
+      <span style={{ height: `${Math.max(35, value * 0.74)}%` }} />
+      <span style={{ height: `${Math.max(45, value * 0.86)}%` }} />
+      <span style={{ height: `${value}%` }} />
+    </div>
+  );
 }
 
-export default function Home() {
+export default function Dashboard() {
+  const { user, isAuthenticated } = useAuth();
   const [activeNav, setActiveNav] = useState("Overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
+  const [listing, setListing] = useState(null as any);
+  const [priceRec, setPriceRec] = useState(null as any);
+  const [matches, setMatches] = useState<Array<any>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const action = (message: string) => toast(message);
+  const action = (msg: string) => toast(msg);
+
+  // Load dashboard data when authenticated
+  useEffect(() => {
+    const loadData = async () => {
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
+      try {
+        // 1️⃣ Get active listings (default limit 10)
+        const listings = await fetchListings({ limit: 10 });
+        const active = listings.find((l) => l.is_active);
+        if (!active) {
+          setError("No active listings found. Create a listing first.");
+          return;
+        }
+        setListing(active);
+        // 2️⃣ Price recommendation for the selected listing
+        const price = await fetchPriceRecommendation(active.id);
+        setPriceRec(price);
+        // 3️⃣ Buyer matches (max 5)
+        const matchResults = await fetchMatches(active.id, 5);
+        setMatches(matchResults);
+      } catch (err) {
+        if (err instanceof ApiError) setError(err.message);
+        else setError("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <div className="dash-shell">
+        <div className="dash-body">
+          <p className="state">Loading dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dash-shell">
+        <div className="dash-body">
+          <div className="card" style={{ padding: 20, borderColor: "var(--error)" }}>
+            <p className="state-body" style={{ color: "var(--error)" }}>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper to format buyer id for display (shortened)
+  const shortBuyerId = (id: string) => id.slice(0, 6) + "…";
 
   return (
     <div className="dash-shell">
       <header className="dash-topbar">
         <div className="dash-topbar-left">
-          <button className="btn btn-ghost btn-sm dash-menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Open navigation"><Menu size={18} /></button>
-          <div className="breadcrumb"><span>Workspace</span><ChevronRight size={14} /><strong>{activeNav}</strong></div>
+          <button
+            className="btn btn-ghost btn-sm dash-menu-btn"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation"
+          >
+            <Menu size={18} />
+          </button>
+          <div className="breadcrumb">
+            <span>Workspace</span>
+            <ChevronRight size={14} />
+            <strong>{activeNav}</strong>
+          </div>
         </div>
         <div className="dash-topbar-right">
-          <button className="btn btn-ghost btn-sm" onClick={() => action("You are all caught up.")} aria-label="Notifications"><Bell size={18} /></button>
-          <div className="dash-avatar">RK</div>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => action("You are all caught up.")}
+            aria-label="Notifications"
+          >
+            <Bell size={18} />
+          </button>
+          <div className="dash-avatar">
+            {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
+          </div>
         </div>
       </header>
 
@@ -68,54 +161,79 @@ export default function Home() {
           <div className="dash-nav-label">Workspace</div>
           <nav className="dash-nav" aria-label="Primary navigation">
             {navItems.map(({ label, icon: Icon }) => (
-              <button key={label} className={`dash-nav-item ${activeNav === label ? "active" : ""}`} onClick={() => { setActiveNav(label); setSidebarOpen(false); }}>
-                <Icon size={18} /><span>{label}</span>
+              <button
+                key={label}
+                className={`dash-nav-item ${activeNav === label ? "active" : ""}`}
+                onClick={() => { setActiveNav(label); setSidebarOpen(false); }}
+              >
+                <Icon size={18} />
+                <span>{label}</span>
               </button>
             ))}
           </nav>
           <div className="dash-nav-label">Manage</div>
           <nav className="dash-nav" aria-label="Manage navigation">
-            <button className="dash-nav-item" onClick={() => action("Team management is coming next.")}><UsersRound size={18} /><span>Team</span></button>
-            <button className="dash-nav-item" onClick={() => action("Settings are ready for the next release.")}><Settings2 size={18} /><span>Settings</span></button>
+            <button className="dash-nav-item" onClick={() => action("Team management is coming next.")}>
+              <UsersRound size={18} />
+              <span>Team</span>
+            </button>
+            <button className="dash-nav-item" onClick={() => action("Settings are ready for the next release.")}>
+              <Settings2 size={18} />
+              <span>Settings</span>
+            </button>
           </nav>
           <div className="dash-sidebar-foot">
-            <div className="season-note"><CloudSun size={18} /><div><strong>Rabi season</strong><span>Day 42 of 120</span></div></div>
+            <div className="season-note">
+              <CloudSun size={18} />
+              <div>
+                <strong>Rabi season</strong>
+                <span>Day 42 of 120</span>
+              </div>
+            </div>
             <div className="season-progress"><span /></div>
-            <button className="text-link" onClick={() => action("Help is on the way.")}><CircleHelp size={16} /> Need a hand?</button>
+            <button className="text-link" onClick={() => action("Help is on the way.")}>
+              <CircleHelp size={16} /> Need a hand?
+            </button>
           </div>
         </aside>
 
         <main className="dash-main">
           <div className="dash-head">
             <div>
-              <p className="eyebrow">Thursday, 28 August 2026 · Live market</p>
-              <h1>Good morning, Ravi.</h1>
-              <p className="state-body" style={{ marginTop: 6 }}>Here’s where your supply can move next.</p>
+              <p className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · Live market</p>
+              <h1>Good morning{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}.</h1>
+              <p className="state-body" style={{ marginTop: 6 }}>
+                Here’s where your supply can move next.
+              </p>
             </div>
-            <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}><FilePlus2 size={17} /> New listing</button>
+            <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
+              <FilePlus2 size={17} /> New listing
+            </button>
           </div>
 
-          {/* Market intelligence — first in the farmer hierarchy */}
+          {/* Market intelligence – price recommendation */}
           <section className="intel">
-            <div className="card intel-card">
-              <h3>Tomato · Grade A</h3>
-              <div className="intel-current"><strong>₹31–34</strong><span>/kg recommended</span></div>
-              <p className="intel-recommended">Current market <strong>₹28/kg</strong> · demand trending up</p>
-              <div className="intel-factors">
-                <span className="badge badge-primary">Demand high</span>
-                <span className="badge badge-neutral">Supply limited</span>
-                <span className="badge badge-neutral">7-day window</span>
+            {priceRec ? (
+              <div className="card intel-card">
+                <h3>{listing?.crop_name ?? "Crop"} · {listing?.variety ?? ""}</h3>
+                <div className="intel-current">
+                  <strong>
+                    {priceRec.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}
+                  </strong>
+                  <span>/kg recommended</span>
+                </div>
+                <p className="intel-recommended">
+                  {priceRec.factors?.length ? `Based on ${priceRec.factors.join(", ")}.` : "Price band calculated from market data."}
+                </p>
+                <div className="intel-factors">
+                  <span className="badge badge-primary">Confidence {priceRec.confidence ?? "?"}</span>
+                </div>
               </div>
-            </div>
-            <div className="card intel-card">
-              <h3>Onion · Grade B</h3>
-              <div className="intel-current"><strong>₹18–21</strong><span>/kg recommended</span></div>
-              <p className="intel-recommended">Current market <strong>₹16/kg</strong> · demand picking up</p>
-              <div className="intel-factors">
-                <span className="badge badge-primary">Demand +24%</span>
-                <span className="badge badge-neutral">Harvest in 5 days</span>
+            ) : (
+              <div className="card intel-card">
+                <p>No price recommendation available.</p>
               </div>
-            </div>
+            )}
           </section>
 
           {/* Recommended listing */}
@@ -127,34 +245,38 @@ export default function Home() {
               </div>
               <button className="text-link" onClick={() => action("All opportunities are already ranked by fit.")}>View all <ArrowUpRight size={15} /></button>
             </div>
-            <div className="card">
-              <div className="recommendation-top">
-                <div className="crop-badge">TM</div>
-                <div className="recommendation-title">
-                  <div className="card-label">Recommended listing</div>
-                  <h3>Tomatoes <span>· Grade A</span></h3>
-                  <p>From Chikkaballapur · Harvest in 3 days</p>
+            {listing && (
+              <div className="card">
+                <div className="recommendation-top">
+                  <div className="crop-badge">{listing.crop_name?.[0] ?? "C"}</div>
+                  <div className="recommendation-title">
+                    <div className="card-label">Recommended listing</div>
+                    <h3>{listing.crop_name} <span>· {listing.quality_grade ?? ""}</span></h3>
+                    <p>{listing.pickup_location ?? "Location TBA"}</p>
+                  </div>
+                  <span className="badge badge-primary">High opportunity</span>
                 </div>
-                <span className="badge badge-primary">High opportunity</span>
-              </div>
-              <div className="recommendation-metrics">
-                <div><span>Available</span><strong>2,000 kg</strong></div>
-                <div><span>Recommended price</span><strong>₹31–34/kg</strong></div>
-                <div><span>Expected demand</span><strong>4,320 kg <em>↑ 18%</em></strong></div>
-              </div>
-              <div className="recommendation-bottom">
-                <div className="reason-copy"><ShieldCheck size={16} /><span><b>Why this price?</b> Demand is trending upward and local supply is limited.</span><button className="why-button" onClick={() => setShowWhy(!showWhy)}>{showWhy ? "Hide" : "See why"}</button></div>
-                <button className="btn btn-secondary" onClick={() => action("Tomato listing draft created.")}>Create listing <ArrowUpRight size={15} /></button>
-              </div>
-              {showWhy && (
-                <div className="why-panel">
-                  <div><strong>Demand trend</strong><span>High / rising</span></div>
-                  <div><strong>Local supply</strong><span>Limited within 25 km</span></div>
-                  <div><strong>Forecast window</strong><span>Next 7 days</span></div>
-                  <div><strong>Current market</strong><span>₹28/kg</span></div>
+                <div className="recommendation-metrics">
+                  <div><span>Available</span><strong>{listing.quantity_kg} kg</strong></div>
+                  <div><span>Recommended price</span><strong>{priceRec?.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}</strong></div>
                 </div>
-              )}
-            </div>
+                <div className="recommendation-bottom">
+                  <div className="reason-copy">
+                    <ShieldCheck size={16} />
+                    <span><b>Why this price?</b> Real‑time market data informs the band.</span>
+                    <button className="why-button" onClick={() => setShowWhy(!showWhy)}>
+                      {showWhy ? "Hide" : "See why"}
+                    </button>
+                  </div>
+                </div>
+                {showWhy && (
+                  <div className="why-panel">
+                    <div><strong>Confidence</strong><span>{priceRec?.confidence ?? "?"}</span></div>
+                    <div><strong>Factors</strong><span>{priceRec?.factors?.join(", ") ?? "—"}</span></div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* Buyer matching */}
@@ -167,50 +289,48 @@ export default function Home() {
               <button className="text-link" onClick={() => action("Matching preferences opened.")}>Tune matching <Settings2 size={14} /></button>
             </div>
             <div className="card">
-              {matches.map((item) => (
-                <div className="match-row" key={item.buyer}>
-                  <div className="match-avatar">{item.buyer.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
-                  <div className="match-main"><strong>{item.buyer}</strong><span>{item.location}</span></div>
-                  <div className="match-cell"><span>Needs</span><strong>{item.volume}</strong></div>
-                  <div className="match-cell"><span>Offer</span><strong>{item.price}</strong></div>
-                  <div className="match-score"><SignalBars value={Number(item.match.replace("%", ""))} tone={item.tone} /><strong>{item.match}</strong></div>
-                  <button className="btn btn-ghost btn-sm" onClick={() => action(`${item.buyer} details opened.`)} aria-label={`Open ${item.buyer}`}><ArrowUpRight size={16} /></button>
+              {matches.map((m) => (
+                <div className="match-row" key={m.buyer_id}>
+                  <div className="match-avatar">{shortBuyerId(m.buyer_id)}</div>
+                  <div className="match-main"><strong>{shortBuyerId(m.buyer_id)}</strong><span>{m.explanation?.distance_km ? `${m.explanation.distance_km} km` : ""}</span></div>
+                  <div className="match-cell"><span>Score</span><strong>{Math.round(m.score * 100)}%</strong></div>
+                  <div className="match-score">
+                    <SignalBars value={Math.round(m.score * 100)} tone="green" />
+                  </div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => action(`Match ${shortBuyerId(m.buyer_id)} opened.`)} aria-label={`Open match ${shortBuyerId(m.buyer_id)}`}>
+                    <ArrowUpRight size={16} />
+                  </button>
                 </div>
               ))}
               <div style={{ padding: 16, borderTop: "1px solid var(--line)" }}>
-                <button className="btn btn-secondary btn-block" onClick={() => action("Marketplace opened with 12 ranked matches.")}>Explore marketplace <ArrowUpRight size={15} /></button>
+                <button className="btn btn-secondary btn-block" onClick={() => action("Marketplace opened with matches.")}>
+                  Explore marketplace <ArrowUpRight size={15} />
+                </button>
               </div>
             </div>
           </section>
 
-          {/* Live operations */}
+          {/* Live operations – placeholder for future order data */}
           <section className="dash-section">
             <div className="dash-section-head">
               <div>
                 <span className="eyebrow">In motion</span>
                 <h2>Live operations</h2>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => action("Operations view refreshed.")} aria-label="Refresh operations"><BarChart3 size={17} /></button>
+              <button className="btn btn-ghost btn-sm" onClick={() => action("Operations view refreshed.")} aria-label="Refresh operations">
+                <BarChart3 size={17} />
+              </button>
             </div>
             <div className="card">
-              <div className="route-card-header">
-                <div>
-                  <div className="card-label">Order #KS-1048</div>
-                  <h3>On the road to Bengaluru</h3>
-                </div>
-                <span className="badge badge-info">In transit</span>
-              </div>
-              <div className="route-meta">
-                <div><span>Load</span><strong>700 kg tomatoes</strong></div>
-                <div><span>ETA</span><strong>Today, 4:20 PM</strong></div>
-              </div>
-              <button className="btn btn-secondary btn-block" onClick={() => action("Shipment tracking opened.")}>Track shipment <MapPinned size={15} /></button>
+              <p className="state-body">No active shipments at the moment.</p>
             </div>
           </section>
 
           <footer className="footer-note">
             <span><Sprout size={14} /> Built for the people who grow with the people who need.</span>
-            <span>Demo data shown for illustration · Data updates every 15 min · <button className="text-link" onClick={() => action("System status: all services operational.")}>System status</button></span>
+            <span>
+              Data updates on demand. <button className="text-link" onClick={() => action("System status: all services operational.")}>System status</button>
+            </span>
           </footer>
         </main>
       </div>

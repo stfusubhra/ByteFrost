@@ -14,7 +14,7 @@ import MarketMatch from "./pages/MarketMatch";
 import Story from "./pages/Story";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
-import DashboardEntry from "./pages/DashboardEntry";
+import Dashboard from "./pages/Dashboard";
 import ListingDetail from "./pages/ListingDetail";
 
 function Router() {
@@ -29,7 +29,7 @@ function Router() {
       <Route path="/story" component={Story} />
       <Route path="/faq" component={Faq} />
       <Route path="/contact" component={Contact} />
-      <Route path="/dashboard" component={DashboardEntry} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
