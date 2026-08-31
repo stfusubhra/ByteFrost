@@ -17,18 +17,9 @@ from app.schemas.schemas import (
 from app.services.vrp_solver import solve_vrp
 from app.services.fulfillment_service import create_fulfillment_plan
 from app.services.consolidation_service import consolidate_pickups, PickupStop
+from app.services.maps_service import haversine
 
 router = APIRouter()
-
-
-def _haversine_km(lat1, lng1, lat2, lng2) -> float:
-    """Great-circle distance in km between two lat/lng points."""
-    r = 6371.0
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lng2 - lng1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * r * math.asin(math.sqrt(a))
 
 
 def _estimate_duration_min(distance_km: float) -> float:
@@ -49,11 +40,11 @@ def _nearest_neighbor_route(stops, start):
         # Find nearest remaining stop to current.
         best_idx = min(
             remaining,
-            key=lambda i: _haversine_km(
+            key=lambda i: haversine(
                 current["lat"], current["lng"], stops[i]["lat"], stops[i]["lng"]
             ),
         )
-        total += _haversine_km(
+        total += haversine(
             current["lat"], current["lng"], stops[best_idx]["lat"], stops[best_idx]["lng"]
         )
         order.append(best_idx)

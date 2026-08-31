@@ -3,7 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_user,
+)
 from app.core.limiter import limiter
 from app.models.models import User, UserRole
 from app.schemas.schemas import UserCreate, UserLogin, TokenResponse, UserResponse
@@ -63,9 +68,7 @@ async def login(request: Request, payload: UserLogin, db: AsyncSession = Depends
     )
 @router.get("/me", response_model=UserResponse)
 async def get_me(
-    current_user: dict = Depends(
-        __import__("app.core.security", fromlist=["get_current_user"]).get_current_user
-    ),
+    current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(User).where(User.id == current_user["id"]))

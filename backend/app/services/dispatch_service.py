@@ -96,7 +96,7 @@ async def dispatch_route(
                 order.status = OrderStatus.ALLOCATED
                 db.add(order)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(shipment)
         
         return shipment

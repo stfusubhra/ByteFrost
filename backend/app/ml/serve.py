@@ -24,6 +24,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from app.services.maps_service import haversine
+
 # Paths relative to this module (backend/app/ml/serve.py -> backend/ml/models)
 # The ml/ directory lives inside backend/ so it is included in the Docker build
 # context (dockerContext: ./backend) and the models ship in the image.
@@ -286,18 +288,6 @@ DEFAULT_MATCH_WEIGHTS = {
 }
 
 
-def _haversine_km(lat1, lon1, lat2, lon2):
-    """Great-circle distance between two lat/lon points in km."""
-    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
-        return None
-    R = 6371.0
-    p1, p2 = np.radians(lat1), np.radians(lat2)
-    dp = np.radians(lat2 - lat1)
-    dl = np.radians(lon2 - lon1)
-    a = np.sin(dp / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
-    return float(R * 2 * np.arcsin(np.sqrt(a)))
-
-
 def _quantity_fit_score(listing_qty, buyer_avg_qty):
     """How well the buyer's typical order size matches the listing quantity."""
     if not buyer_avg_qty or buyer_avg_qty <= 0:
@@ -393,7 +383,7 @@ def score_buyer_matches(listing, buyers, weights=None):
     for b in buyers:
         qty = _quantity_fit_score(listing_qty, b.get("avg_order_quantity_kg"))
         price = _price_compatibility_score(listing_price, b.get("avg_price_per_kg"))
-        km = _haversine_km(
+        km = haversine(
             listing_lat, listing_lon, b.get("latitude"), b.get("longitude")
         )
         dist = _distance_score(km)

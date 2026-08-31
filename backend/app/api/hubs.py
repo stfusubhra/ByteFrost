@@ -26,8 +26,7 @@ async def create_hub(hub_in: HubCreate, current_user: dict = Depends(get_current
     require_roles(current_user, VEHICLE_HUB_ROLES)
     hub = Hub(**hub_in.model_dump())
     db.add(hub)
-    await db.commit()
-    await db.refresh(hub)
+    await db.flush()
     return hub
 
 
@@ -59,6 +58,5 @@ async def update_hub(hub_id: UUID, hub_in: HubUpdate, current_user: dict = Depen
         setattr(hub, field, value)
 
     db.add(hub)
-    await db.commit()
-    await db.refresh(hub)
+    await db.flush()
     return hub

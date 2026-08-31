@@ -26,7 +26,13 @@ EARTH_RADIUS_KM = 6371.0
 
 
 def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-    """Great-circle distance between two points in km."""
+    """Great-circle distance between two points in km.
+
+    Returns None if any coordinate is missing (callers use this to signal
+    "location unknown" rather than crashing on a math domain error).
+    """
+    if lat1 is None or lng1 is None or lat2 is None or lng2 is None:
+        return None
     lat1, lng1, lat2, lng2 = map(math.radians, [lat1, lng1, lat2, lng2])
     dlat = lat2 - lat1
     dlng = lng2 - lng1

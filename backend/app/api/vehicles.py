@@ -26,8 +26,7 @@ async def create_vehicle(vehicle_in: VehicleCreate, current_user: dict = Depends
     require_roles(current_user, VEHICLE_HUB_ROLES)
     vehicle = Vehicle(**vehicle_in.model_dump())
     db.add(vehicle)
-    await db.commit()
-    await db.refresh(vehicle)
+    await db.flush()
     return vehicle
 
 
@@ -59,6 +58,5 @@ async def update_vehicle(vehicle_id: UUID, vehicle_in: VehicleUpdate, current_us
         setattr(vehicle, field, value)
 
     db.add(vehicle)
-    await db.commit()
-    await db.refresh(vehicle)
+    await db.flush()
     return vehicle

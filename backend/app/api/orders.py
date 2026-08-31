@@ -85,7 +85,7 @@ async def create_order(
         total += item.quantity_kg * float(price_per_kg)
 
     order.total_amount = total
-    await db.commit()
+    await db.flush()
 
     # Reload the order with its items eagerly loaded so the response can
     # serialize the nested items without triggering a lazy-load outside the
@@ -155,7 +155,6 @@ async def confirm_order(
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot confirm")
 
     order.status = OrderStatus.CONFIRMED
-    await db.commit()
 
     return {"message": f"Order {order.id} confirmed", "status": order.status}
 
@@ -201,7 +200,6 @@ async def allocate_order(
         # However, we need to ensure the listing still exists and is active; the update already checked.
 
     order.status = OrderStatus.ALLOCATED
-    await db.commit()
 
     return {"message": f"Order {order.id} allocated to listings", "status": order.status}
 
@@ -226,7 +224,6 @@ async def dispatch_order(
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot dispatch")
 
     order.status = OrderStatus.DISPATCHED
-    await db.commit()
 
     return {"message": f"Order {order.id} dispatched", "status": order.status}
 
@@ -251,7 +248,6 @@ async def ship_order(
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot ship")
 
     order.status = OrderStatus.IN_TRANSIT
-    await db.commit()
 
     return {"message": f"Order {order.id} shipped", "status": order.status}
 
@@ -276,7 +272,6 @@ async def deliver_order(
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot deliver")
 
     order.status = OrderStatus.DELIVERED
-    await db.commit()
 
     return {"message": f"Order {order.id} delivered", "status": order.status}
 
@@ -325,7 +320,6 @@ async def allocate_from_listings(
         raise HTTPException(status_code=400, detail="No items allocated")
 
     order.status = OrderStatus.ALLOCATED
-    await db.commit()
 
     return {"message": f"Order {order.id} allocated from {total_allocated} kg of listings", "status": order.status}
 

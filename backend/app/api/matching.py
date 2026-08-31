@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.models import ProduceListing, User, UserRole, Order, OrderItem, OrderStatus
 from app.schemas.schemas import MatchRequest, MatchResult
+from app.services.maps_service import haversine
 
 # Optional ML serving module. When the trained models are present, the
 # endpoints use real XGBoost inference; otherwise they fall back to the
@@ -30,18 +31,6 @@ BUYER_ROLES = {
     UserRole.CONSUMER,
     UserRole.FPO_MANAGER,
 }
-
-
-def _haversine_km(lat1, lng1, lat2, lng2) -> float:
-    """Great-circle distance in km between two lat/lng points."""
-    if lat1 is None or lng1 is None or lat2 is None or lng2 is None:
-        return None
-    r = 6371.0
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lng2 - lng1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * r * math.asin(math.sqrt(a))
 
 
 def _distance_score(distance_km) -> float:
@@ -189,7 +178,7 @@ async def find_matches(
         price_score = max(0.0, min(1.0, 1.0 - (price - 10.0) / 60.0))
 
         # Distance score based on real coordinates.
-        distance_km = _haversine_km(
+        distance_km = haversine(
             listing.pickup_latitude,
             listing.pickup_longitude,
             buyer.latitude,

@@ -31,8 +31,6 @@ async def create_listing(
     )
     db.add(listing)
     await db.flush()
-    await db.commit()
-    await db.refresh(listing)
     return listing
 
 
@@ -90,5 +88,4 @@ async def deactivate_listing(
         raise HTTPException(status_code=404, detail="Listing not found or not owned")
 
     listing.is_active = False
-    await db.commit()
     return None
