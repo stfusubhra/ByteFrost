@@ -1,5 +1,4 @@
-/* KisanSetu Language Context — mirrors ThemeContext pattern */
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { type LangCode, type LocaleKeys, locales } from "../locales";
 
 const STORAGE_KEY = "kisansetu_lang";
@@ -24,6 +23,11 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<LangCode>(getInitialLang);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.setAttribute("data-lang", lang);
+  }, [lang]);
 
   const setLang = useCallback((next: LangCode) => {
     setLangState(next);
