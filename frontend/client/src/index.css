@@ -403,6 +403,17 @@ img {
   background: #9c3a27;
 }
 
+.btn-white {
+  background: #ffffff;
+  color: var(--primary-strong) !important;
+  border-color: transparent;
+}
+
+.btn-white:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--primary-strong) !important;
+}
+
 .btn-sm {
   height: 34px;
   padding: 0 13px;

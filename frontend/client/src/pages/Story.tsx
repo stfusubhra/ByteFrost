@@ -457,7 +457,8 @@ export default function Story() {
           </p>
           <Link
             href="/market-match"
-            className="btn btn-lg bg-white text-[var(--primary-strong)] hover:bg-[var(--bg-subtle)] border-none"
+            className="btn btn-lg btn-white"
+            style={{ color: "var(--primary-strong)", backgroundColor: "#ffffff" }}
           >
             {t("story.findMatch")} <ArrowRight size={18} className="ml-2" />
           </Link>
