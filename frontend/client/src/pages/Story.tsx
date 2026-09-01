@@ -362,45 +362,53 @@ const Section07DataStory = () => {
 
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {/* Chart 1 */}
-          <FadeIn className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6">
-            <h3 className="h3 mb-1">{t("story.sec7.valRet")}</h3>
-            <p className="meta mb-6">{t("story.sec7.valRetSub")}</p>
-            <div className="flex h-40 items-end gap-8 justify-center">
-              <div className="w-24 flex flex-col justify-end items-center gap-2">
-                <div className="w-full bg-[var(--line-strong)] rounded-t-lg" style={{ height: "40%" }} />
-                <span className="text-xs text-[var(--ink-soft)] text-center leading-tight font-medium">{t("story.sec7.tradModel")}</span>
+          <FadeIn className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6 flex flex-col justify-between">
+            <div>
+              <h3 className="h3 mb-1">{t("story.sec7.valRet")}</h3>
+              <p className="meta mb-6">{t("story.sec7.valRetSub")}</p>
+            </div>
+            <div className="flex h-44 items-end gap-8 justify-center pt-4 pb-2">
+              <div className="w-28 h-full flex flex-col justify-end items-center">
+                <span className="text-xs font-bold text-[var(--ink-muted)] mb-1.5">38%</span>
+                <div className="w-full bg-[var(--line-strong)] rounded-t-lg" style={{ height: "65px" }} />
+                <span className="text-xs text-[var(--ink-soft)] text-center leading-tight font-medium mt-2">{t("story.sec7.tradModel")}</span>
               </div>
-              <div className="w-24 flex flex-col justify-end items-center gap-2">
-                <div className="w-full bg-[var(--primary)] rounded-t-lg" style={{ height: "85%" }} />
-                <span className="text-xs font-bold text-[var(--ink)] text-center leading-tight">{t("story.sec7.directModel")}</span>
+              <div className="w-28 h-full flex flex-col justify-end items-center">
+                <span className="text-xs font-bold text-[var(--primary)] mb-1.5">82%</span>
+                <div className="w-full bg-[var(--primary)] rounded-t-lg shadow-sm" style={{ height: "135px" }} />
+                <span className="text-xs font-bold text-[var(--ink)] text-center leading-tight mt-2">{t("story.sec7.directModel")}</span>
               </div>
             </div>
-            <p className="meta mt-6 text-center">{t("story.sec7.marginComp")}</p>
+            <p className="meta mt-4 text-center">{t("story.sec7.marginComp")}</p>
           </FadeIn>
 
           {/* Chart 2 */}
-          <FadeIn delay={0.1} className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6">
-            <h3 className="h3 mb-1">{t("story.sec7.logEff")}</h3>
-            <p className="meta mb-6">{t("story.sec7.logEffSub")}</p>
-            <div className="space-y-6 mt-4">
+          <FadeIn delay={0.1} className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6 flex flex-col justify-between">
+            <div>
+              <h3 className="h3 mb-1">{t("story.sec7.logEff")}</h3>
+              <p className="meta mb-6">{t("story.sec7.logEffSub")}</p>
+            </div>
+            <div className="space-y-6 my-auto py-4">
               <div>
-                <div className="flex justify-between text-xs mb-2 text-[var(--ink-soft)]">
+                <div className="flex justify-between text-xs mb-2 text-[var(--ink-soft)] font-medium">
                   <span>{t("story.sec7.unopt")}</span>
+                  <span className="font-semibold text-[var(--ink-muted)]">68%</span>
                 </div>
-                <div className="h-4 bg-[var(--line)] rounded-full overflow-hidden">
-                  <div className="h-full bg-[var(--error)] opacity-60" style={{ width: "85%" }} />
+                <div className="h-5 bg-[var(--line)] rounded-full overflow-hidden p-0.5">
+                  <div className="h-full bg-[var(--error)] rounded-full opacity-80" style={{ width: "68%" }} />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-2 font-semibold text-[var(--ink)]">
-                  <span>{t("story.sec7.ksEngine")}</span> <span className="text-[var(--primary)]">{t("story.sec7.reduced")}</span>
+                  <span>{t("story.sec7.ksEngine")}</span>
+                  <span className="text-[var(--primary)] font-bold">18% ({t("story.sec7.reduced")})</span>
                 </div>
-                <div className="h-4 bg-[var(--line)] rounded-full overflow-hidden">
-                  <div className="h-full bg-[var(--primary)]" style={{ width: "35%" }} />
+                <div className="h-5 bg-[var(--line)] rounded-full overflow-hidden p-0.5">
+                  <div className="h-full bg-[var(--primary)] rounded-full" style={{ width: "18%" }} />
                 </div>
               </div>
             </div>
-            <p className="meta mt-6 text-center">{t("story.sec7.routeComp")}</p>
+            <p className="meta mt-4 text-center">{t("story.sec7.routeComp")}</p>
           </FadeIn>
         </div>
       </div>
