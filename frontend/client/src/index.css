@@ -288,14 +288,91 @@ img {
   background: currentColor;
 }
 
+/* Symmetrical balanced eyebrow for centered layouts */
+.text-center .eyebrow,
+.eyebrow.justify-center,
+.eyebrow-center,
+.section-center .eyebrow {
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.text-center .eyebrow::after,
+.eyebrow.justify-center::after,
+.eyebrow-center::after,
+.section-center .eyebrow::after {
+  content: "";
+  width: 20px;
+  height: 1px;
+  background: currentColor;
+}
+
 /* ================================================================
-   Layout primitives
+   Layout primitives & Alignment Utilities
    ================================================================ */
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-left {
+  text-align: left !important;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.justify-center {
+  justify-content: center !important;
+}
+
+.justify-between {
+  justify-content: space-between !important;
+}
+
+.justify-start {
+  justify-content: flex-start !important;
+}
+
+.justify-end {
+  justify-content: flex-end !important;
+}
+
+.items-center {
+  align-items: center !important;
+}
+
+.items-start {
+  align-items: flex-start !important;
+}
+
+.items-end {
+  align-items: flex-end !important;
+}
+
+.flex-col {
+  flex-direction: column !important;
+}
+
+.flex-row {
+  flex-direction: row !important;
+}
+
+.mx-auto {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.w-full {
+  width: 100% !important;
 }
 
 .section {
@@ -323,11 +400,33 @@ img {
   gap: 12px;
 }
 
+.row.justify-center,
+.row.row-center,
+.text-center .row {
+  justify-content: center;
+}
+
+.row.justify-between {
+  justify-content: space-between;
+}
+
+.row.justify-end {
+  justify-content: flex-end;
+}
+
 .row-between {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.text-center h1,
+.text-center h2,
+.text-center h3,
+.text-center p {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ================================================================

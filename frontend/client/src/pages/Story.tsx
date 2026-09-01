@@ -415,17 +415,17 @@ export default function Story() {
     <PublicLayout eyebrow={t("story.eyebrow")}>
       {/* Hero */}
       <section className="py-24 md:py-32 bg-[var(--bg)] border-b border-[var(--line)]">
-        <div className="container max-w-4xl text-center">
+        <div className="container max-w-4xl text-center flex flex-col items-center mx-auto">
           <span className="eyebrow mb-6 justify-center">{t("story.section")}</span>
           <h1
-            className="display text-4xl md:text-6xl mb-6"
+            className="display text-4xl md:text-6xl mb-6 mx-auto text-center"
           >
             {t("story.h1a")} <em className="text-[var(--primary)] not-italic">{t("story.h1b")}</em>
           </h1>
-          <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto text-center">
             {t("story.sub")}
           </p>
-          <div className="row justify-center" style={{ marginTop: 28 }}>
+          <div className="row justify-center mx-auto" style={{ marginTop: 28 }}>
             <Link className="btn btn-primary" href="/marketplace">
               {t("story.exploreMarketplace")} <ArrowRight size={15} />
             </Link>
