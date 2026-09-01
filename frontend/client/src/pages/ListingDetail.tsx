@@ -35,8 +35,7 @@ export default function ListingDetail() {
     return imageMap[crop] || imageMap.Default;
   };
 
-  // Image mapping similar to Marketplace
-// Fetch listing on mount and when id changes
+  // Fetch listing on mount and when id changes
   useEffect(() => {
     let isMounted = true;
     const loadListing = async () => {
@@ -62,10 +61,7 @@ export default function ListingDetail() {
 
     loadListing();
     return () => {
-      // Cleanup: set isMounted to false to prevent state updates after unmount
-      // We'll use a mutable variable; simplest is to not check isMounted and rely on the fact that
-      // the component may unmount before the promise resolves; we'll guard with a ref.
-      // For simplicity, we'll skip; given the small app, it's acceptable.
+      isMounted = false;
     };
   }, [id]);
 
@@ -88,21 +84,19 @@ export default function ListingDetail() {
           },
         ],
         notes: notes.trim() || undefined,
-        // We could optionally ask for delivery details; for demo we leave them undefined.
       };
       const response = await createOrder(orderData);
       setOrderSuccess(true);
       showToast(`Order placed! Order ID: ${response.id}`);
-      // Reset form?
       setQuantity(listing.quantity_kg);
       setNotes("");
     } catch (err: any) {
-      setOrderError(
+      const message =
         err instanceof Error
           ? err.message
-          : "Failed to place order. Please check your credentials and try again."
-      );
-      showToast(orderError || "Order failed");
+          : "Failed to place order. Please check your credentials and try again.";
+      setOrderError(message);
+      showToast(message);
     } finally {
       setOrderLoading(false);
     }
@@ -111,11 +105,9 @@ export default function ListingDetail() {
   if (loading) {
     return (
       <PublicLayout eyebrow="Loading…">
-        <div className="container" style={{ textAlign: "center", padding: 40 }}>
+        <div className="container stack" style={{ alignItems: "center", paddingTop: 40, paddingBottom: 40 }}>
           <Loader2 size={32} />
-          <p className="state-body" style={{ marginTop: 16 }}>
-            Loading listing details…
-          </p>
+          <p className="state-body">Loading listing details…</p>
         </div>
       </PublicLayout>
     );
@@ -124,9 +116,9 @@ export default function ListingDetail() {
   if (error) {
     return (
       <PublicLayout eyebrow="Error">
-        <div className="container">
+        <div className="container stack">
           <div className="badge badge-error">Error</div>
-          <p className="state-body" style={{ marginTop: 8 }}>{error}</p>
+          <p className="state-body">{error}</p>
           <Link href="/" className="btn btn-secondary">
             ← Back to Home
           </Link>
@@ -138,11 +130,9 @@ export default function ListingDetail() {
   if (!listing) {
     return (
       <PublicLayout eyebrow="Not Found">
-        <div className="container">
+        <div className="container stack">
           <div className="badge badge-error">Not Found</div>
-          <p className="state-body" style={{ marginTop: 8 }}>
-            No listing with ID {id} found.
-          </p>
+          <p className="state-body">No listing with ID {id} found.</p>
           <Link href="/marketplace" className="btn btn-secondary">
             ← Back to Marketplace
           </Link>
@@ -151,44 +141,36 @@ export default function ListingDetail() {
     );
   }
 
-// getImage is already defined above
+  return (
+    <PublicLayout eyebrow="Listing Detail">
+      {toast && <div className="public-toast">{toast}</div>}
+      <section className="container">
+        <div className="row" style={{ gap: 16, alignItems: "start" }}>
+          {/* Image */}
+          <div className="detail-image">
+            <img
+              src={getImage(listing.crop_name)}
+              alt={`${listing.crop_name} listing`}
+            />
+            <span className="badge badge-neutral">
+              {listing.is_active ? "Ready to move" : "Inactive"}
+            </span>
+          </div>
 
-   return (
-     <PublicLayout eyebrow="Listing Detail">
-       {toast && (
-         <div className="public-toast" style={{ position: "fixed", bottom: 20, right: 20 }}>
-           {toast}
-         </div>
-       )}
-       <section className="container">
-         <div className="row" style={{ gap: 16, alignItems: "start" }}>
-           {/* Image */}
-           <div className="detail-image">
-             <img
-               src={getImage(listing.crop_name)}
-               alt={`${listing.crop_name} listing`}
-               style={{ width: "100%", maxWidth: 400, borderRadius: 8 }}
-             />
-             <span
-               className="badge badge-neutral"
-               style={{ position: "absolute", top: 12, left: 12 }}
-             >
-               {listing.is_active ? "Ready to move" : "Inactive"}
-             </span>
-           </div>
+          {/* Details */}
+          <div className="detail-content">
+            <h1>{listing.crop_name}</h1>
+            <div className="row" style={{ gap: 8, marginTop: 8 }}>
+              <span className="badge badge-primary">{listing.quality_grade || "N/A"} Grade</span>
+              <span className="row" style={{ gap: 4 }}>
+                <MapPin size={14} /> {listing.pickup_location || "Location TBA"}
+              </span>
+            </div>
+            <p className="state-body" style={{ marginTop: 12, color: "var(--ink-soft)" }}>
+              <strong>Seller:</strong> {getSellerName(listing)}
+            </p>
 
-           {/* Details */}
-           <div className="detail-content" style={{ flex: 1, minWidth: 0 }}>
-             <h1>{listing.crop_name}</h1>
-             <div className="row" style={{ gap: 8, marginTop: 8 }}>
-               <span className="badge badge-primary">{listing.quality_grade || "N/A"} Grade</span>
-               <span><MapPin size={14} /> {listing.pickup_location || "Location TBA"}</span>
-             </div>
-             <p className="state-body" style={{ marginTop: 12, color: "var(--ink-soft)" }}>
-               <strong>Seller:</strong> {getSellerName(listing)}
-             </p>
-
-            <div className="detail-stats" style={{ marginTop: 20 }}>
+            <div className="detail-stats">
               <div className="detail-stat">
                 <small>Quantity Available</small><strong>{listing.quantity_kg.toLocaleString()} kg</strong>
               </div>
@@ -201,7 +183,7 @@ export default function ListingDetail() {
             </div>
 
             {/* Order Form */}
-            <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+            <div className="detail-order">
               <h2>Place Order</h2>
               <p className="state-body" style={{ color: "var(--ink-soft)", marginBottom: 12 }}>
                 Enter the quantity you wish to purchase (max {listing.quantity_kg.toLocaleString()} kg).
@@ -225,19 +207,19 @@ export default function ListingDetail() {
                       const val = parseFloat(e.target.value);
                       setQuantity(isNaN(val) ? 0 : val);
                     }}
-                    style={{ width: 100, padding: 8 }}
+                    className="input"
                   />
                 </label>
               </div>
 
               <div className="row" style={{ gap: 12, marginBottom: 16 }}>
-                <label className="row" style={{ gap: 4, alignItems: "start" }}>
-                  <span>Notes (optional)</span><br />
+                <label className="stack" style={{ gap: 4, alignItems: "start" }}>
+                  <span>Notes (optional)</span>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
-                    style={{ width: "100%", resize: "vertical" }}
+                    className="input"
                   />
                 </label>
               </div>
@@ -271,7 +253,7 @@ export default function ListingDetail() {
       </section>
 
       {/* Action buttons */}
-      <div className="container" style={{ marginTop: 32, textAlign: "center" }}>
+      <div className="container detail-actions" style={{ justifyContent: "center" }}>
         <Link href="/marketplace" className="btn btn-ghost">
           ← Back to Marketplace
         </Link>

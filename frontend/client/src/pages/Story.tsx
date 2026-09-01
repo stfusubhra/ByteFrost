@@ -424,8 +424,7 @@ export default function Story() {
         <div className="container max-w-4xl text-center">
           <span className="eyebrow mb-6 justify-center">{t("story.section")}</span>
           <h1
-            className="text-4xl md:text-6xl font-semibold tracking-tight text-[var(--ink)] mb-6"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="display text-4xl md:text-6xl mb-6"
           >
             {t("story.h1a")} <em className="text-[var(--primary)] not-italic">{t("story.h1b")}</em>
           </h1>
@@ -455,8 +454,7 @@ export default function Story() {
         <FadeIn className="max-w-3xl mx-auto px-6">
           <span className="eyebrow text-[var(--accent)] mb-6 justify-center">The Bigger Picture</span>
           <h2
-            className="text-3xl md:text-4xl font-semibold mb-6"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="display text-3xl md:text-4xl mb-6"
           >
             From Farm to Market, Connected.
           </h2>

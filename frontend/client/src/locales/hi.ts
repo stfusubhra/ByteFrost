@@ -8,6 +8,8 @@ const hi: Record<LocaleKeys, string> = {
   "common.selectLang": "भाषा चुनें",
   "common.or": "या",
   "common.scrollTo": "नीचे देखें",
+  "common.switchToDark": "डार्क मोड पर जाएं",
+  "common.switchToLight": "लाइट मोड पर जाएं",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "होम",

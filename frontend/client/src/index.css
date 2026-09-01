@@ -91,6 +91,49 @@
 }
 
 /* ================================================================
+   Dark mode tokens
+   Applied when the `.dark` class is present on <html> (toggled by
+   ThemeContext). Every token is overridden so the whole design
+   system — not just a few components — adapts to dark mode.
+   ================================================================ */
+html.dark {
+  /* Canvas */
+  --bg: #12150f;
+  --bg-subtle: #1a1e16;
+  --surface: #1d221a;
+  --surface-muted: #232920;
+
+  /* Ink */
+  --ink: #eef2ea;
+  --ink-soft: #b7c2b4;
+  --ink-muted: #7f8d7c;
+
+  /* Brand */
+  --primary: #6fae8d;
+  --primary-strong: #8cc4a6;
+  --primary-soft: #22352a;
+
+  /* Lines */
+  --line: #2c332a;
+  --line-strong: #3a4438;
+
+  /* Semantic */
+  --success: #6fce93;
+  --success-soft: #1f3a2a;
+  --warning: #e0b45c;
+  --warning-soft: #3a2f1a;
+  --error: #e07a63;
+  --error-soft: #3a211b;
+  --info: #6fb3d6;
+  --info-soft: #1e3340;
+
+  /* Shadow (deeper in dark mode) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 40px -20px rgba(0, 0, 0, 0.6);
+}
+
+/* ================================================================
    Base
    ================================================================ */
 * {
@@ -1593,6 +1636,12 @@ img {
   align-items: center;
   gap: 12px;
   margin-top: 20px;
+}
+
+.detail-order {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
 
 @keyframes ks-fade {
@@ -3243,6 +3292,31 @@ img {
 .lang-selector-dropdown li button.active { background: #e6f2e6; }
 .lang-selector-dropdown .lang-native { font-size: 13px; font-weight: 600; color: #1a1d19 !important; }
 .lang-selector-dropdown .lang-label { font-size: 10px; color: #7a8c7e !important; }
+
+/* Theme toggle — matches the language selector trigger styling */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.theme-toggle:hover {
+  background: rgba(35, 92, 69, 0.08);
+  border-color: rgba(35, 92, 69, 0.25);
+  color: var(--ink);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 
 /* ================================================================
    Story Page Interactive Utilities

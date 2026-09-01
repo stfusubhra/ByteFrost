@@ -6,6 +6,8 @@ const en = {
   "common.selectLang": "Select language",
   "common.or": "or",
   "common.scrollTo": "Scroll to explore",
+  "common.switchToDark": "Switch to dark mode",
+  "common.switchToLight": "Switch to light mode",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "Home",

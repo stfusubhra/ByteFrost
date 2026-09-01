@@ -1,5 +1,4 @@
 /* KisanSetu landing: a concise scroll-story from farmer to market. Uses the shared public shell (header/footer) and the unified design system. */
-import { useEffect } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useReveal } from "../hooks/useReveal";
 
 const img = {
   tomatoes: "https://images.unsplash.com/photo-1595855759920-86582396756a?w=1200&q=80",
@@ -20,23 +20,9 @@ const img = {
   crates: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&q=80",
 };
 
-function useReveal() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) =>
-          entry.target.classList.toggle("is-visible", entry.isIntersecting)
-        ),
-      { threshold: 0.16, rootMargin: "0px 0px -12% 0px" }
-    );
-    document.querySelectorAll(".reveal").forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
-  }, []);
-}
-
 export default function Home() {
   const { t } = useLanguage();
-  useReveal();
+  useReveal({ threshold: 0.16, rootMargin: "0px 0px -12% 0px" });
 
   return (
     <PublicLayout eyebrow={t("announce.default")}>

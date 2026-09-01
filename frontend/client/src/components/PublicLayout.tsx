@@ -1,8 +1,10 @@
 /* KisanSetu public shell: shared header + footer for public pages. Includes auth links, responsive drawer, scroll progress, footer, and language selector. */
 import { Link } from "wouter";
-import { ArrowUpRight, Mail, MapPin, Menu, Sprout, X, LogOut } from "lucide-react";
+import { ArrowUpRight, Mail, MapPin, Menu, Moon, Sprout, Sun, X, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useReveal } from "../hooks/useReveal";
 import LanguageSelector from "./LanguageSelector";
 
 function useScrollProgress() {
@@ -26,22 +28,6 @@ function useScrollProgress() {
   return progress;
 }
 
-function useReveal() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) =>
-          entry.target.classList.toggle("is-visible", entry.isIntersecting)
-        ),
-      { threshold: 0.14, rootMargin: "0px 0px -10% 0px" }
-    );
-    document
-      .querySelectorAll(".reveal")
-      .forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
-  }, []);
-}
-
 export default function PublicLayout({
   children,
   eyebrow = "Direct market intelligence for everyday farming",
@@ -53,6 +39,7 @@ export default function PublicLayout({
   const [hasToken, setHasToken] = useState(false);
   const progress = useScrollProgress();
   const { t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   useReveal();
 
   useEffect(() => {
@@ -106,6 +93,16 @@ export default function PublicLayout({
 
           <div className="site-header-actions">
             <LanguageSelector variant="dark" />
+            {toggleTheme && (
+              <button
+                className="theme-toggle"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+                title={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+              >
+                {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            )}
             {hasToken ? (
               <>
                 <Link href="/dashboard" className="btn btn-secondary btn-sm">
