@@ -48,8 +48,14 @@ const Section01Problem = () => {
 
             <div className="hidden md:flex flex-col items-center gap-2 text-[var(--ink-muted)]">
               <div className="w-full h-px bg-[var(--line-strong)]" />
-              <span className="text-xs">{t("story.sec1.intermediaries")}</span>
+              <span className="text-xs text-center font-medium">{t("story.sec1.intermediaries")}</span>
               <div className="w-full h-px bg-[var(--line-strong)]" />
+            </div>
+
+            <div className="flex md:hidden flex-col items-center gap-2 py-1 text-[var(--ink-muted)]">
+              <div className="h-6 w-px bg-[var(--line-strong)]" />
+              <span className="text-xs text-center font-medium px-3 py-1 bg-[var(--bg-subtle)] rounded-full border border-[var(--line)]">{t("story.sec1.intermediaries")}</span>
+              <div className="h-6 w-px bg-[var(--line-strong)]" />
             </div>
 
             <div className="text-center">

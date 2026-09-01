@@ -142,8 +142,8 @@ export default function ListingDetail() {
   return (
     <PublicLayout eyebrow={`${listing.crop_name} / KisanSetu`}>
       {toast && <div className="public-toast">{toast}</div>}
-      <section className="container">
-        <div className="row" style={{ gap: 16, alignItems: "start" }}>
+      <section className="container py-8 md:py-12">
+        <div className="listing-detail-layout">
           {/* Image */}
           <div className="detail-image">
             <img

@@ -171,6 +171,13 @@ export default function Dashboard() {
       </header>
 
       <div className="dash-body">
+        {sidebarOpen && (
+          <div
+            className="dash-sidebar-backdrop"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
         <aside className={`dash-sidebar ${sidebarOpen ? "open" : ""}`}>
           <div className="dash-nav-label">{t("dash.workspace")}</div>
           <nav className="dash-nav" aria-label="Primary navigation">

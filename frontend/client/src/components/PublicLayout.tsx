@@ -103,29 +103,31 @@ export default function PublicLayout({
                 {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
               </button>
             )}
-            {hasToken ? (
-              <>
-                <Link href="/dashboard" className="btn btn-secondary btn-sm">
-                  {t("nav.dashboard")}
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-ghost btn-sm"
-                  style={{ cursor: "pointer" }}
-                >
-                  {t("nav.logout")}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="btn btn-ghost btn-sm">
-                  {t("nav.signin")}
-                </Link>
-                <Link href="/signup" className="btn btn-primary btn-sm">
-                  {t("nav.signup")}
-                </Link>
-              </>
-            )}
+            <div className="header-auth-desktop">
+              {hasToken ? (
+                <>
+                  <Link href="/dashboard" className="btn btn-secondary btn-sm">
+                    {t("nav.dashboard")}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="btn btn-ghost btn-sm"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {t("nav.logout")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="btn btn-ghost btn-sm">
+                    {t("nav.signin")}
+                  </Link>
+                  <Link href="/signup" className="btn btn-primary btn-sm">
+                    {t("nav.signup")}
+                  </Link>
+                </>
+              )}
+            </div>
             <button
               className="menu-btn"
               onClick={() => setOpen(true)}
@@ -138,50 +140,57 @@ export default function PublicLayout({
       </header>
 
       {open && (
-        <div className="drawer" role="dialog" aria-modal="true" aria-label={t("common.openMenu")}>
-          <div className="drawer-top">
-            <Link href="/" className="wordmark" onClick={() => setOpen(false)}>
-              <span className="wordmark-mark">
-                <Sprout size={15} />
-              </span>
-              KisanSetu
-            </Link>
-            <button
-              className="drawer-close"
-              onClick={() => setOpen(false)}
-              aria-label={t("common.closeMenu")}
-            >
-              <X size={20} />
-            </button>
-          </div>
-          <div className="drawer-links">
-            {menuLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-                <ArrowUpRight size={18} />
+        <>
+          <div
+            className="drawer-backdrop"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="drawer" role="dialog" aria-modal="true" aria-label={t("common.openMenu")}>
+            <div className="drawer-top">
+              <Link href="/" className="wordmark" onClick={() => setOpen(false)}>
+                <span className="wordmark-mark">
+                  <Sprout size={15} />
+                </span>
+                KisanSetu
               </Link>
-            ))}
-            {hasToken && (
               <button
-                onClick={() => {
-                  setOpen(false);
-                  handleLogout();
-                }}
+                className="drawer-close"
+                onClick={() => setOpen(false)}
+                aria-label={t("common.closeMenu")}
               >
-                {t("nav.signout")}
-                <LogOut size={18} />
+                <X size={20} />
               </button>
-            )}
+            </div>
+            <div className="drawer-links">
+              {menuLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                >
+                  {link.label}
+                  <ArrowUpRight size={18} />
+                </Link>
+              ))}
+              {hasToken && (
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    handleLogout();
+                  }}
+                >
+                  {t("nav.signout")}
+                  <LogOut size={18} />
+                </button>
+              )}
+            </div>
+            <div className="drawer-foot">
+              <span>{t("footer.tagline")}</span>
+              <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
+            </div>
           </div>
-          <div className="drawer-foot">
-            <span>{t("footer.tagline")}</span>
-            <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
-          </div>
-        </div>
+        </>
       )}
 
       <main>{children}</main>
