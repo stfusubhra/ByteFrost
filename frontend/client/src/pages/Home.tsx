@@ -216,7 +216,7 @@ export default function Home() {
 
       {/* STEPS — how it works */}
       <section className="container section-tight reveal">
-        <span className="eyebrow">{t("home.collection.label")}</span>
+        <span className="eyebrow">{t("home.steps.label")}</span>
         <div className="steps" style={{ marginTop: 28 }}>
           <div className="step">
             <b>01</b>
