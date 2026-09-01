@@ -199,16 +199,24 @@ const Section0405LogisticsEngine = () => {
 
         {/* Scenario Toggle */}
         <div className="flex justify-center mb-10">
-          <div className="bg-[var(--bg-subtle)] p-1 rounded-xl inline-flex">
+          <div className="bg-[var(--bg-subtle)] p-1 rounded-xl inline-flex border border-[var(--line)]">
             <button
               onClick={() => setScenario("direct")}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${scenario === "direct" ? "bg-white shadow-sm text-[var(--ink)]" : "text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                scenario === "direct"
+                  ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm border border-[var(--line)]"
+                  : "text-[var(--ink-soft)] hover:text-[var(--ink)] border border-transparent"
+              }`}
             >
               {t("story.sec4.scenarioA")}
             </button>
             <button
               onClick={() => setScenario("hub")}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${scenario === "hub" ? "bg-white shadow-sm text-[var(--ink)]" : "text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                scenario === "hub"
+                  ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm border border-[var(--line)]"
+                  : "text-[var(--ink-soft)] hover:text-[var(--ink)] border border-transparent"
+              }`}
             >
               {t("story.sec4.scenarioB")}
             </button>
