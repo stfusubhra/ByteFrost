@@ -2,21 +2,23 @@
 import { Link } from "wouter";
 import { ArrowRight, BarChart3, MapPin, Users } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function DashboardEntry() {
+  const { t } = useLanguage();
+
   return (
-    <PublicLayout eyebrow="Product / KisanSetu">
+    <PublicLayout eyebrow={t("entry.eyebrow")}>
       <section className="page-hero">
         <div className="container">
-          <span className="eyebrow">Product</span>
-          <h1>See the market in one view.</h1>
+          <span className="eyebrow">{t("footer.product")}</span>
+          <h1>{t("entry.h1")}</h1>
           <p>
-            Demand, price, buyer matching, and route coordination — brought
-            together for the next decision.
+            {t("entry.p")}
           </p>
           <div style={{ marginTop: 28 }}>
             <Link className="btn btn-primary" href="/">
-              Open the KisanSetu experience <ArrowRight size={15} />
+              {t("entry.openExp")} <ArrowRight size={15} />
             </Link>
           </div>
         </div>
@@ -26,39 +28,37 @@ export default function DashboardEntry() {
         <section className="entry-grid">
           <article className="card entry-card">
             <BarChart3 size={20} />
-            <span>Demand</span>
-            <h2>Know what the market needs.</h2>
+            <span>{t("entry.demandTitle")}</span>
+            <h2>{t("entry.demandH2")}</h2>
             <p className="entry-card-p">
-              Live price signals and demand trends for the crops you grow.
+              {t("entry.demandP")}
             </p>
           </article>
           <article className="card entry-card">
             <Users size={20} />
-            <span>Matching</span>
-            <h2>Find the right buyer.</h2>
+            <span>{t("entry.matchingTitle")}</span>
+            <h2>{t("entry.matchingH2")}</h2>
             <p className="entry-card-p">
-              Explainable buyer matches scored on fit, price, distance, and
-              reliability.
+              {t("entry.matchingP")}
             </p>
           </article>
           <article className="card entry-card">
             <MapPin size={20} />
-            <span>Logistics</span>
-            <h2>Move it smarter.</h2>
+            <span>{t("entry.logisticsTitle")}</span>
+            <h2>{t("entry.logisticsH2")}</h2>
             <p className="entry-card-p">
-              From match to allocation to route to delivery — coordinated in
-              one flow.
+              {t("entry.logisticsP")}
             </p>
           </article>
         </section>
 
         <section className="entry-note">
           <span className="eyebrow" style={{ justifyContent: "center" }}>
-            Ready when you are
+            {t("entry.ready")}
           </span>
-          <h2>From farm to market, directly.</h2>
+          <h2>{t("entry.fromFarm")}</h2>
           <Link className="text-link" href="/marketplace">
-            Explore the marketplace <ArrowRight size={14} />
+            {t("entry.explore")} <ArrowRight size={14} />
           </Link>
         </section>
       </div>

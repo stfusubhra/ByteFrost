@@ -26,15 +26,15 @@ const FadeIn = ({ children, delay = 0, className = "" }: any) => {
 // --- Sections ---
 
 const Section01Problem = () => {
+  const { t } = useLanguage();
   return (
     <section className="py-24 bg-[var(--bg)]">
       <div className="container">
         <div className="text-center mb-14 flex flex-col items-center">
-          <span className="eyebrow">01 / The Problem</span>
-          <h2 className="h2 mt-4">Fragmented supply chains waste value.</h2>
+          <span className="eyebrow">{t("story.sec1.eyebrow")}</span>
+          <h2 className="h2 mt-4">{t("story.sec1.h2")}</h2>
           <p className="body mt-4 max-w-2xl mx-auto">
-            Traditional models rely on multiple disconnected intermediaries,
-            resulting in unnecessary movement, lost time, and unclear pricing.
+            {t("story.sec1.p")}
           </p>
         </div>
 
@@ -42,25 +42,24 @@ const Section01Problem = () => {
           <div className="grid md:grid-cols-3 gap-8 items-center">
             <div className="text-center">
               <Sprout className="mx-auto mb-3 text-[var(--primary)]" size={28} />
-              <span className="text-sm font-medium text-[var(--ink)]">Farmer</span>
-              <p className="meta mt-1">Grows the produce</p>
+              <span className="text-sm font-medium text-[var(--ink)]">{t("story.sec1.farmer")}</span>
+              <p className="meta mt-1">{t("story.sec1.grows")}</p>
             </div>
 
             <div className="hidden md:flex flex-col items-center gap-2 text-[var(--ink-muted)]">
               <div className="w-full h-px bg-[var(--line-strong)]" />
-              <span className="text-xs">3–4 intermediaries</span>
+              <span className="text-xs">{t("story.sec1.intermediaries")}</span>
               <div className="w-full h-px bg-[var(--line-strong)]" />
             </div>
 
             <div className="text-center">
               <Store className="mx-auto mb-3 text-[var(--ink-soft)]" size={28} />
-              <span className="text-sm font-medium text-[var(--ink)]">Buyer</span>
-              <p className="meta mt-1">Pays the markup</p>
+              <span className="text-sm font-medium text-[var(--ink)]">{t("story.sec1.buyer")}</span>
+              <p className="meta mt-1">{t("story.sec1.pays")}</p>
             </div>
           </div>
           <p className="state-body text-center mt-8 max-w-md mx-auto">
-            Each hand-off adds distance, delay, and cost — most of which never
-            reaches the farmer who grew the crop.
+            {t("story.sec1.footer")}
           </p>
         </div>
       </div>
@@ -69,21 +68,21 @@ const Section01Problem = () => {
 };
 
 const Section02Network = () => {
+  const { t } = useLanguage();
   const nodes = [
-    { icon: Sprout, title: "Farmers", desc: "Available produce, quantity, and precise locations are mapped in real time." },
-    { icon: Store, title: "Buyers", desc: "Order requirements, quality standards, and destinations are broadcast." },
-    { icon: Box, title: "Smart Hubs", desc: "Optional consolidation points activated only when they improve efficiency." },
-    { icon: Truck, title: "Logistics", desc: "Optimized routes and vehicle matching to minimize empty trips." },
+    { icon: Sprout, title: t("story.sec2.farmers"), desc: t("story.sec2.farmersDesc") },
+    { icon: Store, title: t("story.sec2.buyers"), desc: t("story.sec2.buyersDesc") },
+    { icon: Box, title: t("story.sec2.hubs"), desc: t("story.sec2.hubsDesc") },
+    { icon: Truck, title: t("story.sec2.logistics"), desc: t("story.sec2.logisticsDesc") },
   ];
   return (
     <section className="py-24 bg-[var(--surface)] border-y border-[var(--line)]">
       <div className="container max-w-5xl">
         <div className="text-center mb-14 flex flex-col items-center">
-          <span className="eyebrow">02 / The KisanSetu Network</span>
-          <h2 className="h2 mt-4">A living, connected ecosystem.</h2>
+          <span className="eyebrow">{t("story.sec2.eyebrow")}</span>
+          <h2 className="h2 mt-4">{t("story.sec2.h2")}</h2>
           <p className="body mt-4 max-w-2xl mx-auto">
-            Farmers, buyers, and logistics are no longer isolated. They operate
-            within a single intelligent network.
+            {t("story.sec2.p")}
           </p>
         </div>
 
@@ -106,8 +105,7 @@ const Section02Network = () => {
 };
 
 const Section03SupplyMeet = () => {
-  // Real, existing marketplace data (from the live demo listings) grounds the
-  // aggregation story in actual produce, prices, and locations.
+  const { t } = useLanguage();
   const farmers = [
     { name: "GreenValley Farms", place: "Nashik, MH", qty: "500 kg", price: "₹32/kg" },
     { name: "Sahaja Agro Co-op", place: "Pune, MH", qty: "700 kg", price: "₹30/kg" },
@@ -117,18 +115,17 @@ const Section03SupplyMeet = () => {
     <section className="py-24 bg-[var(--bg)]">
       <div className="container">
         <div className="text-center mb-14 flex flex-col items-center">
-          <span className="eyebrow">03 / Supply Meets Demand</span>
-          <h2 className="h2 mt-4">Fulfilling large orders through aggregation.</h2>
+          <span className="eyebrow">{t("story.sec3.eyebrow")}</span>
+          <h2 className="h2 mt-4">{t("story.sec3.h2")}</h2>
           <p className="body mt-4 max-w-2xl mx-auto">
-            When a buyer places an order, the system identifies the best
-            combination of nearby farmers to fulfill it.
+            {t("story.sec3.p")}
           </p>
         </div>
 
         <div className="max-w-4xl mx-auto border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-6 md:p-10">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div>
-              <span className="eyebrow mb-3">Available supply</span>
+              <span className="eyebrow mb-3">{t("story.sec3.availableSupply")}</span>
               <div className="divide-y divide-[var(--line)]">
                 {farmers.map((f, i) => (
                   <FadeIn key={i} delay={i * 0.08}>
@@ -158,17 +155,16 @@ const Section03SupplyMeet = () => {
                   <Store size={20} />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-[var(--ink)]">Buyer request</div>
-                  <div className="meta">Consolidated order</div>
+                  <div className="text-sm font-bold text-[var(--ink)]">{t("story.sec3.buyerRequest")}</div>
+                  <div className="meta">{t("story.sec3.consolidatedOrder")}</div>
                 </div>
               </div>
-              <div className="text-2xl font-black text-[var(--ink)]">1,520 kg Tomatoes</div>
+              <div className="text-2xl font-black text-[var(--ink)]">{t("story.sec3.orderTitle")}</div>
               <p className="state-body mt-2">
-                Combined from three nearby farms into a single, efficient
-                shipment — one route, one delivery.
+                {t("story.sec3.orderDesc")}
               </p>
               <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between">
-                <span className="meta">Combined value</span>
+                <span className="meta">{t("story.sec3.combinedValue")}</span>
                 <span className="text-lg font-bold text-[var(--primary)]">₹46,400</span>
               </div>
             </div>
@@ -180,25 +176,24 @@ const Section03SupplyMeet = () => {
 };
 
 const Section0405LogisticsEngine = () => {
+  const { t } = useLanguage();
   const [scenario, setScenario] = useState<"direct" | "hub">("direct");
 
   const rows = [
-    { label: "Available quantity", direct: "Sufficient (1 farm)", hub: "Scattered (3 farms)" },
-    { label: "Farmer proximity", direct: "Close to buyer", hub: "Close to hub" },
-    { label: "Vehicle capacity", direct: "Matches order", hub: "Requires consolidation" },
-    { label: "Consolidation opportunity", direct: "Not needed", hub: "High cost savings" },
+    { label: t("story.sec4.availQty"), direct: t("story.sec4.directQty"), hub: t("story.sec4.hubQty") },
+    { label: t("story.sec4.farmerProx"), direct: t("story.sec4.directProx"), hub: t("story.sec4.hubProx") },
+    { label: t("story.sec4.vehCap"), direct: t("story.sec4.directCap"), hub: t("story.sec4.hubCap") },
+    { label: t("story.sec4.consOpp"), direct: t("story.sec4.directOpp"), hub: t("story.sec4.hubOpp") },
   ];
 
   return (
     <section className="py-24 bg-[var(--surface)] border-y border-[var(--line)]">
       <div className="container">
         <div className="text-center mb-14 flex flex-col items-center">
-          <span className="eyebrow">04 & 05 / KisanSetu Thinks & Routes</span>
-          <h2 className="h2 mt-4">Intelligent logistics optimization.</h2>
+          <span className="eyebrow">{t("story.sec4.eyebrow")}</span>
+          <h2 className="h2 mt-4">{t("story.sec4.h2")}</h2>
           <p className="body mt-4 max-w-2xl mx-auto">
-            KisanSetu evaluates quantity, distance, capacity, and cost to
-            determine the most efficient fulfillment path. Hubs are an optional
-            strategic tool, not a mandatory step.
+            {t("story.sec4.p")}
           </p>
         </div>
 
@@ -209,13 +204,13 @@ const Section0405LogisticsEngine = () => {
               onClick={() => setScenario("direct")}
               className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${scenario === "direct" ? "bg-white shadow-sm text-[var(--ink)]" : "text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
             >
-              Scenario A: Direct Pickup
+              {t("story.sec4.scenarioA")}
             </button>
             <button
               onClick={() => setScenario("hub")}
               className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${scenario === "hub" ? "bg-white shadow-sm text-[var(--ink)]" : "text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
             >
-              Scenario B: Hub Consolidation
+              {t("story.sec4.scenarioB")}
             </button>
           </div>
         </div>
@@ -228,12 +223,12 @@ const Section0405LogisticsEngine = () => {
                 <Route size={20} />
               </div>
               <div>
-                <div className="text-sm font-bold text-[var(--ink)]">Recommended route</div>
-                <div className="meta">Based on current supply and demand</div>
+                <div className="text-sm font-bold text-[var(--ink)]">{t("story.sec4.recRoute")}</div>
+                <div className="meta">{t("story.sec4.recRouteSub")}</div>
               </div>
             </div>
             <div className="text-xl font-bold text-[var(--primary)] mb-4">
-              {scenario === "direct" ? "Direct Pickup" : "Hub Consolidation"}
+              {scenario === "direct" ? t("story.sec4.directPickup") : t("story.sec4.hubConsolidation")}
             </div>
             <div className="space-y-3">
               {rows.map((item, i) => (
@@ -256,13 +251,13 @@ const Section0405LogisticsEngine = () => {
                 <div className="w-11 h-11 bg-[var(--primary-soft)] border border-[var(--line-strong)] rounded-full flex items-center justify-center">
                   <Sprout className="text-[var(--primary)]" size={20} />
                 </div>
-                <span className="text-xs font-semibold text-[var(--ink)]">Farm</span>
+                <span className="text-xs font-semibold text-[var(--ink)]">{t("story.sec4.farm")}</span>
               </div>
 
               <div className="flex-1 mx-4 flex flex-col items-center gap-1">
                 <div className="w-full h-px bg-[var(--line-strong)]" />
                 <span className="meta">
-                  {scenario === "direct" ? "1 route" : "3 routes → 1 hub"}
+                  {scenario === "direct" ? t("story.sec4.oneRoute") : t("story.sec4.threeRoutes")}
                 </span>
               </div>
 
@@ -270,7 +265,7 @@ const Section0405LogisticsEngine = () => {
                 <div className="w-11 h-11 bg-[var(--primary-soft)] border border-[var(--line-strong)] rounded-full flex items-center justify-center">
                   <Store className="text-[var(--primary)]" size={20} />
                 </div>
-                <span className="text-xs font-semibold text-[var(--ink)]">Buyer</span>
+                <span className="text-xs font-semibold text-[var(--ink)]">{t("story.sec4.buyer")}</span>
               </div>
             </div>
 
@@ -279,25 +274,24 @@ const Section0405LogisticsEngine = () => {
                 <div className="w-12 h-12 bg-[var(--primary-strong)] text-white rounded-xl flex items-center justify-center">
                   <Box size={22} />
                 </div>
-                <span className="text-sm font-semibold text-[var(--ink)]">Optional Hub</span>
+                <span className="text-sm font-semibold text-[var(--ink)]">{t("story.sec4.optHub")}</span>
               </div>
             )}
 
             <p className="state-body text-center">
               {scenario === "direct"
-                ? "Direct pickup when it is efficient — one farm, one buyer, one trip."
-                : "Hub consolidation when it saves resources — combine small loads into one optimized shipment."}
+                ? t("story.sec4.directDesc")
+                : t("story.sec4.hubDesc")}
             </p>
           </div>
         </div>
 
         <div className="mt-14 text-center">
           <h3 className="text-xl md:text-2xl font-semibold text-[var(--ink)]">
-            Not every shipment needs a hub.
+            {t("story.sec4.notEvery")}
           </h3>
           <p className="text-lg text-[var(--ink-soft)] mt-3 max-w-2xl mx-auto">
-            KisanSetu chooses the route that makes the most sense. Direct pickup
-            when it is efficient. Hub-based consolidation when it saves resources.
+            {t("story.sec4.notEveryDesc")}
           </p>
         </div>
       </div>
@@ -306,15 +300,15 @@ const Section0405LogisticsEngine = () => {
 };
 
 const Section06SmartHub = () => {
+  const { t } = useLanguage();
   return (
     <section className="py-24 bg-[var(--bg)]">
       <div className="container max-w-4xl">
         <div className="text-center mb-14 flex flex-col items-center">
-          <span className="eyebrow">06 / Strategic Consolidation</span>
-          <h2 className="h2 mt-4">Hubs multiply efficiency.</h2>
+          <span className="eyebrow">{t("story.sec6.eyebrow")}</span>
+          <h2 className="h2 mt-4">{t("story.sec6.h2")}</h2>
           <p className="body mt-4 max-w-2xl mx-auto">
-            When activated by the logistics engine, hubs combine small local
-            supplies into a single, optimized long-distance shipment.
+            {t("story.sec6.p")}
           </p>
         </div>
 
@@ -337,14 +331,14 @@ const Section06SmartHub = () => {
           <div className="bg-[var(--primary-strong)] text-white px-8 py-4 rounded-xl flex items-center justify-center gap-4 max-w-md mx-auto">
             <Box size={26} className="text-[var(--accent)]" />
             <div>
-              <div className="text-[10px] uppercase tracking-wider opacity-80">Smart Hub</div>
-              <div className="text-xl font-bold">1,000 kg consolidated</div>
+              <div className="text-[10px] uppercase tracking-wider opacity-80">{t("story.sec6.smartHub")}</div>
+              <div className="text-xl font-bold">{t("story.sec6.consolidated1000")}</div>
             </div>
           </div>
 
           <div className="mt-8 flex items-center justify-center">
             <div className="bg-[var(--primary-soft)] border border-[var(--primary)] text-[var(--primary)] px-6 py-3 rounded-full font-bold flex items-center gap-2">
-              <Truck size={18} /> 1 Optimized Shipment
+              <Truck size={18} /> {t("story.sec6.optShipment")}
             </div>
           </div>
         </div>
@@ -354,44 +348,44 @@ const Section06SmartHub = () => {
 };
 
 const Section07DataStory = () => {
+  const { t } = useLanguage();
   return (
     <section className="py-24 bg-[var(--surface)] border-y border-[var(--line)]">
       <div className="container">
         <div className="text-center mb-14 flex flex-col items-center">
-          <span className="eyebrow">07 / Data Story</span>
-          <h2 className="h2 mt-4">The value of a direct connection.</h2>
+          <span className="eyebrow">{t("story.sec7.eyebrow")}</span>
+          <h2 className="h2 mt-4">{t("story.sec7.h2")}</h2>
           <p className="body mt-4 max-w-2xl mx-auto">
-            Fewer intermediaries means more of the market price reaches the
-            farmer who grew the crop.
+            {t("story.sec7.p")}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {/* Chart 1 */}
           <FadeIn className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6">
-            <h3 className="h3 mb-1">Value Retention</h3>
-            <p className="meta mb-6">Share of market price reaching the farmer</p>
+            <h3 className="h3 mb-1">{t("story.sec7.valRet")}</h3>
+            <p className="meta mb-6">{t("story.sec7.valRetSub")}</p>
             <div className="flex h-40 items-end gap-8 justify-center">
               <div className="w-24 flex flex-col justify-end items-center gap-2">
                 <div className="w-full bg-[var(--line-strong)] rounded-t-lg" style={{ height: "40%" }} />
-                <span className="text-xs text-[var(--ink-soft)] text-center leading-tight font-medium">Traditional<br />model</span>
+                <span className="text-xs text-[var(--ink-soft)] text-center leading-tight font-medium">{t("story.sec7.tradModel")}</span>
               </div>
               <div className="w-24 flex flex-col justify-end items-center gap-2">
                 <div className="w-full bg-[var(--primary)] rounded-t-lg" style={{ height: "85%" }} />
-                <span className="text-xs font-bold text-[var(--ink)] text-center leading-tight">KisanSetu<br />direct</span>
+                <span className="text-xs font-bold text-[var(--ink)] text-center leading-tight">{t("story.sec7.directModel")}</span>
               </div>
             </div>
-            <p className="meta mt-6 text-center">Illustrative comparison of typical margin distribution</p>
+            <p className="meta mt-6 text-center">{t("story.sec7.marginComp")}</p>
           </FadeIn>
 
           {/* Chart 2 */}
           <FadeIn delay={0.1} className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6">
-            <h3 className="h3 mb-1">Logistics Efficiency</h3>
-            <p className="meta mb-6">Empty trips and redundant mileage</p>
+            <h3 className="h3 mb-1">{t("story.sec7.logEff")}</h3>
+            <p className="meta mb-6">{t("story.sec7.logEffSub")}</p>
             <div className="space-y-6 mt-4">
               <div>
                 <div className="flex justify-between text-xs mb-2 text-[var(--ink-soft)]">
-                  <span>Unoptimized transport</span>
+                  <span>{t("story.sec7.unopt")}</span>
                 </div>
                 <div className="h-4 bg-[var(--line)] rounded-full overflow-hidden">
                   <div className="h-full bg-[var(--error)] opacity-60" style={{ width: "85%" }} />
@@ -399,14 +393,14 @@ const Section07DataStory = () => {
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-2 font-semibold text-[var(--ink)]">
-                  <span>KisanSetu engine</span> <span className="text-[var(--primary)]">Reduced</span>
+                  <span>{t("story.sec7.ksEngine")}</span> <span className="text-[var(--primary)]">{t("story.sec7.reduced")}</span>
                 </div>
                 <div className="h-4 bg-[var(--line)] rounded-full overflow-hidden">
                   <div className="h-full bg-[var(--primary)]" style={{ width: "35%" }} />
                 </div>
               </div>
             </div>
-            <p className="meta mt-6 text-center">Illustrative comparison of route efficiency</p>
+            <p className="meta mt-6 text-center">{t("story.sec7.routeComp")}</p>
           </FadeIn>
         </div>
       </div>
@@ -429,14 +423,14 @@ export default function Story() {
             {t("story.h1a")} <em className="text-[var(--primary)] not-italic">{t("story.h1b")}</em>
           </h1>
           <p className="text-lg md:text-xl text-[var(--ink-soft)] max-w-2xl mx-auto">
-            Connecting farmers, markets & smarter logistics.
+            {t("story.sub")}
           </p>
           <div className="row justify-center" style={{ marginTop: 28 }}>
             <Link className="btn btn-primary" href="/marketplace">
-              Explore the marketplace <ArrowRight size={15} />
+              {t("story.exploreMarketplace")} <ArrowRight size={15} />
             </Link>
             <Link className="btn btn-secondary" href="/market-match">
-              Find your market match
+              {t("story.findMatch")}
             </Link>
           </div>
         </div>
@@ -452,21 +446,20 @@ export default function Story() {
       {/* 08 / Final CTA */}
       <section className="py-24 bg-[var(--primary-strong)] text-white text-center">
         <FadeIn className="max-w-3xl mx-auto px-6">
-          <span className="eyebrow text-[var(--accent)] mb-6 justify-center">The Bigger Picture</span>
+          <span className="eyebrow text-[var(--accent)] mb-6 justify-center">{t("story.sec8.eyebrow")}</span>
           <h2
             className="display text-3xl md:text-4xl mb-6"
           >
-            From Farm to Market, Connected.
+            {t("story.sec8.h2")}
           </h2>
           <p className="text-lg text-white/80 mb-10 max-w-xl mx-auto">
-            KisanSetu brings farmers, buyers, and intelligent logistics together
-            in one connected ecosystem.
+            {t("story.sec8.p")}
           </p>
           <Link
             href="/market-match"
             className="btn btn-lg bg-white text-[var(--primary-strong)] hover:bg-[var(--bg-subtle)] border-none"
           >
-            Find your market match <ArrowRight size={18} className="ml-2" />
+            {t("story.findMatch")} <ArrowRight size={18} className="ml-2" />
           </Link>
         </FadeIn>
       </section>

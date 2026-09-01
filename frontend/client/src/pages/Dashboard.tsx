@@ -3,7 +3,6 @@
  *   - Active listings for the logged-in farmer
  *   - Price recommendation for the selected listing
  *   - Buyer matching scores (real API)
- *   - (Live operations placeholder – can be extended with orders endpoint)
  * The UI falls back to a friendly empty state when no data is available.
  */
 import { useEffect, useState } from "react";
@@ -25,24 +24,19 @@ import {
   ShieldCheck,
   Sprout,
   UsersRound,
-  X,
-  Zap,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import LanguageSelector from "@/components/LanguageSelector";
 import {
   fetchListings,
   fetchMatches,
   fetchPriceRecommendation,
   ApiError,
 } from "@/lib/api";
-
-const navItems = [
-  { label: "Overview", icon: LayoutDashboard },
-  { label: "Marketplace", icon: Boxes },
-  { label: "My listings", icon: Sprout },
-  { label: "Orders", icon: PackageCheck },
-  { label: "Routes", icon: MapPinned },
-];
 
 function SignalBars({ value, tone = "green" }: { value: number; tone?: string }) {
   return (
@@ -57,7 +51,9 @@ function SignalBars({ value, tone = "green" }: { value: number; tone?: string })
 
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
-  const [activeNav, setActiveNav] = useState("Overview");
+  const { t, lang } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
+  const [activeNav, setActiveNav] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
   const [listing, setListing] = useState(null as any);
@@ -66,9 +62,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const navItems = [
+    { id: "overview", label: t("dash.overview"), icon: LayoutDashboard },
+    { id: "marketplace", label: t("dash.marketplace"), icon: Boxes },
+    { id: "mylistings", label: t("dash.myListings"), icon: Sprout },
+    { id: "orders", label: t("dash.orders"), icon: PackageCheck },
+    { id: "routes", label: t("dash.routes"), icon: MapPinned },
+  ];
+
+  const activeNavLabel = navItems.find((n) => n.id === activeNav)?.label || t("dash.overview");
+
   const action = (msg: string) => toast(msg);
 
-  // Load dashboard data when authenticated
   useEffect(() => {
     const loadData = async () => {
       if (!isAuthenticated) {
@@ -76,35 +81,32 @@ export default function Dashboard() {
         return;
       }
       try {
-        // 1️⃣ Get active listings (default limit 10)
         const listings = await fetchListings({ limit: 10 });
         const active = listings.find((l) => l.is_active);
         if (!active) {
-          setError("No active listings found. Create a listing first.");
+          setError(t("dash.noListings"));
           return;
         }
         setListing(active);
-        // 2️⃣ Price recommendation for the selected listing
         const price = await fetchPriceRecommendation(active.id);
         setPriceRec(price);
-        // 3️⃣ Buyer matches (max 5)
         const matchResults = await fetchMatches(active.id, 5);
         setMatches(matchResults);
       } catch (err) {
         if (err instanceof ApiError) setError(err.message);
-        else setError("Failed to load dashboard data.");
+        else setError(t("dash.failed"));
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, t]);
 
   if (loading) {
     return (
       <div className="dash-shell">
         <div className="dash-body">
-          <p className="state">Loading dashboard…</p>
+          <p className="state">{t("dash.loading")}</p>
         </div>
       </div>
     );
@@ -122,8 +124,9 @@ export default function Dashboard() {
     );
   }
 
-  // Helper to format buyer id for display (shortened)
   const shortBuyerId = (id: string) => id.slice(0, 6) + "…";
+
+  const dateLocale = lang === "hi" ? "hi-IN" : lang === "bn" ? "bn-BD" : "en-US";
 
   return (
     <div className="dash-shell">
@@ -132,20 +135,31 @@ export default function Dashboard() {
           <button
             className="btn btn-ghost btn-sm dash-menu-btn"
             onClick={() => setSidebarOpen(true)}
-            aria-label="Open navigation"
+            aria-label={t("common.openMenu")}
           >
             <Menu size={18} />
           </button>
           <div className="breadcrumb">
-            <span>Workspace</span>
+            <span>{t("dash.workspace")}</span>
             <ChevronRight size={14} />
-            <strong>{activeNav}</strong>
+            <strong>{activeNavLabel}</strong>
           </div>
         </div>
-        <div className="dash-topbar-right">
+        <div className="dash-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <LanguageSelector variant="dark" />
+          {toggleTheme && (
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+              title={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
           <button
             className="btn btn-ghost btn-sm"
-            onClick={() => action("You are all caught up.")}
+            onClick={() => action(t("dash.dataUpdates"))}
             aria-label="Notifications"
           >
             <Bell size={18} />
@@ -158,41 +172,41 @@ export default function Dashboard() {
 
       <div className="dash-body">
         <aside className={`dash-sidebar ${sidebarOpen ? "open" : ""}`}>
-          <div className="dash-nav-label">Workspace</div>
+          <div className="dash-nav-label">{t("dash.workspace")}</div>
           <nav className="dash-nav" aria-label="Primary navigation">
-            {navItems.map(({ label, icon: Icon }) => (
+            {navItems.map(({ id, label, icon: Icon }) => (
               <button
-                key={label}
-                className={`dash-nav-item ${activeNav === label ? "active" : ""}`}
-                onClick={() => { setActiveNav(label); setSidebarOpen(false); }}
+                key={id}
+                className={`dash-nav-item ${activeNav === id ? "active" : ""}`}
+                onClick={() => { setActiveNav(id); setSidebarOpen(false); }}
               >
                 <Icon size={18} />
                 <span>{label}</span>
               </button>
             ))}
           </nav>
-          <div className="dash-nav-label">Manage</div>
+          <div className="dash-nav-label">{t("dash.manage")}</div>
           <nav className="dash-nav" aria-label="Manage navigation">
             <button className="dash-nav-item" onClick={() => action("Team management is coming next.")}>
               <UsersRound size={18} />
-              <span>Team</span>
+              <span>{t("dash.team")}</span>
             </button>
             <button className="dash-nav-item" onClick={() => action("Settings are ready for the next release.")}>
               <Settings2 size={18} />
-              <span>Settings</span>
+              <span>{t("dash.settings")}</span>
             </button>
           </nav>
           <div className="dash-sidebar-foot">
             <div className="season-note">
               <CloudSun size={18} />
               <div>
-                <strong>Rabi season</strong>
-                <span>Day 42 of 120</span>
+                <strong>{t("dash.rabiSeason")}</strong>
+                <span>{t("dash.seasonDay")}</span>
               </div>
             </div>
             <div className="season-progress"><span /></div>
             <button className="text-link" onClick={() => action("Help is on the way.")}>
-              <CircleHelp size={16} /> Need a hand?
+              <CircleHelp size={16} /> {t("dash.needHand")}
             </button>
           </div>
         </aside>
@@ -200,14 +214,14 @@ export default function Dashboard() {
         <main className="dash-main">
           <div className="dash-head">
             <div>
-              <p className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · Live market</p>
-              <h1>Good morning{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}.</h1>
+              <p className="eyebrow">{new Date().toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · {t("dash.liveMarket")}</p>
+              <h1>{t("dash.goodMorning")}{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}.</h1>
               <p className="state-body" style={{ marginTop: 6 }}>
-                Here’s where your supply can move next.
+                {t("dash.supplyNext")}
               </p>
             </div>
             <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
-              <FilePlus2 size={17} /> New listing
+              <FilePlus2 size={17} /> {t("dash.newListing")}
             </button>
           </div>
 
@@ -220,18 +234,18 @@ export default function Dashboard() {
                   <strong>
                     {priceRec.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}
                   </strong>
-                  <span>/kg recommended</span>
+                  <span>/kg {t("dash.recPrice")}</span>
                 </div>
                 <p className="intel-recommended">
-                  {priceRec.factors?.length ? `Based on ${priceRec.factors.join(", ")}.` : "Price band calculated from market data."}
+                  {priceRec.factors?.length ? `${t("dash.basedOn")} ${priceRec.factors.join(", ")}.` : t("dash.priceBand")}
                 </p>
                 <div className="intel-factors">
-                  <span className="badge badge-primary">Confidence {priceRec.confidence ?? "?"}</span>
+                  <span className="badge badge-primary">{t("dash.confidence")} {priceRec.confidence ?? "?"}</span>
                 </div>
               </div>
             ) : (
               <div className="card intel-card">
-                <p>No price recommendation available.</p>
+                <p>{t("dash.noPriceRec")}</p>
               </div>
             )}
           </section>
@@ -240,39 +254,39 @@ export default function Dashboard() {
           <section className="dash-section">
             <div className="dash-section-head">
               <div>
-                <span className="eyebrow">Decision layer</span>
-                <h2>What should move next?</h2>
+                <span className="eyebrow">{t("dash.decisionLayer")}</span>
+                <h2>{t("dash.whatMove")}</h2>
               </div>
-              <button className="text-link" onClick={() => action("All opportunities are already ranked by fit.")}>View all <ArrowUpRight size={15} /></button>
+              <button className="text-link" onClick={() => action("All opportunities are already ranked by fit.")}>{t("dash.viewAll")} <ArrowUpRight size={15} /></button>
             </div>
             {listing && (
               <div className="card">
                 <div className="recommendation-top">
                   <div className="crop-badge">{listing.crop_name?.[0] ?? "C"}</div>
                   <div className="recommendation-title">
-                    <div className="card-label">Recommended listing</div>
+                    <div className="card-label">{t("dash.recListing")}</div>
                     <h3>{listing.crop_name} <span>· {listing.quality_grade ?? ""}</span></h3>
-                    <p>{listing.pickup_location ?? "Location TBA"}</p>
+                    <p>{listing.pickup_location ?? t("marketplace.locationTBA")}</p>
                   </div>
-                  <span className="badge badge-primary">High opportunity</span>
+                  <span className="badge badge-primary">{t("dash.highOpp")}</span>
                 </div>
                 <div className="recommendation-metrics">
-                  <div><span>Available</span><strong>{listing.quantity_kg} kg</strong></div>
-                  <div><span>Recommended price</span><strong>{priceRec?.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}</strong></div>
+                  <div><span>{t("dash.available")}</span><strong>{listing.quantity_kg} kg</strong></div>
+                  <div><span>{t("dash.recommendedPrice")}</span><strong>{priceRec?.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}</strong></div>
                 </div>
                 <div className="recommendation-bottom">
                   <div className="reason-copy">
                     <ShieldCheck size={16} />
-                    <span><b>Why this price?</b> Real‑time market data informs the band.</span>
+                    <span><b>{t("dash.whyPrice")}</b> {t("dash.whyPriceDesc")}</span>
                     <button className="why-button" onClick={() => setShowWhy(!showWhy)}>
-                      {showWhy ? "Hide" : "See why"}
+                      {showWhy ? t("dash.hide") : t("dash.seeWhy")}
                     </button>
                   </div>
                 </div>
                 {showWhy && (
                   <div className="why-panel">
-                    <div><strong>Confidence</strong><span>{priceRec?.confidence ?? "?"}</span></div>
-                    <div><strong>Factors</strong><span>{priceRec?.factors?.join(", ") ?? "—"}</span></div>
+                    <div><strong>{t("dash.confidence")}</strong><span>{priceRec?.confidence ?? "?"}</span></div>
+                    <div><strong>{t("dash.factors")}</strong><span>{priceRec?.factors?.join(", ") ?? "—"}</span></div>
                   </div>
                 )}
               </div>
@@ -283,17 +297,17 @@ export default function Dashboard() {
           <section className="dash-section">
             <div className="dash-section-head">
               <div>
-                <span className="eyebrow">Buyer matching</span>
-                <h2>Best matches for your supply</h2>
+                <span className="eyebrow">{t("dash.buyerMatching")}</span>
+                <h2>{t("dash.bestMatches")}</h2>
               </div>
-              <button className="text-link" onClick={() => action("Matching preferences opened.")}>Tune matching <Settings2 size={14} /></button>
+              <button className="text-link" onClick={() => action("Matching preferences opened.")}>{t("dash.tuneMatching")} <Settings2 size={14} /></button>
             </div>
             <div className="card">
               {matches.map((m) => (
                 <div className="match-row" key={m.buyer_id}>
                   <div className="match-avatar">{shortBuyerId(m.buyer_id)}</div>
                   <div className="match-main"><strong>{shortBuyerId(m.buyer_id)}</strong><span>{m.explanation?.distance_km ? `${m.explanation.distance_km} km` : ""}</span></div>
-                  <div className="match-cell"><span>Score</span><strong>{Math.round(m.score * 100)}%</strong></div>
+                  <div className="match-cell"><span>{t("dash.score")}</span><strong>{Math.round(m.score * 100)}%</strong></div>
                   <div className="match-score">
                     <SignalBars value={Math.round(m.score * 100)} tone="green" />
                   </div>
@@ -304,7 +318,7 @@ export default function Dashboard() {
               ))}
               <div style={{ padding: 16, borderTop: "1px solid var(--line)" }}>
                 <button className="btn btn-secondary btn-block" onClick={() => action("Marketplace opened with matches.")}>
-                  Explore marketplace <ArrowUpRight size={15} />
+                  {t("dash.exploreMarketplace")} <ArrowUpRight size={15} />
                 </button>
               </div>
             </div>
@@ -314,22 +328,22 @@ export default function Dashboard() {
           <section className="dash-section">
             <div className="dash-section-head">
               <div>
-                <span className="eyebrow">In motion</span>
-                <h2>Live operations</h2>
+                <span className="eyebrow">{t("dash.inMotion")}</span>
+                <h2>{t("dash.liveOps")}</h2>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => action("Operations view refreshed.")} aria-label="Refresh operations">
                 <BarChart3 size={17} />
               </button>
             </div>
             <div className="card">
-              <p className="state-body">No active shipments at the moment.</p>
+              <p className="state-body">{t("dash.noActiveShipments")}</p>
             </div>
           </section>
 
           <footer className="footer-note">
-            <span><Sprout size={14} /> Built for the people who grow with the people who need.</span>
+            <span><Sprout size={14} /> {t("dash.footerBuilt")}</span>
             <span>
-              Data updates on demand. <button className="text-link" onClick={() => action("System status: all services operational.")}>System status</button>
+              {t("dash.dataUpdates")} <button className="text-link" onClick={() => action("System status: all services operational.")}>{t("dash.systemStatus")}</button>
             </span>
           </footer>
         </main>

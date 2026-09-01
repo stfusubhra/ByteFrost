@@ -1,20 +1,23 @@
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function NotFound() {
+  const { t } = useLanguage();
+
   return (
-    <PublicLayout eyebrow="404 · Page Not Found">
+    <PublicLayout eyebrow={t("notfound.eyebrow")}>
       <section className="page-hero">
         <div className="container">
-          <span className="eyebrow">Error</span>
-          <h1>404. Route not found.</h1>
+          <span className="eyebrow">{t("marketplace.backendError")}</span>
+          <h1>{t("notfound.h1")}</h1>
           <p>
-            The page or route you requested does not exist or may have moved.
+            {t("notfound.p")}
           </p>
           <div style={{ marginTop: 28 }}>
             <Link className="btn btn-primary" href="/">
-              Return to home <ArrowRight size={14} />
+              {t("notfound.home")} <ArrowRight size={14} />
             </Link>
           </div>
         </div>

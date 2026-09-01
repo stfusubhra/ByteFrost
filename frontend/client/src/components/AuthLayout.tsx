@@ -1,22 +1,25 @@
 /* KisanSetu auth shell: a quiet, full-page two-column layout.
    Left: editorial agricultural visual + restrained brand copy.
-   Right: the focused authentication form.
-   No marketing navbar, no footer, no decorative cards. */
+   Right: the focused authentication form. */
 import { Link } from "wouter";
 import { Sprout } from "lucide-react";
-
-const AUTH_IMAGE =
-  "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600&q=80";
+import LanguageSelector from "./LanguageSelector";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function AuthLayout({
   children,
-  tagline = "Connecting the people who grow with the people who need.",
-  support = "Direct markets. Better decisions. Smarter movement.",
+  tagline,
+  support,
 }: {
   children: React.ReactNode;
   tagline?: string;
   support?: string;
 }) {
+  const { t } = useLanguage();
+
+  const displayTagline = tagline || t("signup.tagline");
+  const displaySupport = support || t("signup.support");
+
   return (
     <div className="auth-shell">
       {/* Left — editorial visual + brand */}
@@ -29,14 +32,17 @@ export default function AuthLayout({
             <span>KisanSetu</span>
           </Link>
           <div className="auth-visual-copy">
-            <p className="auth-visual-tagline">{tagline}</p>
-            <p className="auth-visual-support">{support}</p>
+            <p className="auth-visual-tagline">{displayTagline}</p>
+            <p className="auth-visual-support">{displaySupport}</p>
           </div>
         </div>
       </aside>
 
       {/* Right — the form */}
       <main className="auth-panel">
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "16px 24px 0" }}>
+          <LanguageSelector variant="dark" />
+        </div>
         <div className="auth-panel-inner">
           <Link href="/" className="auth-mobile-wordmark" aria-label="KisanSetu home">
             <Sprout size={16} />

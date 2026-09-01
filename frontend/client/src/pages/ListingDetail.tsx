@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { fetchListing, Listing } from "@/lib/api";
-import { createOrder, OrderCreate, OrderItemCreate } from "@/lib/api";
+import { createOrder, OrderCreate } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { ArrowRight, MapPin, Loader2, CheckCircle } from "lucide-react";
 
 export default function ListingDetail() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,15 +15,12 @@ export default function ListingDetail() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
-  const [toast, setToast] = useState<string>(""); // simple toast message
+  const [toast, setToast] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(0);
   const [notes, setNotes] = useState<string>("");
 
-  // Helper to compute seller name and image similar to Marketplace mapping
-  const getSellerName = (listing: Listing): string => {
-    // Since the API does not include farm_name/producer_name, fallback to verified producer
-    // In a real implementation, these might come from a joined user relation.
-    return "Verified producer";
+  const getSellerName = (_listing: Listing): string => {
+    return t("listing.verifiedProducer");
   };
 
   const imageMap: Record<string, string> = {
@@ -35,7 +34,6 @@ export default function ListingDetail() {
     return imageMap[crop] || imageMap.Default;
   };
 
-  // Fetch listing on mount and when id changes
   useEffect(() => {
     let isMounted = true;
     const loadListing = async () => {
@@ -46,12 +44,12 @@ export default function ListingDetail() {
         const data = await fetchListing(id);
         if (isMounted) {
           setListing(data);
-          setQuantity(data.quantity_kg); // default quantity to available
+          setQuantity(data.quantity_kg);
         }
       } catch (err: any) {
         if (isMounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load listing"
+            err instanceof Error ? err.message : t("dash.failed")
           );
         }
       } finally {
@@ -63,7 +61,7 @@ export default function ListingDetail() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, t]);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -104,10 +102,10 @@ export default function ListingDetail() {
 
   if (loading) {
     return (
-      <PublicLayout eyebrow="Loading…">
+      <PublicLayout eyebrow={t("listing.loading")}>
         <div className="container stack" style={{ alignItems: "center", paddingTop: 40, paddingBottom: 40 }}>
           <Loader2 size={32} />
-          <p className="state-body">Loading listing details…</p>
+          <p className="state-body">{t("listing.loading")}</p>
         </div>
       </PublicLayout>
     );
@@ -115,12 +113,12 @@ export default function ListingDetail() {
 
   if (error) {
     return (
-      <PublicLayout eyebrow="Error">
+      <PublicLayout eyebrow={t("marketplace.backendError")}>
         <div className="container stack">
-          <div className="badge badge-error">Error</div>
+          <div className="badge badge-error">{t("marketplace.backendError")}</div>
           <p className="state-body">{error}</p>
           <Link href="/" className="btn btn-secondary">
-            ← Back to Home
+            {t("listing.backHome")}
           </Link>
         </div>
       </PublicLayout>
@@ -129,12 +127,12 @@ export default function ListingDetail() {
 
   if (!listing) {
     return (
-      <PublicLayout eyebrow="Not Found">
+      <PublicLayout eyebrow={t("notfound.eyebrow")}>
         <div className="container stack">
-          <div className="badge badge-error">Not Found</div>
-          <p className="state-body">No listing with ID {id} found.</p>
+          <div className="badge badge-error">{t("listing.notFound")}</div>
+          <p className="state-body">{t("listing.notFound")}: {id}</p>
           <Link href="/marketplace" className="btn btn-secondary">
-            ← Back to Marketplace
+            {t("listing.backMarketplace")}
           </Link>
         </div>
       </PublicLayout>
@@ -142,7 +140,7 @@ export default function ListingDetail() {
   }
 
   return (
-    <PublicLayout eyebrow="Listing Detail">
+    <PublicLayout eyebrow={`${listing.crop_name} / KisanSetu`}>
       {toast && <div className="public-toast">{toast}</div>}
       <section className="container">
         <div className="row" style={{ gap: 16, alignItems: "start" }}>
@@ -153,7 +151,7 @@ export default function ListingDetail() {
               alt={`${listing.crop_name} listing`}
             />
             <span className="badge badge-neutral">
-              {listing.is_active ? "Ready to move" : "Inactive"}
+              {listing.is_active ? t("listing.readyToMove") : t("listing.inactive")}
             </span>
           </div>
 
@@ -161,32 +159,32 @@ export default function ListingDetail() {
           <div className="detail-content">
             <h1>{listing.crop_name}</h1>
             <div className="row" style={{ gap: 8, marginTop: 8 }}>
-              <span className="badge badge-primary">{listing.quality_grade || "N/A"} Grade</span>
+              <span className="badge badge-primary">{listing.quality_grade || "Grade A"}</span>
               <span className="row" style={{ gap: 4 }}>
-                <MapPin size={14} /> {listing.pickup_location || "Location TBA"}
+                <MapPin size={14} /> {listing.pickup_location || t("marketplace.locationTBA")}
               </span>
             </div>
             <p className="state-body" style={{ marginTop: 12, color: "var(--ink-soft)" }}>
-              <strong>Seller:</strong> {getSellerName(listing)}
+              <strong>{t("listing.seller")}</strong> {getSellerName(listing)}
             </p>
 
             <div className="detail-stats">
               <div className="detail-stat">
-                <small>Quantity Available</small><strong>{listing.quantity_kg.toLocaleString()} kg</strong>
+                <small>{t("listing.qtyAvailable")}</small><strong>{listing.quantity_kg.toLocaleString()} kg</strong>
               </div>
               <div className="detail-stat">
-                <small>Price per kg</small><strong>{listing.price_per_kg !== null ? `₹${listing.price_per_kg.toFixed(2)}/kg` : "Price on request"}</strong>
+                <small>{t("listing.pricePerKg")}</small><strong>{listing.price_per_kg !== null ? `₹${listing.price_per_kg.toFixed(2)}/kg` : t("marketplace.priceOnRequest")}</strong>
               </div>
               <div className="detail-stat">
-                <small>Harvest Date</small><strong>{listing.harvest_date || "TBA"}</strong>
+                <small>{t("listing.harvestDate")}</small><strong>{listing.harvest_date || t("marketplace.harvestDateTBA")}</strong>
               </div>
             </div>
 
             {/* Order Form */}
             <div className="detail-order">
-              <h2>Place Order</h2>
+              <h2>{t("listing.placeOrder")}</h2>
               <p className="state-body" style={{ color: "var(--ink-soft)", marginBottom: 12 }}>
-                Enter the quantity you wish to purchase (max {listing.quantity_kg.toLocaleString()} kg).
+                {t("listing.orderDesc")} (max {listing.quantity_kg.toLocaleString()} kg).
               </p>
 
               {orderError && (
@@ -197,7 +195,7 @@ export default function ListingDetail() {
 
               <div className="row" style={{ gap: 12, marginBottom: 16 }}>
                 <label className="row" style={{ gap: 4, alignItems: "center" }}>
-                  <span>Quantity (kg)</span>
+                  <span>{t("listing.quantityKg")}</span>
                   <input
                     type="number"
                     min={0.1}
@@ -214,7 +212,7 @@ export default function ListingDetail() {
 
               <div className="row" style={{ gap: 12, marginBottom: 16 }}>
                 <label className="stack" style={{ gap: 4, alignItems: "start" }}>
-                  <span>Notes (optional)</span>
+                  <span>{t("listing.notes")}</span>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -232,19 +230,19 @@ export default function ListingDetail() {
                 {orderLoading ? (
                   <>
                     <Loader2 size={16} />
-                    <span> Placing order…</span>
+                    <span> {t("listing.placingOrder")}</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle size={16} />
-                    <span> Place Order</span>
+                    <span> {t("listing.placeOrder")}</span>
                   </>
                 )}
               </button>
 
               {orderSuccess && (
                 <div className="badge badge-success" style={{ marginTop: 12 }}>
-                  Order placed successfully! Check your dashboard for details.
+                  {t("listing.orderSuccess")}
                 </div>
               )}
             </div>
@@ -255,10 +253,10 @@ export default function ListingDetail() {
       {/* Action buttons */}
       <div className="container detail-actions" style={{ justifyContent: "center" }}>
         <Link href="/marketplace" className="btn btn-ghost">
-          ← Back to Marketplace
+          {t("listing.backMarketplace")}
         </Link>
         <Link href={`/market-match`} className="btn btn-secondary">
-          Find Market Match <ArrowRight size={15} />
+          {t("listing.findMatch")} <ArrowRight size={15} />
         </Link>
       </div>
     </PublicLayout>

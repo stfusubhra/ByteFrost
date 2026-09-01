@@ -9,9 +9,10 @@
  */
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
 import { fetchListings, ApiError } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * ListingImage renders the listing photo with a clean KisanSetu-styled
@@ -52,28 +53,25 @@ function ListingImage({
 
 /**
  * Shape of a listing as used by the Marketplace UI.
- * This is a view-model that maps from the backend Listing schema
- * to the fields needed by the card/detail rendering.
  */
 type MarketListing = {
-  id: string; // UUID from backend
-  crop: string; // crop_name
-  grade: string; // quality_grade or "N/A"
-  place: string; // pickup_location
-  quantity: string; // quantity_kg formatted
-  price: string; // price_per_kg formatted or "Price on request"
-  freshness: string; // derived from created_at or harvest_date
-  route: string; // placeholder for demo; real route would need buyer location
-  match: string; // placeholder for demo; real match would come from matching endpoint
-  image: string; // fallback image based on crop type
-  status: string; // is_active ? "Ready to move" : "Inactive"
-  harvest: string; // derived or placeholder
-  seller: string; // seller identity (farm / producer name)
+  id: string;
+  crop: string;
+  grade: string;
+  place: string;
+  quantity: string;
+  price: string;
+  freshness: string;
+  route: string;
+  match: string;
+  image: string;
+  status: string;
+  harvest: string;
+  seller: string;
 };
 
 /**
  * Fallback demo data used ONLY when the backend is unreachable.
- * This is clearly labeled as demo data in the UI to maintain honesty.
  */
 const DEMO_LISTINGS: MarketListing[] = [
   {
@@ -138,35 +136,25 @@ const DEMO_LISTINGS: MarketListing[] = [
   },
 ];
 
-/**
- * Maps a backend Listing to the Marketplace UI shape.
- * This keeps the UI rendering logic stable while isolating
- * backend schema changes to this adapter.
- */
 function mapBackendListing(listing: any): MarketListing {
-  // Determine image based on crop type (simple heuristic)
   const imageMap: Record<string, string> = {
     Tomatoes: "/manus-storage/kisan-story-tomatoes_128fdb50.jpg",
     "Harvest crates": "/manus-storage/kisan-story-crates_8ebf1895.jpg",
     "Fresh produce": "/manus-storage/kisan-story-waiting_e345d9da.jpg",
     Default: "/manus-storage/kisan-story-farmer_581c0db7.jpg",
   };
-  const image =
-    imageMap[listing.crop_name] || imageMap.Default;
+  const image = imageMap[listing.crop_name] || imageMap.Default;
 
-  // Format quantity with commas
   const quantity =
     listing.quantity_kg !== null && listing.quantity_kg !== undefined
       ? `${listing.quantity_kg.toLocaleString()} kg`
       : "Quantity TBA";
 
-  // Format price
   const price =
     listing.price_per_kg !== null && listing.price_per_kg !== undefined
       ? `₹${listing.price_per_kg.toFixed(2)}/kg`
       : "Price on request";
 
-  // Freshness: simple heuristic based on creation time
   const freshness =
     listing.harvest_date !== null
       ? "Harvested recently"
@@ -180,8 +168,8 @@ function mapBackendListing(listing: any): MarketListing {
     quantity,
     price,
     freshness,
-    route: "Route TBA", // Would need buyer location for real calculation
-    match: "Match TBA", // Would come from matching endpoint for a specific buyer
+    route: "Route TBA",
+    match: "Match TBA",
     image,
     status: listing.is_active ? "Ready to move" : "Inactive",
     harvest: listing.harvest_date || "Harvest date TBA",
@@ -190,28 +178,24 @@ function mapBackendListing(listing: any): MarketListing {
 }
 
 export default function Marketplace() {
-const [query, setQuery] = useState("");
-   const [debouncedQuery, setDebouncedQuery] = useState("");
-   const [active, setActive] = useState("All produce");
-   const [sort, setSort] = useState("Recommended");
-   const [filtersOpen, setFiltersOpen] = useState(false);
-   const [toast, setToast] = useState("");
+  const { t } = useLanguage();
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [activeTabKey, setActiveTabKey] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<string>("recommended");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [toast, setToast] = useState("");
 
-  // Data fetching state
   const [listings, setListings] = useState<MarketListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [usingDemoData, setUsingDemoData] = useState(false);
 
-  // Debounce the search query so typing does not fire an API request per
-  // keystroke. The client-side filter below still uses the live `query` for
-  // instant feedback while the backend call waits for the user to pause.
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Fetch listings from backend on mount and when the debounced search changes
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -221,7 +205,7 @@ const [query, setQuery] = useState("");
       try {
         const backendListings = await fetchListings({
           crop_name: debouncedQuery || undefined,
-          limit: 20, // Reasonable limit for marketplace view
+          limit: 20,
         });
 
         if (isMounted) {
@@ -230,19 +214,17 @@ const [query, setQuery] = useState("");
         }
       } catch (err) {
         if (err instanceof ApiError) {
-          // Network or backend error - fall back to demo data with clear labeling
           if (isMounted) {
             setListings(DEMO_LISTINGS);
             setUsingDemoData(true);
             setError(
-              `Showing demo data. Backend error: ${err.message} (status ${err.status})`
+              `${t("marketplace.demoNotice")}: ${err.message} (${err.status})`
             );
           }
         } else {
-          // Unexpected error
           if (isMounted) {
             setListings([]);
-            setError("Unexpected error loading marketplace data");
+            setError(t("marketplace.backendError"));
           }
         }
       } finally {
@@ -254,24 +236,33 @@ const [query, setQuery] = useState("");
     return () => {
       isMounted = false;
     };
-  }, [debouncedQuery]); // Re-fetch when the debounced search query changes
+  }, [debouncedQuery, t]);
 
-  // Filter listings based on search, active tab, and sort
+  const tabs = [
+    { key: "all", label: t("marketplace.tabAll") },
+    { key: "tomatoes", label: t("marketplace.tabTomatoes"), filter: "Tomatoes" },
+    { key: "ready", label: t("marketplace.tabReady"), filter: "Ready to move" },
+    { key: "matched", label: t("marketplace.tabMatched"), filter: "Matched supply" },
+    { key: "awaiting", label: t("marketplace.tabAwaiting"), filter: "Awaiting buyer" },
+  ];
+
+  const currentTab = tabs.find((x) => x.key === activeTabKey) || tabs[0];
+
   const filtered = listings
     .filter((item) => {
       const text = `${item.crop} ${item.place} ${item.grade}`.toLowerCase();
       const matchesQuery = text.includes(query.toLowerCase());
       const matchesTab =
-        active === "All produce" ||
-        item.crop === active ||
-        item.status === active;
+        !currentTab.filter ||
+        item.crop === currentTab.filter ||
+        item.status === currentTab.filter;
       return matchesQuery && matchesTab;
     })
     .sort((a, b) => {
-      if (sort === "Closest route") {
+      if (sortKey === "closest") {
         return a.route.localeCompare(b.route);
       }
-      if (sort === "Highest match") {
+      if (sortKey === "highest") {
         const matchA = parseInt(a.match) || 0;
         const matchB = parseInt(b.match) || 0;
         return matchB - matchA;
@@ -284,27 +275,39 @@ const [query, setQuery] = useState("");
     window.setTimeout(() => setToast(""), 2600);
   };
 
+  const formatStatus = (st: string) => {
+    if (st === "Ready to move") return t("marketplace.tabReady");
+    if (st === "Matched supply") return t("marketplace.tabMatched");
+    if (st === "Awaiting buyer") return t("marketplace.tabAwaiting");
+    if (st === "Inactive") return t("listing.inactive");
+    return st;
+  };
+
+  const formatFreshness = (f: string) => {
+    if (f === "Harvested today") return t("marketplace.harvestedToday");
+    if (f === "Harvested yesterday") return t("marketplace.harvestedYesterday");
+    if (f === "Harvested 2 days ago") return t("marketplace.harvested2DaysAgo");
+    if (f === "Harvested recently") return t("marketplace.harvestedRecently");
+    if (f === "Freshness info TBA") return t("marketplace.freshnessTBA");
+    return f;
+  };
+
   return (
-    <PublicLayout eyebrow="Marketplace / KisanSetu">
+    <PublicLayout eyebrow={t("marketplace.eyebrow")}>
       <section className="page-hero">
         <div className="container">
-          <span className="eyebrow">Marketplace</span>
-          <h1>Produce with a buyer in view.</h1>
-          <p>
-            Browse available supply with market context attached — location,
-            freshness, price, route, and match.
-          </p>
+          <span className="eyebrow">{t("nav.marketplace")}</span>
+          <h1>{t("marketplace.h1")}</h1>
+          <p>{t("marketplace.p")}</p>
           <div className="row" style={{ marginTop: 28 }}>
             <button
               className="btn btn-primary"
-              onClick={() =>
-                action("Listing creation is ready for the connected farmer flow.")
-              }
+              onClick={() => action(t("marketplace.toastList"))}
             >
-              List your produce <ArrowRight size={15} />
+              {t("marketplace.listProduce")} <ArrowRight size={15} />
             </button>
             <Link className="btn btn-secondary" href="/market-match">
-              Find your market match <ArrowRight size={15} />
+              {t("marketplace.findMatch")} <ArrowRight size={15} />
             </Link>
           </div>
         </div>
@@ -314,7 +317,7 @@ const [query, setQuery] = useState("");
       {usingDemoData && (
         <div className="container" style={{ paddingTop: 20 }}>
           <div className="badge badge-warning">
-            Showing demo data — backend connection failed
+            {t("marketplace.demoNotice")}
           </div>
           <p className="state-body" style={{ marginTop: 8 }}>
             {error}
@@ -323,7 +326,7 @@ const [query, setQuery] = useState("");
       )}
       {!usingDemoData && error && (
         <div className="container" style={{ paddingTop: 20 }}>
-          <div className="badge badge-error">Backend error</div>
+          <div className="badge badge-error">{t("marketplace.backendError")}</div>
           <p className="state-body" style={{ marginTop: 8 }}>{error}</p>
         </div>
       )}
@@ -336,28 +339,28 @@ const [query, setQuery] = useState("");
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search crop, grade, or location"
-              aria-label="Search listings"
+              placeholder={t("marketplace.searchPlaceholder")}
+              aria-label={t("marketplace.searchAria")}
             />
           </div>
           <div className="market-toolbar-actions">
             <label className="row" style={{ gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
-              Sort by
+              {t("marketplace.sortBy")}
               <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                aria-label="Sort listings"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+                aria-label={t("marketplace.searchAria")}
               >
-                <option>Recommended</option>
-                <option>Highest match</option>
-                <option>Closest route</option>
+                <option value="recommended">{t("marketplace.sortRecommended")}</option>
+                <option value="highest">{t("marketplace.sortMatch")}</option>
+                <option value="closest">{t("marketplace.sortRoute")}</option>
               </select>
             </label>
             <button
               className="btn btn-secondary btn-sm"
               onClick={() => setFiltersOpen(!filtersOpen)}
             >
-              <SlidersHorizontal size={15} /> Filters
+              <SlidersHorizontal size={15} /> {t("marketplace.filters")}
             </button>
           </div>
         </div>
@@ -365,22 +368,19 @@ const [query, setQuery] = useState("");
         {filtersOpen && (
           <div className="card" style={{ padding: 20, marginBottom: 8 }}>
             <div className="row-between">
-              <span className="eyebrow">Filters</span>
+              <span className="eyebrow">{t("marketplace.filters")}</span>
               <button
                 className="text-link"
                 onClick={() => {
-                  setActive("All produce");
+                  setActiveTabKey("all");
                   setFiltersOpen(false);
                 }}
               >
-                Reset filters
+                {t("marketplace.resetFilters")}
               </button>
             </div>
             <p className="state-body" style={{ marginTop: 12 }}>
-              Current view is optimized for available supply and buyer matching.
-              {usingDemoData
-                ? " Connect live inventory to add crop, region, quantity, and freshness filters."
-                : " Live inventory connected via ByteFrost backend."}
+              {t("marketplace.filterSupplyDesc")}
             </p>
           </div>
         )}
@@ -388,20 +388,18 @@ const [query, setQuery] = useState("");
 
       {/* Content */}
       <section className="container">
-        <div className="tabs" role="tablist" aria-label="Filter listings">
-          {["All produce", "Tomatoes", "Ready to move", "Matched supply", "Awaiting buyer"].map(
-            (tab) => (
-              <button
-                className={active === tab ? "active" : ""}
-                key={tab}
-                onClick={() => setActive(tab)}
-                role="tab"
-                aria-selected={active === tab}
-              >
-                {tab}
-              </button>
-            )
-          )}
+        <div className="tabs" role="tablist" aria-label={t("marketplace.searchAria")}>
+          {tabs.map((tab) => (
+            <button
+              className={activeTabKey === tab.key ? "active" : ""}
+              key={tab.key}
+              onClick={() => setActiveTabKey(tab.key)}
+              role="tab"
+              aria-selected={activeTabKey === tab.key}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <div className="market-grid">
@@ -417,68 +415,68 @@ const [query, setQuery] = useState("");
                 </div>
               ))}
             </>
-) : filtered.length === 0 ? (
-             <div className="state" style={{ gridColumn: "1 / -1" }}>
-               <div className="state-icon"><Search size={20} /></div>
-               <div className="state-title">No matching produce yet</div>
-               <div className="state-body">
-                 Try another crop or location, or reset your filters.
-               </div>
-             </div>
-           ) : (
-             filtered.map((item) => (
-               <Link href={`/listing/${item.id}`} key={item.id}>
-                 <article
-                   className="card market-card"
-                   style={{ padding: 0, overflow: "hidden" }}
-                 >
-                   <div className="market-card-image">
-                     <ListingImage
-                       src={item.image}
-                       alt={`${item.crop} listing`}
-                       crop={item.crop}
-                     />
-                     <span className="badge badge-neutral" style={{ position: "absolute", top: 12, left: 12 }}>
-                       {item.status}
-                     </span>
-                   </div>
-                   <div className="market-card-body">
-                     <div className="market-card-top">
-                       <h3>{item.crop}</h3>
-                       <span className="badge badge-primary">{item.match} match</span>
-                     </div>
-                     <div className="market-card-meta">
-                       <span className="market-card-seller">
-                         <span className="seller-avatar">{item.seller.charAt(0)}</span>
-                         {item.seller}
-                       </span>
-                       <span><MapPin size={12} /> {item.place}</span>
-                       <span className="market-card-specs">
-                         <b>{item.quantity}</b>
-                         <span className="dot" aria-hidden="true" />
-                         {item.grade}
-                         <span className="dot" aria-hidden="true" />
-                         {item.freshness}
-                       </span>
-                     </div>
-                     <div className="market-card-bottom">
-                       <span className="market-card-price">{item.price}</span>
-                       <button
-                         className="btn btn-ghost btn-sm"
-                         aria-label={`Contact about ${item.crop}`}
-                       >
-                         <ArrowRight size={16} />
-                       </button>
-                     </div>
-                   </div>
-                 </article>
-               </Link>
-             ))
-           )}
+          ) : filtered.length === 0 ? (
+            <div className="state" style={{ gridColumn: "1 / -1" }}>
+              <div className="state-icon"><Search size={20} /></div>
+              <div className="state-title">{t("marketplace.emptyTitle")}</div>
+              <div className="state-body">
+                {t("marketplace.emptyBody")}
+              </div>
+            </div>
+          ) : (
+            filtered.map((item) => (
+              <Link href={`/listing/${item.id}`} key={item.id}>
+                <article
+                  className="card market-card"
+                  style={{ padding: 0, overflow: "hidden" }}
+                >
+                  <div className="market-card-image">
+                    <ListingImage
+                      src={item.image}
+                      alt={`${item.crop} listing`}
+                      crop={item.crop}
+                    />
+                    <span className="badge badge-neutral" style={{ position: "absolute", top: 12, left: 12 }}>
+                      {formatStatus(item.status)}
+                    </span>
+                  </div>
+                  <div className="market-card-body">
+                    <div className="market-card-top">
+                      <h3>{item.crop}</h3>
+                      <span className="badge badge-primary">
+                        {item.match.includes("%") ? `${item.match} ${t("marketplace.matchBadge")}` : item.match}
+                      </span>
+                    </div>
+                    <div className="market-card-meta">
+                      <span className="market-card-seller">
+                        <span className="seller-avatar">{item.seller.charAt(0)}</span>
+                        {item.seller === "Verified producer" ? t("marketplace.verifiedProducer") : item.seller}
+                      </span>
+                      <span><MapPin size={12} /> {item.place}</span>
+                      <span className="market-card-specs">
+                        <b>{item.quantity}</b>
+                        <span className="dot" aria-hidden="true" />
+                        {item.grade}
+                        <span className="dot" aria-hidden="true" />
+                        {formatFreshness(item.freshness)}
+                      </span>
+                    </div>
+                    <div className="market-card-bottom">
+                      <span className="market-card-price">{item.price}</span>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        aria-label={`${t("marketplace.contactAria")} ${item.crop}`}
+                      >
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            ))
+          )}
         </div>
       </section>
-
-
 
       {toast && <div className="public-toast">{toast}</div>}
     </PublicLayout>
