@@ -445,8 +445,13 @@ export default function Story() {
 
       {/* 08 / Final CTA */}
       <section className="py-24 bg-[var(--primary-strong)] text-white text-center">
-        <FadeIn className="max-w-3xl mx-auto px-6">
-          <span className="eyebrow text-[var(--accent)] mb-6 justify-center">{t("story.sec8.eyebrow")}</span>
+        <FadeIn className="max-w-3xl mx-auto px-6 text-center">
+          <span
+            className="eyebrow eyebrow-accent mb-6 justify-center"
+            style={{ color: "#e0b45a" }}
+          >
+            {t("story.sec8.eyebrow")}
+          </span>
           <h2
             className="display text-3xl md:text-4xl mb-6"
           >

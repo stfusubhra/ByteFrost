@@ -313,6 +313,19 @@ img {
   flex-shrink: 0;
 }
 
+/* Eyebrows on dark / primary backgrounds */
+.text-white .eyebrow,
+.bg-primary-strong .eyebrow,
+[class*="bg-[var(--primary"] .eyebrow,
+.eyebrow-accent,
+.eyebrow-gold {
+  color: #e0b45a !important;
+}
+
+.eyebrow-white {
+  color: #ffffff !important;
+}
+
 /* ================================================================
    Layout primitives & Alignment Utilities
    ================================================================ */
