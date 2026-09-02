@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import Home from "./pages/Home";
@@ -13,6 +14,7 @@ import Marketplace from "./pages/Marketplace";
 import MarketMatch from "./pages/MarketMatch";
 import Story from "./pages/Story";
 import Faq from "./pages/Faq";
+import Contact from "./pages/Contact";
 import BuyerDashboard from "./pages/BuyerDashboard";
 import Dashboard from "./pages/Dashboard";
 import ListingDetail from "./pages/ListingDetail";
@@ -29,7 +31,8 @@ function Router() {
       <Route path="/story" component={Story} />
       <Route path="/faq" component={Faq} />
       <Route path="/contact" component={Contact} />
-       <ProtectedRoute path="/buyer-dashboard" component={BuyerDashboard} allowedRoles={["buyer_bulk","buyer_retailer","consumer"]} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} allowedRoles={["farmer","fpo_manager"]} />
+      <ProtectedRoute path="/buyer-dashboard" component={BuyerDashboard} allowedRoles={["buyer_bulk","buyer_retailer","consumer"]} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
