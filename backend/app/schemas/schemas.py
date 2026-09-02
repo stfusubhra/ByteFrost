@@ -138,6 +138,39 @@ class MatchResult(BaseModel):
     explanation: dict
 
 
+class MatchedFarmerResponse(BaseModel):
+    listing_id: UUID
+    farmer_id: UUID
+    farmer_name: str
+    crop_name: str
+    available_kg: float
+    allocated_kg: float
+    price_per_kg: float
+    quality_grade: str
+    distance_km: float
+    latitude: float
+    longitude: float
+    score: float
+    reliability_score: float
+    estimated_transport_cost: float = 0.0
+    explanation: dict = {}
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierMatchResponse(BaseModel):
+    status: str  # FEASIBLE / PARTIAL / INFEASIBLE
+    matched_farmers: List[MatchedFarmerResponse] = []
+    total_matched_kg: float = 0.0
+    required_kg: float
+    shortage_kg: float = 0.0
+    infeasibility_reason: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 # --- Logistics ---
 
 # == Vehicle ==

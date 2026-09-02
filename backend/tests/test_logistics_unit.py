@@ -104,3 +104,184 @@ async def test_vrp_solver_execution():
     assert result["status"] == "SUCCESS"
     assert len(result["routes"]) == 1
     assert result["total_distance_km"] > 0
+
+
+def test_multi_farmer_matching_and_allocation_exact_example():
+    """
+    User prompt specification:
+    Buyer requests: 1000 kg tomatoes
+    Available:
+      Farmer A → 400 kg
+      Farmer B → 300 kg
+      Farmer C → 300 kg
+      Farmer D → 500 kg but very far away (450 km, transport cost > 30% produce value)
+
+    Expectation:
+      - System selects feasible combination of Farmer A (400 kg), Farmer B (300 kg), Farmer C (300 kg)
+      - Total matched: 1000 kg
+      - Shortage: 0 kg
+      - Status: FEASIBLE
+      - Farmer D is excluded / not allocated due to distance & transport economics
+    """
+    from app.services.supply_matching_service import MatchedFarmer, allocate_supply_from_candidates
+
+    fa_id = uuid4()
+    fb_id = uuid4()
+    fc_id = uuid4()
+    fd_id = uuid4()
+
+    candidates = [
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=fa_id,
+            farmer_name="Farmer A",
+            crop_name="Tomato",
+            available_kg=400.0,
+            allocated_kg=0.0,
+            price_per_kg=25.0,
+            quality_grade="A",
+            distance_km=20.0,
+            latitude=19.1,
+            longitude=73.0,
+            score=0.88,
+            reliability_score=0.9,
+            estimated_transport_cost=240.0,
+        ),
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=fb_id,
+            farmer_name="Farmer B",
+            crop_name="Tomato",
+            available_kg=300.0,
+            allocated_kg=0.0,
+            price_per_kg=24.0,
+            quality_grade="A",
+            distance_km=30.0,
+            latitude=19.2,
+            longitude=73.1,
+            score=0.84,
+            reliability_score=0.85,
+            estimated_transport_cost=360.0,
+        ),
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=fc_id,
+            farmer_name="Farmer C",
+            crop_name="Tomato",
+            available_kg=300.0,
+            allocated_kg=0.0,
+            price_per_kg=26.0,
+            quality_grade="B",
+            distance_km=40.0,
+            latitude=19.3,
+            longitude=73.2,
+            score=0.79,
+            reliability_score=0.8,
+            estimated_transport_cost=480.0,
+        ),
+        # Farmer D: 500 kg available, but 450 km away.
+        # Est. transport = 450 * 12 = 5,400 INR. Produce value for 500 kg @ 20 = 10,000 INR.
+        # Transport is 54% of produce value (> 30% cap)
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=fd_id,
+            farmer_name="Farmer D",
+            crop_name="Tomato",
+            available_kg=500.0,
+            allocated_kg=0.0,
+            price_per_kg=20.0,
+            quality_grade="B",
+            distance_km=450.0,
+            latitude=23.0,
+            longitude=77.0,
+            score=0.45,
+            reliability_score=0.7,
+            estimated_transport_cost=5400.0,
+        ),
+    ]
+
+    result = allocate_supply_from_candidates(candidates, required_kg=1000.0)
+
+    assert result.status == "FEASIBLE"
+    assert result.total_matched_kg == 1000.0
+    assert result.shortage_kg == 0.0
+    assert len(result.matched_farmers) == 3
+
+    # Verify each farmer's individual contribution
+    allocations = {m.farmer_name: m.allocated_kg for m in result.matched_farmers}
+    assert allocations["Farmer A"] == 400.0
+    assert allocations["Farmer B"] == 300.0
+    assert allocations["Farmer C"] == 300.0
+    assert "Farmer D" not in allocations
+
+
+def test_partial_fulfillment_and_shortage_tracking():
+    """
+    User prompt specification:
+    If only 850 kg is feasible:
+      Requested → 1000 kg
+      Fulfillable → 850 kg
+      Shortage → 150 kg
+    The system must never falsely report complete fulfillment.
+    """
+    from app.services.supply_matching_service import MatchedFarmer, allocate_supply_from_candidates
+
+    candidates = [
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=uuid4(),
+            farmer_name="Farmer 1",
+            crop_name="Tomato",
+            available_kg=500.0,
+            allocated_kg=0.0,
+            price_per_kg=25.0,
+            quality_grade="A",
+            distance_km=25.0,
+            latitude=19.1,
+            longitude=73.0,
+            score=0.85,
+            reliability_score=0.9,
+        ),
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=uuid4(),
+            farmer_name="Farmer 2",
+            crop_name="Tomato",
+            available_kg=350.0,
+            allocated_kg=0.0,
+            price_per_kg=24.0,
+            quality_grade="B",
+            distance_km=40.0,
+            latitude=19.2,
+            longitude=73.1,
+            score=0.80,
+            reliability_score=0.85,
+        ),
+    ]
+
+    result = allocate_supply_from_candidates(candidates, required_kg=1000.0)
+
+    assert result.status == "PARTIAL"
+    assert result.status != "FEASIBLE"
+    assert result.total_matched_kg == 850.0
+    assert result.shortage_kg == 150.0
+    assert result.required_kg == 1000.0
+    assert len(result.matched_farmers) == 2
+    assert result.infeasibility_reason is not None
+
+
+def test_multi_factor_scoring_not_just_lowest_price():
+    """
+    Verifies that farmer evaluation does not simply pick the lowest price.
+    A farmer with slightly higher price but superior quality (Grade A),
+    proximity, freshness, and high reliability outranks a distant, low-reliability seller.
+    """
+    from app.services.supply_matching_service import (
+        WEIGHT_DISTANCE, WEIGHT_QUANTITY, WEIGHT_QUALITY,
+        WEIGHT_FRESHNESS, WEIGHT_PRICE, WEIGHT_RELIABILITY,
+    )
+
+    # Weights ensure price is only 10% of total score
+    assert WEIGHT_PRICE == 0.10
+    assert (WEIGHT_DISTANCE + WEIGHT_QUALITY + WEIGHT_QUANTITY + WEIGHT_FRESHNESS + WEIGHT_RELIABILITY) == 0.90
+

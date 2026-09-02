@@ -216,12 +216,39 @@ export interface TrackingStatusData {
 export interface BuyerRequirementData {
   crop_name: string;
   required_quantity_kg: number;
+  min_quality_grade?: string;
   delivery_latitude: number;
   delivery_longitude: number;
-  delivery_address?: string;
-  min_quality_grade?: string;
-  max_price_per_kg?: number;
+  delivery_address: string;
   delivery_deadline?: string;
+  max_price_per_kg?: number;
+}
+
+export interface MatchedFarmerData {
+  listing_id: string;
+  farmer_id: string;
+  farmer_name: string;
+  crop_name: string;
+  available_kg: number;
+  allocated_kg: number;
+  price_per_kg: number;
+  quality_grade: string;
+  distance_km: number;
+  latitude: number;
+  longitude: number;
+  score: number;
+  reliability_score: number;
+  estimated_transport_cost: number;
+  explanation: Record<string, any>;
+}
+
+export interface SupplierMatchResponseData {
+  status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE" | string;
+  matched_farmers: MatchedFarmerData[];
+  total_matched_kg: number;
+  required_kg: number;
+  shortage_kg: number;
+  infeasibility_reason?: string | null;
 }
 
 export interface LandedCostBreakdownData {
@@ -334,6 +361,16 @@ export async function fetchPriceRecommendation(
     "/matching/price-recommendation",
     null,
     { params: { listing_id: listingId } }
+  );
+  return data;
+}
+
+export async function matchSuppliers(
+  payload: BuyerRequirementData
+): Promise<SupplierMatchResponseData> {
+  const { data } = await client.post<SupplierMatchResponseData>(
+    "/matching/match-suppliers",
+    payload
   );
   return data;
 }

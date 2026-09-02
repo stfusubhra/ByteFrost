@@ -7,8 +7,15 @@ import math
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.models import ProduceListing, User, UserRole, Order, OrderItem, OrderStatus
-from app.schemas.schemas import MatchRequest, MatchResult
+from app.schemas.schemas import (
+    MatchRequest,
+    MatchResult,
+    BuyerRequirement,
+    SupplierMatchResponse,
+    MatchedFarmerResponse,
+)
 from app.services.maps_service import haversine
+from app.services.supply_matching_service import match_supply
 
 # Optional ML serving module. When the trained models are present, the
 # endpoints use real XGBoost inference; otherwise they fall back to the
@@ -381,3 +388,66 @@ async def forecast_demand(
         "basis": "historical_order_volume",
         "total_ordered_kg": round(total_ordered_kg, 1),
     }
+
+
+@router.post("/match-suppliers", response_model=SupplierMatchResponse)
+async def match_suppliers_endpoint(
+    payload: BuyerRequirement,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Find optimal multi-farmer matching and quantity allocation for a buyer's order requirement.
+
+    Evaluates:
+      - Available quantity
+      - Distance & proximity
+      - Produce type & quality grade
+      - Price competitiveness
+      - Freshness (days since harvest)
+      - Farmer reliability history
+      - Transportation cost feasibility
+
+    Allocates exact quantities across multiple farmers and accurately calculates shortages.
+    """
+    result = await match_supply(
+        crop_name=payload.crop_name,
+        required_kg=payload.required_quantity_kg,
+        delivery_lat=payload.delivery_latitude,
+        delivery_lng=payload.delivery_longitude,
+        min_quality_grade=payload.min_quality_grade,
+        max_price_per_kg=payload.max_price_per_kg,
+        delivery_deadline=payload.delivery_deadline,
+        db=db,
+    )
+
+    matched_farmers_resp = [
+        MatchedFarmerResponse(
+            listing_id=f.listing_id,
+            farmer_id=f.farmer_id,
+            farmer_name=f.farmer_name,
+            crop_name=f.crop_name,
+            available_kg=f.available_kg,
+            allocated_kg=f.allocated_kg,
+            price_per_kg=f.price_per_kg,
+            quality_grade=f.quality_grade,
+            distance_km=f.distance_km,
+            latitude=f.latitude,
+            longitude=f.longitude,
+            score=f.score,
+            reliability_score=f.reliability_score,
+            estimated_transport_cost=f.estimated_transport_cost,
+            explanation=f.explanation,
+        )
+        for f in result.matched_farmers
+    ]
+
+    return SupplierMatchResponse(
+        status=result.status,
+        matched_farmers=matched_farmers_resp,
+        total_matched_kg=result.total_matched_kg,
+        required_kg=result.required_kg,
+        shortage_kg=result.shortage_kg,
+        infeasibility_reason=result.infeasibility_reason,
+    )
+
