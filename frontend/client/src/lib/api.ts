@@ -251,6 +251,91 @@ export interface SupplierMatchResponseData {
   infeasibility_reason?: string | null;
 }
 
+export interface HubCapacityData {
+  hub_id: string;
+  hub_name: string;
+  hub_type: string;
+  total_capacity_kg: number;
+  occupied_capacity_kg: number;
+  reserved_capacity_kg: number;
+  available_capacity_kg: number;
+  incoming_quantity_kg: number;
+  outgoing_quantity_kg: number;
+  utilization_pct: number;
+  can_accommodate: boolean;
+}
+
+export interface HubRoutingEvaluationRequestData {
+  farmer_locations: Array<{ lat: number; lng: number; quantity_kg: number }>;
+  buyer_latitude: number;
+  buyer_longitude: number;
+  total_kg: number;
+  delivery_deadline?: string;
+  max_freshness_hours?: number;
+}
+
+export interface HubRoutingEvaluationResponseData {
+  mode: "direct" | "hub" | "multi_hub" | string;
+  local_hub?: {
+    hub_id: string;
+    name: string;
+    hub_type: string;
+    capacity_kg: number;
+    available_kg: number;
+    distance_to_centroid_km: number;
+  } | null;
+  regional_hub?: {
+    hub_id: string;
+    name: string;
+    hub_type: string;
+    capacity_kg: number;
+    available_kg: number;
+    distance_to_centroid_km: number;
+  } | null;
+  direct_cost_estimate: number;
+  hub_cost_estimate: number;
+  multi_hub_cost_estimate: number;
+  direct_duration_hours: number;
+  hub_duration_hours: number;
+  multi_hub_duration_hours: number;
+  is_direct_feasible: boolean;
+  is_hub_feasible: boolean;
+  is_multi_hub_feasible: boolean;
+  reason: string;
+}
+
+export interface MatchedVehicleDetailData {
+  vehicle_id: string;
+  vehicle_type: string;
+  capacity_kg: number;
+  current_load_kg: number;
+  net_available_kg: number;
+  allocated_load_kg: number;
+  operating_cost_per_km: number;
+  distance_to_pickup_km: number;
+  score: number;
+}
+
+export interface VehicleMatchRequestData {
+  required_capacity_kg: number;
+  pickup_latitude: number;
+  pickup_longitude: number;
+  requires_refrigeration?: boolean;
+  max_distance_km?: number;
+  max_duration_hours?: number;
+}
+
+export interface VehicleMatchResponseData {
+  status: "MATCHED" | "INSUFFICIENT_CAPACITY" | "NO_VEHICLES_AVAILABLE" | string;
+  required_kg: number;
+  total_allocated_kg: number;
+  shortfall_kg: number;
+  vehicles: MatchedVehicleDetailData[];
+  requires_multiple_vehicles: boolean;
+  refrigeration_met: boolean;
+  explanation: string;
+}
+
 export interface LandedCostBreakdownData {
   produce_cost: number;
   transport_cost: number;
@@ -370,6 +455,37 @@ export async function matchSuppliers(
 ): Promise<SupplierMatchResponseData> {
   const { data } = await client.post<SupplierMatchResponseData>(
     "/matching/match-suppliers",
+    payload
+  );
+  return data;
+}
+
+export async function fetchHubCapacity(
+  hubId: string,
+  requestedKg = 0
+): Promise<HubCapacityData> {
+  const { data } = await client.get<HubCapacityData>(
+    `/logistics/hubs/${hubId}/capacity`,
+    { params: { requested_kg: requestedKg } }
+  );
+  return data;
+}
+
+export async function evaluateHubMode(
+  payload: HubRoutingEvaluationRequestData
+): Promise<HubRoutingEvaluationResponseData> {
+  const { data } = await client.post<HubRoutingEvaluationResponseData>(
+    "/logistics/evaluate-hub-mode",
+    payload
+  );
+  return data;
+}
+
+export async function matchVehicles(
+  payload: VehicleMatchRequestData
+): Promise<VehicleMatchResponseData> {
+  const { data } = await client.post<VehicleMatchResponseData>(
+    "/logistics/match-vehicles",
     payload
   );
   return data;

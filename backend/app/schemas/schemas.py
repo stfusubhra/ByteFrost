@@ -238,6 +238,91 @@ class HubResponse(BaseModel):
         from_attributes = True
 
 
+class HubCapacityResponse(BaseModel):
+    hub_id: UUID
+    hub_name: str
+    hub_type: str
+    total_capacity_kg: float
+    occupied_capacity_kg: float
+    reserved_capacity_kg: float
+    available_capacity_kg: float
+    incoming_quantity_kg: float
+    outgoing_quantity_kg: float
+    utilization_pct: float
+    can_accommodate: bool
+
+    class Config:
+        from_attributes = True
+
+
+class HubCandidateDetail(BaseModel):
+    hub_id: UUID
+    name: str
+    hub_type: str
+    latitude: float
+    longitude: float
+    capacity_kg: float
+    available_kg: float
+    distance_to_centroid_km: float
+
+
+class HubRoutingEvaluationRequest(BaseModel):
+    farmer_locations: List[dict]
+    buyer_latitude: float
+    buyer_longitude: float
+    total_kg: float
+    delivery_deadline: Optional[datetime] = None
+    max_freshness_hours: Optional[float] = 48.0
+
+
+class HubRoutingEvaluationResponse(BaseModel):
+    mode: str
+    local_hub: Optional[HubCandidateDetail] = None
+    regional_hub: Optional[HubCandidateDetail] = None
+    direct_cost_estimate: float
+    hub_cost_estimate: float
+    multi_hub_cost_estimate: float
+    direct_duration_hours: float
+    hub_duration_hours: float
+    multi_hub_duration_hours: float
+    is_direct_feasible: bool = True
+    is_hub_feasible: bool = True
+    is_multi_hub_feasible: bool = True
+    reason: str
+
+
+class MatchedVehicleDetail(BaseModel):
+    vehicle_id: UUID
+    vehicle_type: str
+    capacity_kg: float
+    current_load_kg: float
+    net_available_kg: float
+    allocated_load_kg: float
+    operating_cost_per_km: float
+    distance_to_pickup_km: float
+    score: float
+
+
+class VehicleMatchRequest(BaseModel):
+    required_capacity_kg: float
+    pickup_latitude: float
+    pickup_longitude: float
+    requires_refrigeration: bool = False
+    max_distance_km: float = 150.0
+    max_duration_hours: float = 14.0
+
+
+class VehicleMatchResponse(BaseModel):
+    status: str
+    required_kg: float
+    total_allocated_kg: float
+    shortfall_kg: float
+    vehicles: List[MatchedVehicleDetail] = []
+    requires_multiple_vehicles: bool = False
+    refrigeration_met: bool = True
+    explanation: str
+
+
 # == Hub Inventory ==
 class HubInventoryResponse(BaseModel):
     id: UUID

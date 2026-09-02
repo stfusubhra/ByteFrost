@@ -285,3 +285,252 @@ def test_multi_factor_scoring_not_just_lowest_price():
     assert WEIGHT_PRICE == 0.10
     assert (WEIGHT_DISTANCE + WEIGHT_QUALITY + WEIGHT_QUANTITY + WEIGHT_FRESHNESS + WEIGHT_RELIABILITY) == 0.90
 
+
+def test_hub_capacity_breakdown_and_rejection_when_full():
+    """
+    Verifies hub capacity tracking:
+    - total, occupied, reserved, available, incoming, outgoing.
+    - strictly rejects assigning produce to a hub that cannot accommodate it.
+    """
+    from app.services.hub_service import HubCandidate, evaluate_hub_routing
+
+    hub_id = uuid4()
+    # Hub with 1000 kg capacity, 700 kg occupied, 150 kg reserved -> 150 kg available
+    limited_hub = HubCandidate(
+        hub_id=hub_id,
+        name="Nashik Local Hub",
+        hub_type="local",
+        latitude=19.9975,
+        longitude=73.7898,
+        capacity_kg=1000.0,
+        occupied_kg=700.0,
+        reserved_kg=150.0,
+        available_kg=150.0,
+        distance_to_centroid_km=15.0,
+    )
+
+    farmers = [{"lat": 20.0, "lng": 73.8, "quantity_kg": 500.0}]
+
+    # Case 1: Requirement is 500 kg (exceeds 150 kg available capacity)
+    # The hub cannot accommodate it -> Hub mode must be disqualified, defaulting to direct
+    decision_heavy = evaluate_hub_routing(
+        farmer_locations=farmers,
+        buyer_lat=18.5204,
+        buyer_lng=73.8567,
+        total_kg=500.0,
+        candidate_hubs=[limited_hub],
+    )
+    assert decision_heavy.mode == "direct"
+    assert decision_heavy.local_hub is None
+
+    # Case 2: Requirement is 100 kg (within 150 kg available capacity)
+    # The hub CAN accommodate it
+    decision_light = evaluate_hub_routing(
+        farmer_locations=farmers,
+        buyer_lat=18.5204,
+        buyer_lng=73.8567,
+        total_kg=100.0,
+        candidate_hubs=[limited_hub],
+    )
+    # Both direct and hub are feasible; whichever is cheaper/feasible is picked
+    assert decision_light.is_hub_feasible is True
+
+
+def test_direct_delivery_preferred_when_urgent_or_cheaper():
+    """
+    Hubs should NOT be mandatory.
+    When direct delivery is faster (no hub transfer delay) or buyer deadline is tight,
+    system must choose direct routing.
+    """
+    from app.services.hub_service import HubCandidate, evaluate_hub_routing
+
+    local_hub = HubCandidate(
+        hub_id=uuid4(),
+        name="Pune Regional Consolidation",
+        hub_type="local",
+        latitude=18.55,
+        longitude=73.85,
+        capacity_kg=5000.0,
+        occupied_kg=1000.0,
+        reserved_kg=0.0,
+        available_kg=4000.0,
+        distance_to_centroid_km=20.0,
+    )
+
+    # Farmers and buyer are close to each other (~10 km)
+    # Direct trip takes ~0.25 hrs.
+    # Hub trip requires routing 20 km away to the hub + 1.5 hrs handling delay = ~2.5 hrs.
+    farmers = [{"lat": 18.52, "lng": 73.85, "quantity_kg": 200.0}]
+    buyer_lat, buyer_lng = 18.53, 73.86
+
+    # Tight deadline: 1.0 hour
+    now = datetime(2026, 9, 2, 12, 0, tzinfo=timezone.utc)
+    deadline = now + timedelta(hours=1.0)
+
+    decision = evaluate_hub_routing(
+        farmer_locations=farmers,
+        buyer_lat=buyer_lat,
+        buyer_lng=buyer_lng,
+        total_kg=200.0,
+        candidate_hubs=[local_hub],
+        delivery_deadline=deadline,
+        now=now,
+    )
+
+    # Direct delivery takes < 1 hr; Hub delivery violates the 1.0 hr deadline
+    assert decision.mode == "direct"
+    assert decision.is_direct_feasible is True
+    assert decision.is_hub_feasible is False
+
+
+def test_vehicle_matching_single_and_multiple_vehicles_exact_example():
+    """
+    User prompt specification:
+    Required → 1000 kg
+    Truck A → 500 kg
+    Truck B → 700 kg
+    Truck C → 1500 kg
+
+    System determines whether one or multiple vehicles are required:
+    - Case 1: When Truck C (1500 kg) is available -> Single truck assigned (Truck C)
+    - Case 2: When Truck C is unavailable, only Truck A (500 kg) and Truck B (700 kg)
+              -> Multiple vehicles required: Truck B (700 kg) + Truck A (300 kg) = 1000 kg
+    """
+    from app.services.truck_assignment_service import MatchedVehicleItem, match_vehicles_from_candidates
+
+    truck_a = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="STANDARD",
+        capacity_kg=500.0,
+        current_load_kg=0.0,
+        net_available_kg=500.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=10.0,
+        distance_to_pickup_km=15.0,
+        score=0.0,
+    )
+    truck_b = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="STANDARD",
+        capacity_kg=700.0,
+        current_load_kg=0.0,
+        net_available_kg=700.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=12.0,
+        distance_to_pickup_km=20.0,
+        score=0.0,
+    )
+    truck_c = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="STANDARD",
+        capacity_kg=1500.0,
+        current_load_kg=0.0,
+        net_available_kg=1500.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=16.0,
+        distance_to_pickup_km=25.0,
+        score=0.0,
+    )
+
+    # Case 1: All 3 trucks available. Truck C can carry 1000 kg alone.
+    res_single = match_vehicles_from_candidates(
+        candidates=[truck_a, truck_b, truck_c],
+        required_capacity_kg=1000.0,
+    )
+    assert res_single.status == "MATCHED"
+    assert res_single.requires_multiple_vehicles is False
+    assert len(res_single.vehicles) == 1
+    assert res_single.vehicles[0].capacity_kg == 1500.0
+    assert res_single.vehicles[0].allocated_load_kg == 1000.0
+    assert res_single.shortfall_kg == 0.0
+
+    # Case 2: Truck C is unavailable / busy. Only Truck A (500 kg) & Truck B (700 kg) available.
+    # Neither can take 1000 kg alone, so multiple vehicles must be assigned.
+    res_multi = match_vehicles_from_candidates(
+        candidates=[truck_a, truck_b],
+        required_capacity_kg=1000.0,
+    )
+    assert res_multi.status == "MATCHED"
+    assert res_multi.requires_multiple_vehicles is True
+    assert len(res_multi.vehicles) == 2
+    assert res_multi.total_allocated_kg == 1000.0
+    assert res_multi.shortfall_kg == 0.0
+
+    # Verify individual contributions: Truck B (700 kg) + Truck A (300 kg)
+    v_loads = {v.capacity_kg: v.allocated_load_kg for v in res_multi.vehicles}
+    assert v_loads[700.0] == 700.0
+    assert v_loads[500.0] == 300.0
+
+
+def test_insufficient_vehicle_capacity_never_assigned():
+    """
+    User prompt requirement:
+    Never assign a vehicle with insufficient capacity.
+    If required is 1000 kg and only 500 kg truck exists, status is INSUFFICIENT_CAPACITY
+    and vehicles list is empty.
+    """
+    from app.services.truck_assignment_service import MatchedVehicleItem, match_vehicles_from_candidates
+
+    truck_small = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="STANDARD",
+        capacity_kg=500.0,
+        current_load_kg=0.0,
+        net_available_kg=500.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=10.0,
+        distance_to_pickup_km=10.0,
+        score=0.0,
+    )
+
+    res = match_vehicles_from_candidates(
+        candidates=[truck_small],
+        required_capacity_kg=1000.0,
+    )
+    assert res.status == "INSUFFICIENT_CAPACITY"
+    assert res.shortfall_kg == 500.0
+    assert res.total_allocated_kg == 500.0
+    # Must NEVER assign a vehicle with insufficient capacity
+    assert len(res.vehicles) == 0
+
+
+def test_refrigeration_requirement_matching():
+    """
+    When produce requires refrigeration, standard trucks must be excluded
+    and only refrigerated trucks matched.
+    """
+    from app.services.truck_assignment_service import MatchedVehicleItem, match_vehicles_from_candidates
+
+    standard_truck = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="STANDARD",
+        capacity_kg=1000.0,
+        current_load_kg=0.0,
+        net_available_kg=1000.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=12.0,
+        distance_to_pickup_km=10.0,
+        score=0.0,
+    )
+    refrigerated_truck = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="REFRIGERATED",
+        capacity_kg=1200.0,
+        current_load_kg=0.0,
+        net_available_kg=1200.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=18.0,
+        distance_to_pickup_km=15.0,
+        score=0.0,
+    )
+
+    res = match_vehicles_from_candidates(
+        candidates=[standard_truck, refrigerated_truck],
+        required_capacity_kg=800.0,
+        requires_refrigeration=True,
+    )
+    assert res.status == "MATCHED"
+    assert res.vehicles[0].vehicle_type == "REFRIGERATED"
+    assert res.refrigeration_met is True
+
+

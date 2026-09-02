@@ -13,11 +13,21 @@ from app.schemas.schemas import (
     VehicleRouteOptimization,
     BuyerRequirement,
     FulfillmentPlanResponse,
+    HubCapacityResponse,
+    HubRoutingEvaluationRequest,
+    HubRoutingEvaluationResponse,
+    HubCandidateDetail,
+    VehicleMatchRequest,
+    VehicleMatchResponse,
+    MatchedVehicleDetail,
 )
+from app.models.models import Hub
 from app.services.vrp_solver import solve_vrp
 from app.services.fulfillment_service import create_fulfillment_plan
 from app.services.consolidation_service import consolidate_pickups, PickupStop
 from app.services.maps_service import haversine
+from app.services.hub_service import get_hub_capacity_status, decide_routing_mode
+from app.services.truck_assignment_service import match_vehicles
 
 router = APIRouter()
 
@@ -369,3 +379,158 @@ async def report_shipment_incident(
             status_code=400,
             detail="Unsupported incident_type. Valid values: 'TRUCK_BREAKDOWN', 'FARMER_CANCELLED'"
         )
+
+
+@router.get("/hubs/{hub_id}/capacity", response_model=HubCapacityResponse)
+async def get_hub_capacity_endpoint(
+    hub_id: UUID,
+    requested_kg: float = 0.0,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get detailed capacity breakdown for a logistics hub:
+    - total, occupied, reserved, available, incoming, and outgoing capacity.
+    - evaluates whether it can accommodate the requested_kg load.
+    """
+    from sqlalchemy import select
+    stmt = select(Hub).where(Hub.id == hub_id)
+    result = await db.execute(stmt)
+    hub = result.scalar_one_or_none()
+    if not hub:
+        raise HTTPException(status_code=404, detail="Hub not found")
+
+    status = await get_hub_capacity_status(hub, requested_kg=requested_kg, db=db)
+    return HubCapacityResponse(
+        hub_id=status.hub_id,
+        hub_name=status.hub_name,
+        hub_type=status.hub_type,
+        total_capacity_kg=status.total_capacity_kg,
+        occupied_capacity_kg=status.occupied_capacity_kg,
+        reserved_capacity_kg=status.reserved_capacity_kg,
+        available_capacity_kg=status.available_capacity_kg,
+        incoming_quantity_kg=status.incoming_quantity_kg,
+        outgoing_quantity_kg=status.outgoing_quantity_kg,
+        utilization_pct=status.utilization_pct,
+        can_accommodate=status.can_accommodate,
+    )
+
+
+@router.post("/evaluate-hub-mode", response_model=HubRoutingEvaluationResponse)
+async def evaluate_hub_mode_endpoint(
+    payload: HubRoutingEvaluationRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Evaluate and compare routing modes:
+      - Direct (Farmer -> Buyer)
+      - Local Hub (Farmer -> Local Hub -> Buyer)
+      - Regional Hub (Farmer -> Local Hub -> Regional Hub -> Buyer)
+    Considers transportation cost, hub handling, loading delays, travel times,
+    buyer deadlines, freshness shelf-life, and hub capacity.
+    """
+    decision = await decide_routing_mode(
+        farmer_locations=payload.farmer_locations,
+        buyer_lat=payload.buyer_latitude,
+        buyer_lng=payload.buyer_longitude,
+        total_kg=payload.total_kg,
+        db=db,
+        delivery_deadline=payload.delivery_deadline,
+        max_freshness_hours=payload.max_freshness_hours,
+    )
+
+    local_hub_detail = None
+    if decision.local_hub:
+        local_hub_detail = HubCandidateDetail(
+            hub_id=decision.local_hub.hub_id,
+            name=decision.local_hub.name,
+            hub_type=decision.local_hub.hub_type,
+            latitude=decision.local_hub.latitude,
+            longitude=decision.local_hub.longitude,
+            capacity_kg=decision.local_hub.capacity_kg,
+            available_kg=decision.local_hub.available_kg,
+            distance_to_centroid_km=decision.local_hub.distance_to_centroid_km,
+        )
+
+    regional_hub_detail = None
+    if decision.regional_hub:
+        regional_hub_detail = HubCandidateDetail(
+            hub_id=decision.regional_hub.hub_id,
+            name=decision.regional_hub.name,
+            hub_type=decision.regional_hub.hub_type,
+            latitude=decision.regional_hub.latitude,
+            longitude=decision.regional_hub.longitude,
+            capacity_kg=decision.regional_hub.capacity_kg,
+            available_kg=decision.regional_hub.available_kg,
+            distance_to_centroid_km=decision.regional_hub.distance_to_centroid_km,
+        )
+
+    return HubRoutingEvaluationResponse(
+        mode=decision.mode,
+        local_hub=local_hub_detail,
+        regional_hub=regional_hub_detail,
+        direct_cost_estimate=decision.direct_cost_estimate,
+        hub_cost_estimate=decision.hub_cost_estimate,
+        multi_hub_cost_estimate=decision.multi_hub_cost_estimate,
+        direct_duration_hours=decision.direct_duration_hours,
+        hub_duration_hours=decision.hub_duration_hours,
+        multi_hub_duration_hours=decision.multi_hub_duration_hours,
+        is_direct_feasible=decision.is_direct_feasible,
+        is_hub_feasible=decision.is_hub_feasible,
+        is_multi_hub_feasible=decision.is_multi_hub_feasible,
+        reason=decision.reason,
+    )
+
+
+@router.post("/match-vehicles", response_model=VehicleMatchResponse)
+async def match_vehicles_endpoint(
+    payload: VehicleMatchRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Match vehicles for a load requirement evaluating:
+      - Net available capacity (capacity - current load)
+      - Vehicle type and refrigeration requirement
+      - Proximity to pickup location
+      - Operating cost per km and max duration
+    Determines whether a single truck or multiple trucks are needed,
+    and strictly enforces that produce is never assigned with insufficient capacity.
+    """
+    result = await match_vehicles(
+        required_capacity_kg=payload.required_capacity_kg,
+        pickup_lat=payload.pickup_latitude,
+        pickup_lng=payload.pickup_longitude,
+        db=db,
+        requires_refrigeration=payload.requires_refrigeration,
+        max_distance_km=payload.max_distance_km,
+        max_duration_hours=payload.max_duration_hours,
+    )
+
+    vehicles_detail = [
+        MatchedVehicleDetail(
+            vehicle_id=v.vehicle_id,
+            vehicle_type=v.vehicle_type,
+            capacity_kg=v.capacity_kg,
+            current_load_kg=v.current_load_kg,
+            net_available_kg=v.net_available_kg,
+            allocated_load_kg=v.allocated_load_kg,
+            operating_cost_per_km=v.operating_cost_per_km,
+            distance_to_pickup_km=v.distance_to_pickup_km,
+            score=v.score,
+        )
+        for v in result.vehicles
+    ]
+
+    return VehicleMatchResponse(
+        status=result.status,
+        required_kg=result.required_kg,
+        total_allocated_kg=result.total_allocated_kg,
+        shortfall_kg=result.shortfall_kg,
+        vehicles=vehicles_detail,
+        requires_multiple_vehicles=result.requires_multiple_vehicles,
+        refrigeration_met=result.refrigeration_met,
+        explanation=result.explanation,
+    )
+
