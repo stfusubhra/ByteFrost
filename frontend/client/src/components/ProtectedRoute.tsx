@@ -1,20 +1,31 @@
 import React from "react";
-import { RouteComponentProps, Redirect, Route } from "wouter";
+import { Redirect, Route } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface Props extends RouteComponentProps {
-  allowedRoles?: string[]; // if omitted, any authenticated user can access
+interface Props {
+  path: string;
+  component: React.ComponentType<any>;
+  allowedRoles?: string[];
 }
 
-export const ProtectedRoute: React.FC<Props> = ({ allowedRoles, ...rest }) => {
+export const ProtectedRoute: React.FC<Props> = ({ path, component: Component, allowedRoles }) => {
   const { isAuthenticated, user } = useAuth();
-  if (!isAuthenticated) {
-    return <Redirect to="/login" />;
-  }
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    // redirect to appropriate dashboard based on role
-    const target = user.role === "farmer" || user.role === "fpo_manager" ? "/dashboard" : "/buyer-dashboard";
-    return <Redirect to={target} />;
-  }
-  return <Route {...rest} />;
+
+  return (
+    <Route path={path}>
+      {(params) => {
+        if (!isAuthenticated) {
+          return <Redirect to="/login" />;
+        }
+        if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+          const target =
+            user.role === "farmer" || user.role === "fpo_manager"
+              ? "/dashboard"
+              : "/buyer-dashboard";
+          return <Redirect to={target} />;
+        }
+        return <Component {...params} />;
+      }}
+    </Route>
+  );
 };

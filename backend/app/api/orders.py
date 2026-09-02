@@ -220,7 +220,7 @@ async def dispatch_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    if order.status != OrderStatus.DISPATCHED:
+    if order.status not in (OrderStatus.ALLOCATED, OrderStatus.CONFIRMED):
         raise HTTPException(status_code=400, detail=f"Order status is {order.status}, cannot dispatch")
 
     order.status = OrderStatus.DISPATCHED

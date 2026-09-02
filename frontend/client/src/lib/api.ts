@@ -141,10 +141,178 @@ export interface OrderResponse {
    items: OrderItemResponse[];
 }
 
+// --- Logistics Types ---
+export interface RouteStopItem {
+  id: string;
+  stop_type: "PICKUP" | "HUB" | "DROP" | string;
+  farmer_id?: string | null;
+  hub_id?: string | null;
+  buyer_id?: string | null;
+  latitude: number;
+  longitude: number;
+  quantity_kg: number;
+  sequence: number;
+  time_window_earliest?: string | null;
+  time_window_latest?: string | null;
+  max_transit_hours?: number | null;
+  eta?: string | null;
+}
+
+export interface VehicleItem {
+  id: string;
+  capacity_kg: number;
+  vehicle_type: "STANDARD" | "REFRIGERATED" | string;
+  status: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  operating_cost_per_km: number;
+}
+
+export interface ShipmentItem {
+  id: string;
+  allocation_id?: string | null;
+  order_id?: string | null;
+  route_id?: string | null;
+  vehicle_id?: string | null;
+  status: string;
+  landed_cost?: number | null;
+  route_mode?: string | null;
+  estimated_distance_km?: number | null;
+  estimated_duration_min?: number | null;
+  pickup_latitude?: number | null;
+  pickup_longitude?: number | null;
+  drop_latitude?: number | null;
+  drop_longitude?: number | null;
+  pickup_time?: string | null;
+  delivery_time?: string | null;
+  created_at: string;
+}
+
+export interface ShipmentDetailItem extends ShipmentItem {
+  stops: RouteStopItem[];
+  vehicle?: VehicleItem | null;
+  maps_url?: string | null;
+}
+
+export interface TrackingEventItem {
+  id: string;
+  event_type: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+  timestamp: string;
+}
+
+export interface TrackingStatusData {
+  shipment_id: string;
+  current_status: string;
+  current_latitude?: number | null;
+  current_longitude?: number | null;
+  estimated_arrival?: string | null;
+  events: TrackingEventItem[];
+  maps_url?: string | null;
+}
+
+export interface BuyerRequirementData {
+  crop_name: string;
+  required_quantity_kg: number;
+  delivery_latitude: number;
+  delivery_longitude: number;
+  delivery_address?: string;
+  min_quality_grade?: string;
+  max_price_per_kg?: number;
+  delivery_deadline?: string;
+}
+
+export interface LandedCostBreakdownData {
+  produce_cost: number;
+  transport_cost: number;
+  handling_cost: number;
+  expected_loss: number;
+  total: number;
+  is_economically_viable: boolean;
+  warning?: string | null;
+}
+
+export interface FulfillmentPlanData {
+  status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE" | string;
+  infeasibility_reason?: string | null;
+  routing_mode?: string | null;
+  vehicle_routes?: Array<{
+    vehicle_id: string;
+    stops: RouteStopItem[];
+    distance_km: number;
+    duration_min: number;
+    load_kg: number;
+    operating_cost: number;
+  }>;
+  landed_cost?: LandedCostBreakdownData | null;
+  consolidation_savings_km?: number | null;
+  estimated_delivery?: string | null;
+  shipment_ids: string[];
+}
+
+export interface IncidentReportData {
+  incident_type: "TRUCK_BREAKDOWN" | "FARMER_CANCELLED";
+  latitude?: number;
+  longitude?: number;
+  cancelled_farmer_id?: string;
+  notes?: string;
+}
+
 // --- Authenticated endpoint for creating an order ---
 export async function createOrder(orderData: OrderCreate): Promise<OrderResponse> {
    const { data } = await client.post<OrderResponse>("/orders/", orderData);
    return data;
+}
+
+// --- Logistics Endpoints ---
+export async function fetchShipments(params?: {
+  status?: string;
+  skip?: number;
+  limit?: number;
+}): Promise<ShipmentItem[]> {
+  const { data } = await client.get<ShipmentItem[]>("/shipments/", { params });
+  return data;
+}
+
+export async function fetchShipment(shipmentId: string): Promise<ShipmentDetailItem> {
+  const { data } = await client.get<ShipmentDetailItem>(`/shipments/${shipmentId}`);
+  return data;
+}
+
+export async function updateShipmentStatus(
+  shipmentId: string,
+  payload: { status: string; notes?: string; latitude?: number; longitude?: number }
+): Promise<ShipmentItem> {
+  const { data } = await client.patch<ShipmentItem>(`/shipments/${shipmentId}/status`, payload);
+  return data;
+}
+
+export async function fetchTracking(shipmentId: string): Promise<TrackingStatusData> {
+  const { data } = await client.get<TrackingStatusData>(`/tracking/${shipmentId}`);
+  return data;
+}
+
+export async function postTrackingEvent(
+  shipmentId: string,
+  event: { event_type: string; latitude?: number; longitude?: number; notes?: string }
+): Promise<TrackingEventItem> {
+  const { data } = await client.post<TrackingEventItem>(`/tracking/${shipmentId}/events`, event);
+  return data;
+}
+
+export async function fulfillOrder(requirement: BuyerRequirementData): Promise<FulfillmentPlanData> {
+  const { data } = await client.post<FulfillmentPlanData>("/logistics/fulfill-order", requirement);
+  return data;
+}
+
+export async function reportShipmentIncident(
+  shipmentId: string,
+  payload: IncidentReportData
+): Promise<any> {
+  const { data } = await client.post(`/logistics/shipments/${shipmentId}/incident`, payload);
+  return data;
 }
 
 // --- Authenticated endpoints ---

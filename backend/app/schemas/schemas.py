@@ -323,19 +323,31 @@ class FulfillmentPlanResponse(BaseModel):
 # == Shipment ==
 class ShipmentResponse(BaseModel):
     id: UUID
-    allocation_id: UUID
-    order_id: Optional[UUID]
-    route_id: Optional[UUID]
-    vehicle_id: Optional[UUID]
+    allocation_id: Optional[UUID] = None
+    order_id: Optional[UUID] = None
+    route_id: Optional[UUID] = None
+    vehicle_id: Optional[UUID] = None
     status: str
-    landed_cost: Optional[float]
-    route_mode: Optional[str]
-    pickup_time: Optional[datetime]
-    delivery_time: Optional[datetime]
+    landed_cost: Optional[float] = None
+    route_mode: Optional[str] = None
+    estimated_distance_km: Optional[float] = None
+    estimated_duration_min: Optional[float] = None
+    pickup_latitude: Optional[float] = None
+    pickup_longitude: Optional[float] = None
+    drop_latitude: Optional[float] = None
+    drop_longitude: Optional[float] = None
+    pickup_time: Optional[datetime] = None
+    delivery_time: Optional[datetime] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class ShipmentDetailResponse(ShipmentResponse):
+    stops: List[RouteStopResponse] = []
+    vehicle: Optional[VehicleResponse] = None
+    maps_url: Optional[str] = None
 
 
 # == Tracking ==

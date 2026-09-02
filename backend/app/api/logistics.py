@@ -312,3 +312,60 @@ async def consolidate_shipments(
         ],
         "total_savings_km": 0,
     }
+
+
+from uuid import UUID
+from pydantic import BaseModel
+from typing import Optional
+from app.services.reoptimization_service import handle_truck_breakdown, handle_farmer_cancellation
+
+
+class IncidentPayload(BaseModel):
+    incident_type: str  # "TRUCK_BREAKDOWN" or "FARMER_CANCELLED"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    cancelled_farmer_id: Optional[UUID] = None
+    notes: Optional[str] = None
+
+
+@router.post("/shipments/{shipment_id}/incident")
+async def report_shipment_incident(
+    shipment_id: UUID,
+    payload: IncidentPayload,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Report an in-transit logistics incident and trigger automated recovery:
+    - TRUCK_BREAKDOWN: re-assigns backup truck and re-solves VRP from breakdown coordinates.
+    - FARMER_CANCELLED: removes the cancelled pickup stop and re-balances route sequence and load.
+    """
+    incident_type = payload.incident_type.upper()
+    if incident_type == "TRUCK_BREAKDOWN":
+        if payload.latitude is None or payload.longitude is None:
+            raise HTTPException(status_code=400, detail="Truck breakdown requires latitude and longitude")
+        result = await handle_truck_breakdown(
+            shipment_id=shipment_id,
+            breakdown_lat=payload.latitude,
+            breakdown_lng=payload.longitude,
+            notes=payload.notes,
+            db=db,
+        )
+        return result
+
+    elif incident_type == "FARMER_CANCELLED":
+        if not payload.cancelled_farmer_id:
+            raise HTTPException(status_code=400, detail="Farmer cancellation requires cancelled_farmer_id")
+        result = await handle_farmer_cancellation(
+            shipment_id=shipment_id,
+            cancelled_farmer_id=payload.cancelled_farmer_id,
+            notes=payload.notes,
+            db=db,
+        )
+        return result
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported incident_type. Valid values: 'TRUCK_BREAKDOWN', 'FARMER_CANCELLED'"
+        )

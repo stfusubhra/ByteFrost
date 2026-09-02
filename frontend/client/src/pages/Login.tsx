@@ -8,6 +8,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Login() {
   const { login } = useAuth();
+  const { t } = useLanguage();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -34,13 +35,14 @@ export default function Login() {
         password,
         ...(isEmail ? { email: identifier } : { phone: identifier })
       };
-        if (response.data?.access_token && response.data?.role) {
+      const response = await api.post("/auth/login", payload);
+      if (response.data?.access_token && response.data?.role) {
           // Store token and user info via AuthContext (includes role)
           login(response.data.access_token, {
             id: response.data.user_id,
             email: response.data?.email ?? "",
             full_name: "",
-            phone: payload.phone ?? null,
+            phone: "phone" in payload ? payload.phone : null,
             role: response.data.role,
             is_verified: true,
             is_active: true,

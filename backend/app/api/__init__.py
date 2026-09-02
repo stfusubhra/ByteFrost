@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api import auth, users, listings, orders, matching, logistics, vehicles, hubs
+from app.api import auth, users, listings, orders, matching, logistics, vehicles, hubs, shipments, tracking
 
 api_router = APIRouter()
 
@@ -11,3 +11,5 @@ api_router.include_router(matching.router, prefix="/matching", tags=["AI Matchin
 api_router.include_router(logistics.router, prefix="/logistics", tags=["Logistics"])
 api_router.include_router(vehicles.router, prefix="/vehicles", tags=["Logistics - Vehicles"])
 api_router.include_router(hubs.router, prefix="/hubs", tags=["Logistics - Hubs"])
+api_router.include_router(shipments.router, prefix="/shipments", tags=["Logistics - Shipments"])
+api_router.include_router(tracking.router, prefix="/tracking", tags=["Logistics - Tracking"])

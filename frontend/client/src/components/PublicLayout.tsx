@@ -110,7 +110,7 @@ export default function PublicLayout({
                   {t("nav.dashboard")}
                 </Link>
                 <Link href="/buyer-dashboard" className="btn btn-primary btn-sm">
-                  {t("nav.buyerDashboard") || "Buyer"}
+                  {(t as any)("nav.buyerDashboard") || "Buyer"}
                 </Link>
                 <button
                   onClick={handleLogout}
