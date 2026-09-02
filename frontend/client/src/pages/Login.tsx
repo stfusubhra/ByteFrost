@@ -3,10 +3,12 @@ import { Link } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { api } from "../lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Login() {
-  const { t } = useLanguage();
+  const { login } = useAuth();
+
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,16 +34,31 @@ export default function Login() {
         password,
         ...(isEmail ? { email: identifier } : { phone: identifier })
       };
-      const response = await api.post("/auth/login", payload);
-      if (response.data?.access_token) {
-        localStorage.setItem("kisansetu_token", response.data.access_token);
-      }
-      window.location.href = "/";
+        const response = await api.post("/auth/login", payload);
+        if (response.data?.access_token && response.data?.user_id) {
+          // Store token and user info via AuthContext to keep role info
+          login(response.data.access_token, {
+            id: response.data.user_id,
+            email: response.data?.email ?? "",
+            full_name: "",
+            phone: payload.phone ?? null,
+            role: response.data.role,
+            is_verified: true,
+            is_active: true,
+            latitude: null,
+            longitude: null,
+            created_at: new Date().toISOString(),
+          });
+        }
+        window.location.href = "/";
+
     } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 401) setError(t("login.err.invalid"));
-      else if (status === 429) setError(t("login.err.tooMany"));
-      else setError(t("login.err.generic"));
+        const status = err.response?.status;
+        if (status === 401) setError(t("login.err.invalid"));
+        else if (status === 429) setError(t("login.err.tooMany"));
+        else setError(t("login.err.generic"));
+
+
     } finally {
       setLoading(false);
     }
