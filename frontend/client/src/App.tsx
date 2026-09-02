@@ -13,7 +13,7 @@ import Marketplace from "./pages/Marketplace";
 import MarketMatch from "./pages/MarketMatch";
 import Story from "./pages/Story";
 import Faq from "./pages/Faq";
-import Contact from "./pages/Contact";
+import BuyerDashboard from "./pages/BuyerDashboard";
 import Dashboard from "./pages/Dashboard";
 import ListingDetail from "./pages/ListingDetail";
 
@@ -29,7 +29,7 @@ function Router() {
       <Route path="/story" component={Story} />
       <Route path="/faq" component={Faq} />
       <Route path="/contact" component={Contact} />
-      <Route path="/dashboard" component={Dashboard} />
+       <ProtectedRoute path="/buyer-dashboard" component={BuyerDashboard} allowedRoles={["buyer_bulk","buyer_retailer","consumer"]} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

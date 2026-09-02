@@ -34,9 +34,8 @@ export default function Login() {
         password,
         ...(isEmail ? { email: identifier } : { phone: identifier })
       };
-        const response = await api.post("/auth/login", payload);
-        if (response.data?.access_token && response.data?.user_id) {
-          // Store token and user info via AuthContext to keep role info
+        if (response.data?.access_token && response.data?.role) {
+          // Store token and user info via AuthContext (includes role)
           login(response.data.access_token, {
             id: response.data.user_id,
             email: response.data?.email ?? "",
@@ -49,8 +48,19 @@ export default function Login() {
             longitude: null,
             created_at: new Date().toISOString(),
           });
+          // Redirect based on role
+          if (response.data.role === "farmer" || response.data.role === "fpo_manager") {
+            window.location.href = "/dashboard";
+          } else {
+            window.location.href = "/buyer-dashboard";
+          }
+        } else {
+          window.location.href = "/";
         }
-        window.location.href = "/";
+        } else {
+          window.location.href = "/";
+        }
+
 
     } catch (err: any) {
         const status = err.response?.status;

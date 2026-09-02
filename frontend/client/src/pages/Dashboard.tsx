@@ -5,7 +5,7 @@
  *   - Buyer matching scores (real API)
  * The UI falls back to a friendly empty state when no data is available.
  */
-import { useEffect, useState } from "react";
+import { useNavigate } from "wouter";
 import { toast } from "sonner";
 import {
   ArrowUpRight,

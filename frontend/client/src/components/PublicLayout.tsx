@@ -104,29 +104,32 @@ export default function PublicLayout({
               </button>
             )}
             <div className="header-auth-desktop">
-              {hasToken ? (
-                <>
-                  <Link href="/dashboard" className="btn btn-secondary btn-sm">
-                    {t("nav.dashboard")}
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="btn btn-ghost btn-sm"
-                    style={{ cursor: "pointer" }}
-                  >
-                    {t("nav.logout")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" className="btn btn-ghost btn-sm">
-                    {t("nav.signin")}
-                  </Link>
-                  <Link href="/signup" className="btn btn-primary btn-sm">
-                    {t("nav.signup")}
-                  </Link>
-                </>
-              )}
+                          {hasToken ? (
+              <>
+                <Link href="/dashboard" className="btn btn-secondary btn-sm">
+                  {t("nav.dashboard")}
+                </Link>
+                <Link href="/buyer-dashboard" className="btn btn-primary btn-sm">
+                  {t("nav.buyerDashboard") || "Buyer"}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-ghost btn-sm"
+                  style={{ cursor: "pointer" }}
+                >
+                  {t("nav.logout")}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="btn btn-ghost btn-sm">
+                  {t("nav.signin")}
+                </Link>
+                <Link href="/signup" className="btn btn-primary btn-sm">
+                  {t("nav.signup")}
+                </Link>
+              </>
+            )}
             </div>
             <button
               className="menu-btn"
