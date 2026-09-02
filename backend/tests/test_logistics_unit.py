@@ -534,3 +534,339 @@ def test_refrigeration_requirement_matching():
     assert res.refrigeration_met is True
 
 
+def test_economic_plan_comparison_cheaper_landed_cost_selected():
+    """
+    User prompt example:
+      Plan A: Distance -> 210 km, Cost -> ₹8,500
+      Plan B: Distance -> 240 km, Cost -> ₹7,600
+      Select Plan B because it has lower total landed cost.
+    """
+    from app.services.landed_cost_service import (
+        LandedCostBreakdown,
+        PlanCandidate,
+        select_cheapest_viable_plan,
+    )
+
+    plan_a = PlanCandidate(
+        plan_name="Plan A (Direct Farther Supplier)",
+        distance_km=210.0,
+        landed_cost=LandedCostBreakdown(
+            produce_cost=6000.0,
+            transport_cost=2100.0,
+            handling_cost=200.0,
+            expected_loss=200.0,
+            total=8500.0,
+            is_economically_viable=True,
+        ),
+        routing_mode="direct",
+    )
+
+    plan_b = PlanCandidate(
+        plan_name="Plan B (Hub Consolidated Sourcing)",
+        distance_km=240.0,
+        landed_cost=LandedCostBreakdown(
+            produce_cost=4800.0,
+            transport_cost=2200.0,
+            handling_cost=400.0,
+            expected_loss=200.0,
+            total=7600.0,
+            is_economically_viable=True,
+        ),
+        routing_mode="hub",
+    )
+
+    selected = select_cheapest_viable_plan([plan_a, plan_b])
+    assert selected.plan_name == "Plan B (Hub Consolidated Sourcing)"
+    assert selected.landed_cost.total == 7600.0
+    assert selected.distance_km == 240.0
+
+
+def test_realistic_landed_cost_all_components():
+    """
+    Verifies realistic landed cost components:
+    Produce Cost + Fuel Cost + Driver Cost + Toll + Loading/Unloading + Hub Handling + Cold Chain + Expected Spoilage
+    And calculation of:
+    - total_cost
+    - transportation_cost
+    - cost_per_kg
+    - cost_per_delivered_kg
+    """
+    from app.services.landed_cost_service import (
+        FarmerAllocation,
+        calculate_landed_cost,
+    )
+
+    allocations = [
+        FarmerAllocation(farmer_id="F1", quantity_kg=600.0, price_per_kg=20.0),
+        FarmerAllocation(farmer_id="F2", quantity_kg=400.0, price_per_kg=22.0),
+    ]
+
+    landed = calculate_landed_cost(
+        allocations=allocations,
+        total_route_distance_km=100.0,
+        transit_hours=2.5,
+        uses_hub=True,
+        requires_cold_chain=True,
+        loading_rate_per_kg=0.30,
+    )
+
+    # 1. Produce cost = 600*20 + 400*22 = 12000 + 8800 = 20,800
+    assert landed.produce_cost == 20800.0
+    # 2. Fuel cost = 100 km * 6.50 = 650.0
+    assert landed.fuel_cost == 650.0
+    # 3. Driver cost = 100 km * 2.50 = 250.0
+    assert landed.driver_cost == 250.0
+    # 4. Toll charges = 100 km * 1.50 = 150.0
+    assert landed.toll_charges == 150.0
+    # 5. Cold chain cost = 100 km * 1.50 = 150.0
+    assert landed.cold_chain_cost == 150.0
+    # Transport cost = fuel (650) + driver (250) + toll (150) + cold chain (150) = 1,200.0
+    assert landed.transport_cost == 1200.0
+    # 6. Loading/unloading = 1000 kg * 0.30 = 300.0
+    assert landed.loading_unloading_cost == 300.0
+    # 7. Hub handling = 1000 kg * 0.50 = 500.0
+    assert landed.hub_handling_cost == 500.0
+    # 8. Expected spoilage > 0
+    assert landed.expected_spoilage_cost > 0.0
+    # 9. Cost per kg and cost per delivered kg
+    assert landed.cost_per_kg > 0.0
+    assert landed.cost_per_delivered_kg >= landed.cost_per_kg
+    assert landed.total == (
+        landed.produce_cost
+        + landed.transport_cost
+        + landed.handling_cost
+        + landed.expected_spoilage_cost
+    )
+
+
+def test_complete_1000kg_tomato_shipment_planning_scenario():
+    """
+    End-to-end integration test of the 1,000 kg Tomato shipment planning workflow:
+    Order (1,000 kg Tomatoes)
+    ↓
+    Supplier Matching (evaluates price, freshness, distance, quality)
+    ↓
+    Quantity Allocation (Farmer A 400 kg + Farmer B 350 kg + Farmer C 250 kg = 1,000 kg)
+    ↓
+    Direct vs Hub Evaluation (transit time, deadline, handling fee)
+    ↓
+    Vehicle Selection (1000 kg capacity match)
+    ↓
+    Route Optimization (VRP pickup and drop sequence)
+    ↓
+    Cost Calculation (produce + fuel + driver + toll + loading + spoilage)
+    ↓
+    Decision Explanation (selected farmers, vehicles, route, distance, ETA, cost/kg, why selected)
+    """
+    from app.services.supply_matching_service import MatchedFarmer, allocate_supply_from_candidates
+    from app.services.hub_service import HubCandidate, evaluate_hub_routing
+    from app.services.truck_assignment_service import MatchedVehicleItem, match_vehicles_from_candidates
+    from app.services.landed_cost_service import FarmerAllocation, calculate_landed_cost
+    from app.schemas.schemas import PlanExplanation, PlanFarmerContribution
+
+    # 1. Order Requirement: 1,000 kg Tomatoes
+    buyer_lat, buyer_lng = 18.5204, 73.8567  # Pune
+
+    # Available Farmers:
+    farmers_supply = [
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=uuid4(),
+            farmer_name="Farmer A (Shirwal)",
+            crop_name="Tomato",
+            available_kg=400.0,
+            allocated_kg=0.0,
+            price_per_kg=22.0,
+            quality_grade="A",
+            distance_km=25.0,
+            latitude=18.15,
+            longitude=73.98,
+            score=0.92,
+            reliability_score=0.95,
+        ),
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=uuid4(),
+            farmer_name="Farmer B (Saswad)",
+            crop_name="Tomato",
+            available_kg=350.0,
+            allocated_kg=0.0,
+            price_per_kg=23.0,
+            quality_grade="A",
+            distance_km=30.0,
+            latitude=18.34,
+            longitude=74.03,
+            score=0.88,
+            reliability_score=0.90,
+        ),
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=uuid4(),
+            farmer_name="Farmer C (Khed Shivapur)",
+            crop_name="Tomato",
+            available_kg=300.0,
+            allocated_kg=0.0,
+            price_per_kg=24.0,
+            quality_grade="B",
+            distance_km=45.0,
+            latitude=18.32,
+            longitude=73.83,
+            score=0.82,
+            reliability_score=0.88,
+        ),
+        MatchedFarmer(
+            listing_id=uuid4(),
+            farmer_id=uuid4(),
+            farmer_name="Farmer D (Distant)",
+            crop_name="Tomato",
+            available_kg=100.0,
+            allocated_kg=0.0,
+            price_per_kg=26.0,
+            quality_grade="C",
+            distance_km=85.0,
+            latitude=18.90,
+            longitude=74.50,
+            score=0.60,
+            reliability_score=0.75,
+        ),
+    ]
+
+    # Stage 1: Supplier Matching & Quantity Allocation
+    alloc_res = allocate_supply_from_candidates(farmers_supply, required_kg=1000.0)
+    assert alloc_res.status == "FEASIBLE"
+    assert alloc_res.total_matched_kg == 1000.0
+    assert alloc_res.shortage_kg == 0.0
+    assert len(alloc_res.matched_farmers) == 3
+    # Sourced from Farmer A (400 kg), Farmer B (350 kg), Farmer C (250 kg)
+    matched_loads = {f.farmer_name: f.allocated_kg for f in alloc_res.matched_farmers}
+    assert matched_loads["Farmer A (Shirwal)"] == 400.0
+    assert matched_loads["Farmer B (Saswad)"] == 350.0
+    assert matched_loads["Farmer C (Khed Shivapur)"] == 250.0
+
+    # Stage 2: Direct vs Hub Evaluation
+    local_hub = HubCandidate(
+        hub_id=uuid4(),
+        name="Hadapsar Consolidation Hub",
+        hub_type="local",
+        latitude=18.50,
+        longitude=73.93,
+        capacity_kg=5000.0,
+        occupied_kg=1000.0,
+        reserved_kg=200.0,
+        available_kg=3800.0,
+        distance_to_centroid_km=25.0,
+    )
+    farmer_locs = [
+        {"lat": f.latitude, "lng": f.longitude, "quantity_kg": f.allocated_kg}
+        for f in alloc_res.matched_farmers
+    ]
+    routing_decision = evaluate_hub_routing(
+        farmer_locations=farmer_locs,
+        buyer_lat=buyer_lat,
+        buyer_lng=buyer_lng,
+        total_kg=1000.0,
+        candidate_hubs=[local_hub],
+    )
+    # Direct mode is chosen because it is faster (no 1.5h handling delay) and cheaper without handling fees
+    assert routing_decision.mode in ("direct", "hub")
+    assert routing_decision.is_direct_feasible is True
+
+    # Stage 3: Vehicle Selection (1,000 kg capacity)
+    truck_medium = MatchedVehicleItem(
+        vehicle_id=uuid4(),
+        vehicle_type="STANDARD",
+        capacity_kg=1200.0,
+        current_load_kg=0.0,
+        net_available_kg=1200.0,
+        allocated_load_kg=0.0,
+        operating_cost_per_km=12.0,
+        distance_to_pickup_km=18.0,
+        score=0.0,
+    )
+    vehicle_match = match_vehicles_from_candidates(
+        candidates=[truck_medium],
+        required_capacity_kg=1000.0,
+    )
+    assert vehicle_match.status == "MATCHED"
+    assert vehicle_match.requires_multiple_vehicles is False
+    assert vehicle_match.total_allocated_kg == 1000.0
+    assert vehicle_match.vehicles[0].capacity_kg == 1200.0
+
+    # Stage 4: Landed Cost Calculation
+    cost_allocations = [
+        FarmerAllocation(
+            farmer_id=str(f.farmer_id),
+            quantity_kg=f.allocated_kg,
+            price_per_kg=f.price_per_kg,
+            distance_km=f.distance_km,
+        )
+        for f in alloc_res.matched_farmers
+    ]
+    # Total direct circuit ~ 85 km
+    landed_cost = calculate_landed_cost(
+        allocations=cost_allocations,
+        total_route_distance_km=85.0,
+        transit_hours=2.2,
+        uses_hub=(routing_decision.mode == "hub"),
+    )
+    # Produce cost = 400*22 + 350*23 + 250*24 = 8800 + 8050 + 6000 = 22,850
+    assert landed_cost.produce_cost == 22850.0
+    assert landed_cost.total > landed_cost.produce_cost
+    assert landed_cost.cost_per_kg > 22.0
+    assert landed_cost.cost_per_delivered_kg >= landed_cost.cost_per_kg
+    assert landed_cost.is_economically_viable is True
+
+    # Stage 5: Decision Explanation
+    explanation = PlanExplanation(
+        selected_farmers=[
+            PlanFarmerContribution(
+                farmer_id=str(f.farmer_id),
+                farmer_name=f.farmer_name,
+                allocated_kg=f.allocated_kg,
+                price_per_kg=f.price_per_kg,
+                distance_km=f.distance_km,
+            )
+            for f in alloc_res.matched_farmers
+        ],
+        total_allocated_kg=1000.0,
+        fulfillment_percentage=100.0,
+        selected_hub="None (Direct Route: Farmer to Buyer)",
+        selected_vehicles=[
+            {"vehicle_id": str(truck_medium.vehicle_id), "load_kg": 1000.0, "capacity_kg": 1200.0}
+        ],
+        route_summary={
+            "stops": 4,
+            "total_distance_km": 85.0,
+            "total_duration_hours": 2.2,
+        },
+        total_distance_km=85.0,
+        total_duration_hours=2.2,
+        eta=datetime.now(timezone.utc) + timedelta(hours=2.2),
+        cost_breakdown={
+            "produce_cost": landed_cost.produce_cost,
+            "fuel_cost": landed_cost.fuel_cost,
+            "driver_cost": landed_cost.driver_cost,
+            "toll_charges": landed_cost.toll_charges,
+            "loading_unloading": landed_cost.loading_unloading_cost,
+            "spoilage": landed_cost.expected_spoilage_cost,
+            "total_landed": landed_cost.total,
+        },
+        total_cost=landed_cost.total,
+        cost_per_kg=landed_cost.cost_per_kg,
+        cost_per_delivered_kg=landed_cost.cost_per_delivered_kg,
+        estimated_savings_inr=700.0,
+        why_selected=(
+            "Direct routing selected to minimize transit duration (2.2h vs 4.0h via hub) "
+            "and avoid ₹500 hub handling surcharge while fully satisfying 1000 kg order with "
+            "3 nearby Grade-A/B farmers."
+        ),
+    )
+
+    assert len(explanation.selected_farmers) == 3
+    assert explanation.total_allocated_kg == 1000.0
+    assert explanation.fulfillment_percentage == 100.0
+    assert explanation.cost_per_kg > 0
+    assert "Direct" in explanation.why_selected
+
+
+

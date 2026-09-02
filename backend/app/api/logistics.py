@@ -248,21 +248,32 @@ async def optimize_route(
 
 
 @router.post("/fulfill-order", response_model=FulfillmentPlanResponse)
-async def fulfill_order(
+@router.post("/plan-shipment", response_model=FulfillmentPlanResponse)
+async def plan_shipment_endpoint(
     payload: BuyerRequirement,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    End-to-end order fulfillment.
+    High-level end-to-end shipment planning workflow:
+      Order / Requirement
+      ↓
+      Supplier Matching (evaluate quantity, quality, freshness, distance, price, reliability)
+      ↓
+      Quantity Allocation (multi-farmer pooling & shortage tracking)
+      ↓
+      Direct vs Hub Evaluation (transit time, deadline, handling fee, hub capacity)
+      ↓
+      Vehicle Selection (capacity, net load, refrigeration, operating cost)
+      ↓
+      Route Optimization (OR-Tools VRP with time windows)
+      ↓
+      Realistic Landed Cost Calculation (produce, fuel, driver, toll, loading, hub handling, cold chain, spoilage)
+      ↓
+      Shipment Creation & Comprehensive Decision Explanation
 
-    Runs the full two-stage logistics pipeline:
-      Stage 1 — Supply matching (which farmers, how much from each)
-      Stage 2 — Consolidation, routing-mode decision, truck assignment,
-                VRP route optimization, landed-cost calculation, and dispatch.
-
-    Returns a FulfillmentPlanResponse with status FEASIBLE / PARTIAL / INFEASIBLE
-    and an honest reason when the order cannot be economically fulfilled.
+    Returns a FulfillmentPlanResponse with detailed status, route, landed cost breakdown,
+    and a clear explanation of why this plan was chosen.
     """
     if payload.required_quantity_kg <= 0:
         raise HTTPException(status_code=400, detail="required_quantity_kg must be positive")

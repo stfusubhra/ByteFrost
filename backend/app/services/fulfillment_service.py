@@ -34,6 +34,8 @@ from app.schemas.schemas import (
     VehicleRouteResponse,
     RouteStopResponse,
     LandedCostBreakdown,
+    PlanExplanation,
+    PlanFarmerContribution,
 )
 from app.services.supply_matching_service import match_supply
 from app.services.consolidation_service import consolidate_pickups, PickupStop
@@ -332,13 +334,89 @@ async def create_fulfillment_plan(
     )
 
     # ------------------------------------------------------------------
+    # Stage 2f: Decision Explanation
+    # ------------------------------------------------------------------
+    selected_farmers_expl = [
+        PlanFarmerContribution(
+            farmer_id=str(f.farmer_id),
+            farmer_name=f.farmer_name,
+            allocated_kg=f.allocated_kg,
+            price_per_kg=f.price_per_kg,
+            distance_km=f.distance_km,
+        )
+        for f in match.matched_farmers
+        if f.allocated_kg > 0
+    ]
+
+    selected_hub_name = None
+    if routing.mode == "hub" and routing.local_hub:
+        selected_hub_name = f"{routing.local_hub.name} (Local Hub)"
+    elif routing.mode == "multi_hub":
+        l_name = routing.local_hub.name if routing.local_hub else "Local Hub"
+        r_name = routing.regional_hub.name if routing.regional_hub else "Regional Hub"
+        selected_hub_name = f"{l_name} -> {r_name} (Regional Hubs)"
+    else:
+        selected_hub_name = "None (Direct Route: Farmer to Buyer)"
+
+    fulfillment_pct = (
+        round((match.total_matched_kg / requirement.required_quantity_kg) * 100.0, 1)
+        if requirement.required_quantity_kg > 0
+        else 100.0
+    )
+
+    savings_vs_individual = max(0.0, (len(selected_farmers_expl) - 1) * 35.0 * DEFAULT_OPERATING_COST_PER_KM)
+
+    why_selected_parts = [
+        f"Selected {len(selected_farmers_expl)} farmer(s) aggregating {match.total_matched_kg:.0f} kg ({fulfillment_pct}% fulfillment).",
+        f"Routing mode '{routing.mode}' chosen: {routing.reason}.",
+        f"Assigned {len(vehicle_routes)} optimized vehicle route(s) covering {total_distance:.1f} km total distance.",
+        f"Total landed cost is ₹{landed.total:.2f} (₹{landed.cost_per_kg:.2f}/kg, delivered: ₹{landed.cost_per_delivered_kg:.2f}/kg) with expected spoilage of only {landed.expected_spoilage_kg:.1f} kg.",
+    ]
+    if savings_vs_individual > 0:
+        why_selected_parts.append(f"Consolidation saved an estimated ₹{savings_vs_individual:.0f} compared to unpooled single-farmer trips.")
+
+    explanation = PlanExplanation(
+        selected_farmers=selected_farmers_expl,
+        total_allocated_kg=match.total_matched_kg,
+        fulfillment_percentage=fulfillment_pct,
+        selected_hub=selected_hub_name,
+        selected_vehicles=[
+            {"vehicle_id": str(vr.vehicle_id), "load_kg": vr.load_kg, "distance_km": vr.distance_km}
+            for vr in vehicle_routes
+        ],
+        route_summary={
+            "routing_mode": routing.mode,
+            "total_stops": sum(len(vr.stops) for vr in vehicle_routes),
+            "total_distance_km": round(total_distance, 2),
+            "total_duration_hours": round(total_duration / 60.0, 2),
+        },
+        total_distance_km=round(total_distance, 2),
+        total_duration_hours=round(total_duration / 60.0, 2),
+        eta=max_eta,
+        cost_breakdown={
+            "produce_cost": landed.produce_cost,
+            "fuel_cost": landed.fuel_cost,
+            "driver_cost": landed.driver_cost,
+            "toll_charges": landed.toll_charges,
+            "loading_unloading": landed.loading_unloading_cost,
+            "hub_handling": landed.hub_handling_cost,
+            "cold_chain": landed.cold_chain_cost,
+            "expected_spoilage": landed.expected_spoilage_cost,
+            "total_landed": landed.total,
+        },
+        total_cost=landed.total,
+        cost_per_kg=landed.cost_per_kg,
+        cost_per_delivered_kg=landed.cost_per_delivered_kg,
+        estimated_savings_inr=round(savings_vs_individual, 2),
+        why_selected=" ".join(why_selected_parts),
+    )
+
+    # ------------------------------------------------------------------
     # Assemble the response
     # ------------------------------------------------------------------
     status = match.status  # FEASIBLE / PARTIAL
     if not landed.is_economically_viable:
         status = "INFEASIBLE"
-
-    shipment_ids = shipment_ids
 
     return FulfillmentPlanResponse(
         status=status,
@@ -348,7 +426,8 @@ async def create_fulfillment_plan(
         routing_mode=routing.mode,
         vehicle_routes=vehicle_routes,
         landed_cost=landed,
-        consolidation_savings_km=0.0,
+        consolidation_savings_km=round(savings_vs_individual / DEFAULT_OPERATING_COST_PER_KM, 1),
         estimated_delivery=max_eta,
         shipment_ids=shipment_ids,
+        explanation=explanation,
     )

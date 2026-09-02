@@ -338,12 +338,46 @@ export interface VehicleMatchResponseData {
 
 export interface LandedCostBreakdownData {
   produce_cost: number;
+  fuel_cost?: number;
+  driver_cost?: number;
+  toll_charges?: number;
+  loading_unloading_cost?: number;
+  hub_handling_cost?: number;
+  cold_chain_cost?: number;
+  expected_spoilage_cost?: number;
+  expected_spoilage_kg?: number;
   transport_cost: number;
   handling_cost: number;
   expected_loss: number;
   total: number;
+  cost_per_kg?: number;
+  cost_per_delivered_kg?: number;
   is_economically_viable: boolean;
   warning?: string | null;
+}
+
+export interface PlanExplanationData {
+  selected_farmers: Array<{
+    farmer_id: string;
+    farmer_name: string;
+    allocated_kg: number;
+    price_per_kg: number;
+    distance_km: number;
+  }>;
+  total_allocated_kg: number;
+  fulfillment_percentage: number;
+  selected_hub?: string | null;
+  selected_vehicles: any[];
+  route_summary: Record<string, any>;
+  total_distance_km: number;
+  total_duration_hours: number;
+  eta?: string | null;
+  cost_breakdown: Record<string, number>;
+  total_cost: number;
+  cost_per_kg: number;
+  cost_per_delivered_kg: number;
+  estimated_savings_inr: number;
+  why_selected: string;
 }
 
 export interface FulfillmentPlanData {
@@ -362,6 +396,7 @@ export interface FulfillmentPlanData {
   consolidation_savings_km?: number | null;
   estimated_delivery?: string | null;
   shipment_ids: string[];
+  explanation?: PlanExplanationData | null;
 }
 
 export interface IncidentReportData {
@@ -486,6 +521,16 @@ export async function matchVehicles(
 ): Promise<VehicleMatchResponseData> {
   const { data } = await client.post<VehicleMatchResponseData>(
     "/logistics/match-vehicles",
+    payload
+  );
+  return data;
+}
+
+export async function planShipment(
+  payload: BuyerRequirementData
+): Promise<FulfillmentPlanData> {
+  const { data } = await client.post<FulfillmentPlanData>(
+    "/logistics/plan-shipment",
     payload
   );
   return data;

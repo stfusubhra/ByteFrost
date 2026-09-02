@@ -408,12 +408,51 @@ class BuyerRequirement(BaseModel):
 # == Landed Cost Breakdown ==
 class LandedCostBreakdown(BaseModel):
     produce_cost: float
+    fuel_cost: float = 0.0
+    driver_cost: float = 0.0
+    toll_charges: float = 0.0
+    loading_unloading_cost: float = 0.0
+    hub_handling_cost: float = 0.0
+    cold_chain_cost: float = 0.0
+    expected_spoilage_cost: float = 0.0
+    expected_spoilage_kg: float = 0.0
     transport_cost: float
-    handling_cost: float
-    expected_loss: float
+    handling_cost: float = 0.0
+    expected_loss: float = 0.0
     total: float
+    cost_per_kg: float = 0.0
+    cost_per_delivered_kg: float = 0.0
+    is_economically_viable: bool = True
+    warning: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+# == Explanation of Shipment Planning Decision ==
+class PlanFarmerContribution(BaseModel):
+    farmer_id: str
+    farmer_name: str
+    allocated_kg: float
+    price_per_kg: float
+    distance_km: float
+
+
+class PlanExplanation(BaseModel):
+    selected_farmers: List[PlanFarmerContribution] = []
+    total_allocated_kg: float = 0.0
+    fulfillment_percentage: float = 0.0
+    selected_hub: Optional[str] = None
+    selected_vehicles: List[dict] = []
+    route_summary: dict = {}
+    total_distance_km: float = 0.0
+    total_duration_hours: float = 0.0
+    eta: Optional[datetime] = None
+    cost_breakdown: dict = {}
+    total_cost: float = 0.0
+    cost_per_kg: float = 0.0
+    cost_per_delivered_kg: float = 0.0
+    estimated_savings_inr: float = 0.0
+    why_selected: str = ""
 
 
 # == Vehicle Route (for fulfillment response) ==
@@ -436,6 +475,7 @@ class FulfillmentPlanResponse(BaseModel):
     consolidation_savings_km: Optional[float] = None
     estimated_delivery: Optional[datetime] = None
     shipment_ids: List[UUID] = []
+    explanation: Optional[PlanExplanation] = None
 
 
 # == Shipment ==
