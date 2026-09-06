@@ -3,9 +3,11 @@ import { Link } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { api } from "../lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Signup() {
+  const { login } = useAuth();
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -13,6 +15,12 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("farmer");
+  // Map UI role labels to backend enum values
+  const roleMap: Record<string, string> = {
+    farmer: "farmer",
+    buyer: "buyer_bulk",
+    fpo: "fpo_manager",
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -28,10 +36,21 @@ export default function Signup() {
     setLoading(true);
     try {
       const response = await api.post("/auth/register", {
-        email, phone, password, full_name: fullName || email.split("@")[0], role,
+        email, phone, password, full_name: fullName || email.split("@")[0], role: roleMap[role] || role,
       });
-      if (response.data?.access_token) {
-        localStorage.setItem("kisansetu_token", response.data.access_token);
+      if (response.data?.access_token && response.data?.role) {
+        login(response.data.access_token, {
+          id: response.data.user_id,
+          email: email,
+          full_name: fullName || email.split("@")[0],
+          phone: phone || null,
+          role: response.data.role,
+          is_verified: false,
+          is_active: true,
+          latitude: null,
+          longitude: null,
+          created_at: new Date().toISOString(),
+        });
       }
       window.location.href = "/";
     } catch (err: any) {
