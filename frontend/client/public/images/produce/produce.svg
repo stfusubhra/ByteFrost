@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14532d"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="280" cy="320" r="110" fill="#fbbf24"/>
+  <circle cx="430" cy="300" r="95" fill="#f97316"/>
+  <circle cx="540" cy="350" r="100" fill="#fde047"/>
+  <path d="M280 210 q0 -40 40 -40 q40 0 40 40" fill="none" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+  <path d="M430 205 q0 -40 40 -40 q40 0 40 40" fill="none" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+  <text x="400" y="560" text-anchor="middle" font-family="system-ui, sans-serif" font-size="34" font-weight="700" fill="#f0fdf4">Fresh Produce · Harvested Today</text>
+</svg>

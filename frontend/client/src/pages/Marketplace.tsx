@@ -84,7 +84,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested today",
     route: "28 km · 1h 12m",
     match: "92%",
-    image: "/manus-storage/kisan-story-tomatoes_128fdb50.jpg",
+    image: "/images/produce/tomatoes.svg",
     status: "Ready to move",
     harvest: "Today",
     seller: "GreenValley Farms",
@@ -99,7 +99,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested yesterday",
     route: "42 km · 1h 48m",
     match: "87%",
-    image: "/manus-storage/kisan-story-crates_8ebf1895.jpg",
+    image: "/images/produce/crates.svg",
     status: "Matched supply",
     harvest: "Yesterday",
     seller: "Sahaja Agro Co-op",
@@ -114,7 +114,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested 2 days ago",
     route: "61 km · 2h 18m",
     match: "81%",
-    image: "/manus-storage/kisan-story-waiting_e345d9da.jpg",
+    image: "/images/produce/produce.svg",
     status: "Awaiting buyer",
     harvest: "2 days ago",
     seller: "Satara Fresh Collective",
@@ -129,7 +129,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested today",
     route: "74 km · 2h 40m",
     match: "78%",
-    image: "/manus-storage/kisan-story-farmer_581c0db7.jpg",
+    image: "/images/produce/farmer.svg",
     status: "New listing",
     harvest: "Today",
     seller: "Ahmednagar Growers",
@@ -138,10 +138,10 @@ const DEMO_LISTINGS: MarketListing[] = [
 
 function mapBackendListing(listing: any): MarketListing {
   const imageMap: Record<string, string> = {
-    Tomatoes: "/manus-storage/kisan-story-tomatoes_128fdb50.jpg",
-    "Harvest crates": "/manus-storage/kisan-story-crates_8ebf1895.jpg",
-    "Fresh produce": "/manus-storage/kisan-story-waiting_e345d9da.jpg",
-    Default: "/manus-storage/kisan-story-farmer_581c0db7.jpg",
+    Tomatoes: "/images/produce/tomatoes.svg",
+    "Harvest crates": "/images/produce/crates.svg",
+    "Fresh produce": "/images/produce/produce.svg",
+    Default: "/images/produce/farmer.svg",
   };
   const image = imageMap[listing.crop_name] || imageMap.Default;
 

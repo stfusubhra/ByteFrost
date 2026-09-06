@@ -24,10 +24,10 @@ export default function ListingDetail() {
   };
 
   const imageMap: Record<string, string> = {
-    Tomatoes: "/manus-storage/kisan-story-tomatoes_128fdb50.jpg",
-    "Harvest crates": "/manus-storage/kisan-story-crates_8ebf1895.jpg",
-    "Fresh produce": "/manus-storage/kisan-story-waiting_e345d9da.jpg",
-    Default: "/manus-storage/kisan-story-farmer_581c0db7.jpg",
+    Tomatoes: "/images/produce/tomatoes.svg",
+    "Harvest crates": "/images/produce/crates.svg",
+    "Fresh produce": "/images/produce/produce.svg",
+    Default: "/images/produce/farmer.svg",
   };
 
   const getImage = (crop: string): string => {

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7f1d1d"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+    <radialGradient id="tomato" cx="0.4" cy="0.35" r="0.9">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="60%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="300" cy="330" r="130" fill="url(#tomato)"/>
+  <circle cx="500" cy="330" r="130" fill="url(#tomato)"/>
+  <circle cx="400" cy="420" r="120" fill="url(#tomato)"/>
+  <path d="M300 200 q0 -45 45 -45 q45 0 45 45" fill="none" stroke="#166534" stroke-width="10" stroke-linecap="round"/>
+  <path d="M345 155 q-30 -30 -70 -15" fill="none" stroke="#166534" stroke-width="10" stroke-linecap="round"/>
+  <path d="M345 155 q30 -30 70 -15" fill="none" stroke="#166534" stroke-width="10" stroke-linecap="round"/>
+  <text x="400" y="560" text-anchor="middle" font-family="system-ui, sans-serif" font-size="34" font-weight="700" fill="#fef2f2">Fresh Tomatoes · Grade A</text>
+</svg>

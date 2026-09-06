@@ -53,3 +53,9 @@ backend/check_logistics.py
 opencode.json
 .vercel
 .env*
+!.env.example
+
+# Local tool state (never commit)
+.opencode/
+.freebuff/
+frontend/client/public/__manus__/
