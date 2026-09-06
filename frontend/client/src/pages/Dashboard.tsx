@@ -104,6 +104,27 @@ export default function Dashboard() {
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
+      // Show demo data for screenshots when not authenticated
+      setListing({
+        id: "demo",
+        crop_name: "Tomato",
+        variety: "Cherry",
+        quantity_kg: 500,
+        quality_grade: "A",
+        price_per_kg: 45,
+        pickup_location: "Village Vinchur, Nashik, MH",
+        is_active: true,
+      });
+      setPriceRec({
+        recommended_price: 42,
+        confidence: 0.87,
+        factors: ["comparable_active_listings", "crop_market"],
+      });
+      setMatches([
+        { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
+        { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
+        { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
+      ]);
       setLoading(false);
       return;
     }
@@ -360,6 +381,9 @@ export default function Dashboard() {
                   <p className="state-body" style={{ marginTop: 6 }}>
                     {t("dash.supplyNext")}
                   </p>
+                  {!isAuthenticated && (
+                    <span className="badge badge-warning" style={{ marginTop: 8, display: "inline-block" }}>Demo Data — Sign in for real data</span>
+                  )}
                 </div>
                 <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
                   <FilePlus2 size={17} /> {t("dash.newListing")}
