@@ -25,6 +25,7 @@ const hi: Record<LocaleKeys, string> = {
   "nav.signup": "जुड़ें",
   "nav.createAccount": "खाता बनाएँ",
   "nav.dashboard": "डैशबोर्ड",
+  "nav.buyerDashboard": "खरीदार",
   "nav.productDashboard": "उत्पाद डैशबोर्ड",
   "nav.signout": "लॉग आउट करें",
   "nav.logout": "लॉग आउट",

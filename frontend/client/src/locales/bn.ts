@@ -25,6 +25,7 @@ const bn: Record<LocaleKeys, string> = {
   "nav.signup": "যোগ দিন",
   "nav.createAccount": "অ্যাকাউন্ট তৈরি করুন",
   "nav.dashboard": "ড্যাশবোর্ড",
+  "nav.buyerDashboard": "ক্রেতা",
   "nav.productDashboard": "পণ্য ড্যাশবোর্ড",
   "nav.signout": "লগ আউট করুন",
   "nav.logout": "লগ আউট",

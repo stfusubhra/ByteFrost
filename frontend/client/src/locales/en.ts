@@ -23,6 +23,7 @@ const en = {
   "nav.signup": "Sign up",
   "nav.createAccount": "Create account",
   "nav.dashboard": "Dashboard",
+  "nav.buyerDashboard": "Buyer",
   "nav.productDashboard": "Product Dashboard",
   "nav.signout": "Sign out",
   "nav.logout": "Logout",
