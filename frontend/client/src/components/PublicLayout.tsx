@@ -43,7 +43,6 @@ export default function PublicLayout({
 
   const farmerLinks = [
     { href: "/marketplace", label: t("nav.marketplace") },
-    { href: "/market-match", label: t("nav.findmatch") },
     { href: "/story", label: t("nav.story") },
     { href: "/about", label: t("nav.about") },
   ];
@@ -198,7 +197,6 @@ export default function PublicLayout({
             <div className="site-footer-col">
               <span className="site-footer-head">{t("footer.explore")}</span>
               <Link href="/marketplace">{t("nav.marketplace")}</Link>
-              <Link href="/market-match">{t("footer.marketMatch")}</Link>
               <Link href="/story">{t("nav.story")}</Link>
               <Link href="/faq">{t("nav.faq")}</Link>
             </div>

@@ -11,7 +11,6 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Marketplace from "./pages/Marketplace";
-import MarketMatch from "./pages/MarketMatch";
 import Story from "./pages/Story";
 import About from "./pages/About";
 import Faq from "./pages/Faq";
@@ -27,7 +26,6 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/marketplace" component={Marketplace} />
-      <Route path="/market-match" component={MarketMatch} />
       <Route path="/listing/:id" component={ListingDetail} />
       <Route path="/story" component={Story} />
       <Route path="/about" component={About} />
