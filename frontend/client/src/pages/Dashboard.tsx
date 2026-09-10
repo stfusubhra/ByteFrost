@@ -6,8 +6,10 @@
  * The UI falls back to a friendly empty state when no data is available.
  */
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "wouter";
 import { toast } from "sonner";
 import {
+  ArrowLeft,
   ArrowUpRight,
   BarChart3,
   Bell,
@@ -42,6 +44,9 @@ import {
   fetchShipments,
   fetchShipment,
   fetchTracking,
+  fetchIncomingOrders,
+  Listing,
+  OrderResponse,
   ShipmentItem,
   ShipmentDetailItem,
   TrackingStatusData,
@@ -73,6 +78,8 @@ export default function Dashboard() {
   const [selectedShipment, setSelectedShipment] = useState<ShipmentDetailItem | null>(null);
   const [trackingData, setTrackingData] = useState<TrackingStatusData | null>(null);
   const [shipmentLoading, setShipmentLoading] = useState(false);
+  const [allListings, setAllListings] = useState<Listing[]>([]);
+  const [incomingOrders, setIncomingOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -157,6 +164,22 @@ export default function Dashboard() {
       } catch {
         // Shipments optional
       }
+
+      // All active listings (Marketplace section)
+      try {
+        const all = await fetchListings({ limit: 50 });
+        setAllListings(all);
+      } catch {
+        // Listings optional
+      }
+
+      // Incoming orders — orders containing this farmer's listings
+      try {
+        const orders = await fetchIncomingOrders({ limit: 20 });
+        setIncomingOrders(orders);
+      } catch {
+        // Orders optional
+      }
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
       else setError(t("dash.failed"));
@@ -199,6 +222,15 @@ export default function Dashboard() {
     <div className="dash-shell">
       <header className="dash-topbar">
         <div className="dash-topbar-left">
+          <Link
+            href="/"
+            className="btn btn-ghost btn-sm dash-back-link"
+            aria-label={t("dash.backToSite")}
+            title={t("dash.backToSite")}
+          >
+            <ArrowLeft size={16} />
+            <span>{t("dash.backToSite")}</span>
+          </Link>
           <button
             className="btn btn-ghost btn-sm dash-menu-btn"
             onClick={() => setSidebarOpen(true)}
@@ -368,6 +400,185 @@ export default function Dashboard() {
                   <h3 className="font-semibold text-lg text-foreground">{t("dash.noRoutes")}</h3>
                   <p className="text-sm text-muted-foreground max-w-md mx-auto">
                     {t("dash.noRoutesBody")}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : activeNav === "marketplace" ? (
+            <div className="space-y-6">
+              <div className="dash-head">
+                <div>
+                  <p className="eyebrow">{t("dash.liveMarket")}</p>
+                  <h1>{t("dash.marketplace")}</h1>
+                  <p className="state-body" style={{ marginTop: 6 }}>
+                    {t("dash.marketplaceSub")}
+                  </p>
+                </div>
+                <Link href="/marketplace" className="btn btn-primary inline-flex items-center gap-2">
+                  <ArrowUpRight size={17} /> {t("dash.openMarketplace")}
+                </Link>
+              </div>
+
+              {allListings.length > 0 ? (
+                <div className="card overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="dash-table">
+                      <thead>
+                        <tr>
+                          <th>{t("dash.colCrop")}</th>
+                          <th>{t("dash.colQty")}</th>
+                          <th>{t("dash.colPrice")}</th>
+                          <th>{t("dash.colGrade")}</th>
+                          <th>{t("dash.colLocation")}</th>
+                          <th className="text-right">{t("dash.colStatus")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allListings.map((l) => (
+                          <tr key={l.id}>
+                            <td className="font-medium">
+                              {l.crop_name}
+                              {l.variety ? ` · ${l.variety}` : ""}
+                            </td>
+                            <td>{l.quantity_kg} kg</td>
+                            <td>{l.price_per_kg ? `₹${l.price_per_kg}/kg` : "—"}</td>
+                            <td>{l.quality_grade ?? "—"}</td>
+                            <td>{l.pickup_location ?? "—"}</td>
+                            <td className="text-right">
+                              <Link href={`/listing/${l.id}`} className="text-link inline-flex items-center gap-1">
+                                {t("dash.viewListing")} <ArrowUpRight size={14} />
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="card p-8 text-center space-y-3">
+                  <Boxes className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
+                  <h3 className="font-semibold text-lg text-foreground">{t("dash.emptyMarketplace")}</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {t("dash.emptyMarketplaceBody")}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : activeNav === "mylistings" ? (
+            <div className="space-y-6">
+              <div className="dash-head">
+                <div>
+                  <p className="eyebrow">{t("dash.liveMarket")}</p>
+                  <h1>{t("dash.myListings")}</h1>
+                  <p className="state-body" style={{ marginTop: 6 }}>
+                    {t("dash.myListingsSub")}
+                  </p>
+                </div>
+                <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
+                  <FilePlus2 size={17} /> {t("dash.createListing")}
+                </button>
+              </div>
+
+              {allListings.filter((l) => l.seller_id === user?.id).length > 0 ? (
+                <div className="card overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="dash-table">
+                      <thead>
+                        <tr>
+                          <th>{t("dash.colCrop")}</th>
+                          <th>{t("dash.colQty")}</th>
+                          <th>{t("dash.colPrice")}</th>
+                          <th>{t("dash.colGrade")}</th>
+                          <th>{t("dash.colLocation")}</th>
+                          <th className="text-right">{t("dash.colStatus")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allListings
+                          .filter((l) => l.seller_id === user?.id)
+                          .map((l) => (
+                            <tr key={l.id}>
+                              <td className="font-medium">
+                                {l.crop_name}
+                                {l.variety ? ` · ${l.variety}` : ""}
+                              </td>
+                              <td>{l.quantity_kg} kg</td>
+                              <td>{l.price_per_kg ? `₹${l.price_per_kg}/kg` : "—"}</td>
+                              <td>{l.quality_grade ?? "—"}</td>
+                              <td>{l.pickup_location ?? "—"}</td>
+                              <td className="text-right">
+                                <span className={`badge ${l.is_active ? "badge-primary" : "badge-neutral"}`}>
+                                  {l.is_active ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="card p-8 text-center space-y-3">
+                  <Sprout className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
+                  <h3 className="font-semibold text-lg text-foreground">{t("dash.emptyListings")}</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {t("dash.emptyListingsBody")}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : activeNav === "orders" ? (
+            <div className="space-y-6">
+              <div className="dash-head">
+                <div>
+                  <p className="eyebrow">{t("dash.liveMarket")}</p>
+                  <h1>{t("dash.orders")}</h1>
+                  <p className="state-body" style={{ marginTop: 6 }}>
+                    {t("dash.ordersSub")}
+                  </p>
+                </div>
+              </div>
+
+              {incomingOrders.length > 0 ? (
+                <div className="card overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="dash-table">
+                      <thead>
+                        <tr>
+                          <th>{t("dash.colOrder")}</th>
+                          <th>{t("dash.colStatus")}</th>
+                          <th>{t("dash.colItems")}</th>
+                          <th>{t("dash.colTotal")}</th>
+                          <th>{t("dash.colPlaced")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {incomingOrders.map((o) => (
+                          <tr key={o.id}>
+                            <td className="font-mono text-xs">#{o.id.slice(0, 8)}</td>
+                            <td>
+                              <span className={`badge ${o.status === "PENDING" ? "badge-warning" : "badge-primary"}`}>
+                                {o.status}
+                              </span>
+                            </td>
+                            <td>
+                              {o.items.map((i) => `${i.quantity_kg} kg`).join(", ")}
+                            </td>
+                            <td>{o.total_amount != null ? `₹${o.total_amount.toFixed(2)}` : "—"}</td>
+                            <td>{new Date(o.created_at).toLocaleDateString(dateLocale)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="card p-8 text-center space-y-3">
+                  <PackageCheck className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
+                  <h3 className="font-semibold text-lg text-foreground">{t("dash.noOrders")}</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {t("dash.noOrdersBody")}
                   </p>
                 </div>
               )}

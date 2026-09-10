@@ -141,6 +141,22 @@ export interface OrderResponse {
    items: OrderItemResponse[];
 }
 
+export async function fetchOrders(params?: {
+   status?: string;
+   limit?: number;
+}): Promise<OrderResponse[]> {
+   const { data } = await client.get<OrderResponse[]>("/orders/", { params });
+   return data;
+}
+
+export async function fetchIncomingOrders(params?: {
+   status?: string;
+   limit?: number;
+}): Promise<OrderResponse[]> {
+   const { data } = await client.get<OrderResponse[]>("/orders/incoming", { params });
+   return data;
+}
+
 // --- Logistics Types ---
 export interface RouteStopItem {
   id: string;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/lib/api";
 import { toast } from "sonner";
 import {
+  ArrowLeft,
   Truck,
   Package,
   ShoppingBag,
@@ -204,6 +206,13 @@ export default function BuyerDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b">
         <div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-2"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            {tr("dash.backToSite", "Back to site")}
+          </Link>
           <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
             Procurement Portal
           </span>

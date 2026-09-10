@@ -121,6 +121,38 @@ async def list_orders(
     return result.unique().scalars().all()
 
 
+@router.get("/incoming", response_model=List[OrderResponse])
+async def list_incoming_orders(
+    current_user: dict = Depends(get_current_user),
+    status: str = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db),
+):
+    """Orders that contain the current user's listings (farmer/FPO as seller).
+
+    Orders link to sellers through their items -> listings, so we join
+    OrderItem -> ProduceListing and filter on the listing's seller_id.
+    """
+    seller_id = UUID(current_user["id"])
+    query = (
+        select(Order)
+        .join(OrderItem, OrderItem.order_id == Order.id)
+        .join(ProduceListing, ProduceListing.id == OrderItem.listing_id)
+        .where(ProduceListing.seller_id == seller_id)
+        .options(joinedload(Order.items))
+        .order_by(Order.created_at.desc())
+        .distinct()
+    )
+
+    if status:
+        query = query.where(Order.status == OrderStatus(status))
+
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.unique().scalars().all()
+
+
 @router.get("/{order_id}", response_model=OrderResponse)
 async def get_order(
     order_id: UUID,
