@@ -108,6 +108,79 @@ export interface DemandForecastData {
   message?: string;
 }
 
+// --- Marketplace Intelligence Types ---
+export interface DemandSignalData {
+  total_ordered_kg: number;
+  recent_order_count: number;
+  signal: "strong" | "moderate" | "low";
+}
+
+export interface PriceRecommendationData {
+  recommended_price: number | null;
+  confidence: number;
+  price_band: { low: number | null; mid: number | null; high: number | null };
+  factors: string[];
+  error?: string;
+}
+
+export interface BuyerOpportunityData {
+  buyer_id: string;
+  score: number;
+  explanation: Record<string, any>;
+}
+
+export interface ListingIntelligenceData {
+  listing_id: string;
+  crop: string;
+  quantity_kg: number;
+  price_per_kg: number | null;
+  location: string | null;
+  demand_signal: DemandSignalData;
+  price_recommendation: PriceRecommendationData;
+  buyer_opportunities: BuyerOpportunityData[];
+}
+
+export interface SupplyDiscoveryData {
+  crop: string;
+  required_kg: number;
+  available_supply: Array<{
+    listing_id: string;
+    farm_name: string;
+    quantity_kg: number;
+    price_per_kg: number | null;
+    quality_grade: string;
+    distance_km: number | null;
+    harvest_date: string | null;
+  }>;
+  total_available_kg: number;
+  shortage_kg: number;
+  fulfillment_potential: number;
+  recommendation: "fully_fulfillable" | "partially_fulfillable" | "insufficient_supply" | "no_supply_found";
+  num_sources: number;
+}
+
+export interface FulfillmentPlanData {
+  status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE";
+  matched_farmers: Array<{
+    listing_id: string;
+    farmer_id: string;
+    farmer_name: string;
+    crop_name: string;
+    available_kg: number;
+    allocated_kg: number;
+    price_per_kg: number;
+    quality_grade: string;
+    distance_km: number;
+    score: number;
+    explanation: Record<string, any>;
+  }>;
+  total_matched_kg: number;
+  required_kg: number;
+  shortage_kg: number;
+  fulfillment_percentage: number;
+  infeasibility_reason?: string | null;
+}
+
 // --- Public endpoints (no auth) ---
 export async function fetchListings(params?: {
    crop_name?: string;
@@ -524,6 +597,51 @@ export async function fetchDemandForecast(
     "/matching/demand-forecast",
     null,
     { params: { crop_name: cropName, region } }
+  );
+  return data;
+}
+
+// --- Marketplace Intelligence Endpoints ---
+export async function fetchListingIntelligence(
+  listingId: string
+): Promise<ListingIntelligenceData> {
+  const { data } = await client.get<ListingIntelligenceData>(
+    `/intelligence/listing/${listingId}`
+  );
+  return data;
+}
+
+export async function discoverSupply(
+  payload: {
+    crop_name: string;
+    required_kg: number;
+    delivery_lat: number;
+    delivery_lng: number;
+    max_price_per_kg?: number;
+    min_quality_grade?: string;
+  }
+): Promise<SupplyDiscoveryData> {
+  const { data } = await client.post<SupplyDiscoveryData>(
+    "/intelligence/supply-discovery",
+    payload
+  );
+  return data;
+}
+
+export async function createFulfillmentPlan(
+  payload: {
+    crop_name: string;
+    required_quantity_kg: number;
+    delivery_latitude: number;
+    delivery_longitude: number;
+    delivery_deadline?: string;
+    min_quality_grade?: string;
+    max_price_per_kg?: number;
+  }
+): Promise<FulfillmentPlanData> {
+  const { data } = await client.post<FulfillmentPlanData>(
+    "/intelligence/fulfillment-plan",
+    payload
   );
   return data;
 }
