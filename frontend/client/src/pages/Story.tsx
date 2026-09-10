@@ -38,7 +38,7 @@ export default function Story() {
           </div>
           <div className="story-hero-media">
             <img
-              src="/images/story-hero.webp"
+              src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1600&q=80"
               alt="Indian farmland at harvest time — tomato fields and rural market road"
               loading="eager"
               fetchPriority="high"
