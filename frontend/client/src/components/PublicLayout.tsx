@@ -66,9 +66,7 @@ export default function PublicLayout({
 
           <div className="site-header-actions">
             <LanguageSelector variant="dark" />
-{toggleTheme && (
-                <!-- theme toggle removed -->
-              )}
+{toggleTheme && null}
             <div className="header-auth-desktop">
               {hasToken ? (
                 <>
