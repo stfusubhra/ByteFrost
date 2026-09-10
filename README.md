@@ -121,6 +121,17 @@ cd backend && source venv/bin/activate && pytest -v
 cd frontend && pnpm run type-check && pnpm run build
 ```
 
+> **Test database isolation**: the backend test suite never touches your dev
+> database. Tests run against a dedicated `bytefrost_test` database (derived
+> from `DATABASE_URL` by appending `_test`, or overridden with
+> `TEST_DATABASE_URL`). First run:
+> ```bash
+> cd backend && source venv/bin/activate
+> createdb bytefrost_test          # once
+> alembic upgrade head             # apply migrations to the test DB
+> pytest                           # 28/28 passing, dev data untouched
+> ```
+
 CI (`.github/workflows/ci.yml`) runs all of the above on every push to `main`/`develop` and on PRs to `main`. **A green CI check is required before merging.**
 
 ---
@@ -131,7 +142,8 @@ Populate the database with demo users, vehicles, hubs, and produce listings:
 
 ```bash
 cd backend
-python3 seed_demo_data.py
+source venv/bin/activate
+python seed_demo_data.py
 ```
 
 This creates:

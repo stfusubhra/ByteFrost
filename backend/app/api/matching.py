@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case
 from uuid import UUID
 import math
+from datetime import date
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -244,23 +245,27 @@ async def recommend_price(
         raise HTTPException(status_code=404, detail="Listing not found")
 
     # When the trained XGBoost model is deployed, use it for the price
-    # recommendation. The model predicts from seasonality + lagged price
-    # features; we seed those from the listing's own price/quantity.
+    # recommendation. The model was trained on price_per_quintal (₹/100 kg)
+    # with seasonality features derived from the listing date, so we convert
+    # the listing's ₹/kg price to ₹/quintal before seeding the lag features
+    # and use the current date for month/week/day.
     if ML_AVAILABLE:
         try:
             price = float(listing.price_per_kg) if listing.price_per_kg is not None else 25.0
             qty = float(listing.quantity_kg) if listing.quantity_kg is not None else 1000.0
+            today = date.today()
+            price_q = price * 100.0  # ₹/kg -> ₹/quintal (model training scale)
             result = ml_recommend_price(
                 crop_name=listing.crop_name,
                 mandi="Azadpur, Delhi",  # default mandi; refined as real data grows
-                month=8,
-                week_of_year=35,
-                day_of_year=240,
-                lag_7=price,
-                lag_14=price * 0.98,
-                lag_30=price * 0.95,
-                rolling_mean_7=price,
-                rolling_std_7=price * 0.06,
+                month=today.month,
+                week_of_year=today.isocalendar().week,
+                day_of_year=today.timetuple().tm_yday,
+                lag_7=price_q,
+                lag_14=price_q * 0.98,
+                lag_30=price_q * 0.95,
+                rolling_mean_7=price_q,
+                rolling_std_7=price_q * 0.06,
                 quantity_log=math.log1p(qty),
                 quantity_lag_7=math.log1p(qty * 0.96),
             )

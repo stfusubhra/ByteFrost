@@ -13,7 +13,7 @@ from app.core.security import get_current_user, require_roles
 from app.models.models import Vehicle, UserRole
 from app.schemas.schemas import VehicleCreate, VehicleUpdate, VehicleResponse
 
-router = APIRouter(prefix="/vehicles", tags=["Logistics - Vehicles"])
+router = APIRouter(tags=["Logistics - Vehicles"])
 
 VEHICLE_HUB_ROLES = {
     UserRole.ADMIN,

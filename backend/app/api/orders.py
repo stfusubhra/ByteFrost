@@ -112,9 +112,13 @@ async def list_orders(
     if status:
         query = query.where(Order.status == OrderStatus(status))
 
+    # Eager-load items: OrderResponse serializes order.items, and lazy
+    # loading raises MissingGreenlet outside an async session context.
+    query = query.options(joinedload(Order.items)).order_by(Order.created_at.desc())
+
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    return result.unique().scalars().all()
 
 
 @router.get("/{order_id}", response_model=OrderResponse)

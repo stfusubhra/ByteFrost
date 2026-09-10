@@ -22,7 +22,7 @@ from app.schemas.schemas import (
 )
 from app.services.maps_service import build_google_maps_url
 
-router = APIRouter(prefix="/shipments", tags=["Logistics - Shipments"])
+router = APIRouter(tags=["Logistics - Shipments"])
 
 
 class ShipmentStatusUpdate(BaseModel):

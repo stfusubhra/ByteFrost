@@ -112,9 +112,14 @@ def recommend_price(
 
     pred = float(model.predict(features)[0])
 
+    # The model was trained on price_per_quintal (₹/100 kg), but the platform
+    # prices listings in ₹/kg. Convert before returning so the recommendation
+    # matches the marketplace scale (e.g. tomato ≈ ₹10–30/kg, not ₹1000+/kg).
+    pred = pred / 100.0
+
     # Price band: use model's residual spread as a proxy for interval width
     # (approx 1 sigma from training MAE)
-    sigma = meta["metrics"]["mae"] * 1.25
+    sigma = meta["metrics"]["mae"] * 1.25 / 100.0
     low = max(pred - sigma, 0.0)
     high = pred + sigma
 

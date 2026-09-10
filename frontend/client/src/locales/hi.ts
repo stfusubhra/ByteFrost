@@ -10,6 +10,8 @@ const hi: Record<LocaleKeys, string> = {
   "common.scrollTo": "नीचे देखें",
   "common.switchToDark": "डार्क मोड पर जाएं",
   "common.switchToLight": "लाइट मोड पर जाएं",
+  "common.loading": "लोड हो रहा है…",
+  "common.loginRequired": "जारी रखने के लिए कृपया साइन इन करें।",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "होम",
@@ -351,6 +353,19 @@ const hi: Record<LocaleKeys, string> = {
   "dash.inMotion": "गति में",
   "dash.liveOps": "लाइव संचालन",
   "dash.noActiveShipments": "इस समय कोई सक्रिय शिपमेंट नहीं है।",
+  "dash.routesTitle": "लॉजिस्टिक्स और सक्रिय रूट",
+  "dash.routesSub": "रीयल-टाइम मल्टी-स्टॉप फार्म-टू-बायर रूट, कंसोलिडेशन बैच और जीपीएस ट्रैकिंग।",
+  "dash.openGps": "ड्राइवर जीपीएस खोलें",
+  "dash.shipments": "शिपमेंट:",
+  "dash.shipment": "शिपमेंट",
+  "dash.loadingRoute": "रूट विवरण लोड हो रहा है...",
+  "dash.selectShipment": "रूट और माइलस्टोन देखने के लिए ऊपर एक शिपमेंट चुनें।",
+  "dash.noRoutes": "कोई सक्रिय रूट या शिपमेंट नहीं",
+  "dash.noRoutesBody": "जब बल्क ऑर्डर या मल्टी-फार्मर आवश्यकताएं पूरी होंगी, तो अनुकूलित कंसोलिडेटेड रूट, वाहन असाइनमेंट और लाइव ट्रैकिंग यहां दिखाई देंगे।",
+  "dash.activeShipment": "सक्रिय शिपमेंट",
+  "dash.totalDistance": "{km} किमी कुल दूरी",
+  "dash.routeDispatched": "रूट डिस्पैच हो गया",
+  "dash.viewRoute": "रूट और जीपीएस ट्रैकिंग देखें",
   "dash.footerBuilt": "उगाने वालों और ज़रूरत वालों के लिए निर्मित।",
   "dash.dataUpdates": "माँग पर डेटा अपडेट।",
   "dash.systemStatus": "सिस्टम स्थिति",
@@ -523,6 +538,12 @@ const hi: Record<LocaleKeys, string> = {
   "signup.err.emailExists": "इस ईमेल से पहले से खाता मौजूद है।",
   "signup.err.tooMany": "बहुत अधिक प्रयास। कृपया थोड़ी देर बाद कोशिश करें।",
   "signup.err.generic": "खाता नहीं बना सके। कृपया पुनः प्रयास करें।",
+
+  // ── Buyer dashboard ──────────────────────────────────────
+  "buyer.dashboard.title": "खरीदार प्रोक्योरमेंट और फुलफिलमेंट डैशबोर्ड",
+  "buyer.cart.title": "ऑर्डर कार्ट",
+  "buyer.addToCart": "ऑर्डर में जोड़ें",
+  "buyer.checkout": "चेकआउट",
 };
 
 export default hi;

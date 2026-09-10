@@ -10,6 +10,8 @@ const bn: Record<LocaleKeys, string> = {
   "common.scrollTo": "নিচে দেখুন",
   "common.switchToDark": "ডার্ক মোডে যান",
   "common.switchToLight": "লাইট মোডে যান",
+  "common.loading": "লোড হচ্ছে…",
+  "common.loginRequired": "চালিয়ে যেতে দয়া করে সাইন ইন করুন।",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "হোম",
@@ -351,6 +353,19 @@ const bn: Record<LocaleKeys, string> = {
   "dash.inMotion": "গতিশীল",
   "dash.liveOps": "লাইভ অপারেশন",
   "dash.noActiveShipments": "এই মুহূর্তে কোনও সক্রিয় চালান নেই।",
+  "dash.routesTitle": "লজিস্টিকস ও সক্রিয় রুট",
+  "dash.routesSub": "রিয়েল-টাইম মাল্টি-স্টপ ফার্ম-টু-বায়ার রুট, কনসলিডেশন ব্যাচ ও জিপিএস ট্র্যাকিং।",
+  "dash.openGps": "ড্রাইভার জিপিএস খুলুন",
+  "dash.shipments": "চালান:",
+  "dash.shipment": "চালান",
+  "dash.loadingRoute": "রুটের বিবরণ লোড হচ্ছে...",
+  "dash.selectShipment": "রুট ও মাইলস্টোন দেখতে উপরে একটি চালান নির্বাচন করুন।",
+  "dash.noRoutes": "কোনও সক্রিয় রুট বা চালান নেই",
+  "dash.noRoutesBody": "বাল্ক অর্ডার বা মাল্টি-ফার্মার প্রয়োজনীয়তা পূরণ হলে, সর্বোত্তম কনসলিডেটেড রুট, যানবাহন বরাদ্দ এবং লাইভ ট্র্যাকিং এখানে দেখা যাবে।",
+  "dash.activeShipment": "সক্রিয় চালান",
+  "dash.totalDistance": "{km} কিমি মোট দূরত্ব",
+  "dash.routeDispatched": "রুট ডিসপ্যাচ হয়েছে",
+  "dash.viewRoute": "রুট ও জিপিএস ট্র্যাকিং দেখুন",
   "dash.footerBuilt": "যারা চাষ করেন এবং যাদের প্রয়োজন তাদের জন্য তৈরি।",
   "dash.dataUpdates": "চাহিদা অনুযায়ী ডেটা আপডেট।",
   "dash.systemStatus": "সিস্টেমের অবস্থা",
@@ -523,6 +538,12 @@ const bn: Record<LocaleKeys, string> = {
   "signup.err.emailExists": "এই ইমেল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে।",
   "signup.err.tooMany": "অতিরিক্ত চেষ্টা। দয়া করে কিছুক্ষণ পরে আবার চেষ্টা করুন।",
   "signup.err.generic": "অ্যাকাউন্ট তৈরি করা যায়নি। দয়া করে আবার চেষ্টা করুন।",
+
+  // ── Buyer dashboard ──────────────────────────────────────
+  "buyer.dashboard.title": "ক্রেতা সংগ্রহ ও ফুলফিলমেন্ট ড্যাশবোর্ড",
+  "buyer.cart.title": "অর্ডার কার্ট",
+  "buyer.addToCart": "অর্ডারে যোগ করুন",
+  "buyer.checkout": "চেকআউট",
 };
 
 export default bn;

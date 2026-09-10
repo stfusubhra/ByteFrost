@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
@@ -7,7 +9,19 @@ from sqlalchemy.pool import NullPool
 from app.core.config import settings
 from app.core.database import get_db
 
-TEST_DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+# Tests must NEVER run against the dev database — the suite truncates every
+# table before each test. Use a dedicated test database:
+#   1. TEST_DATABASE_URL env var wins if set (CI sets DATABASE_URL to
+#      bytefrost_test, which is used as-is).
+#   2. Otherwise derive "<dev_db>_test" from the dev DATABASE_URL.
+def _test_db_url() -> str:
+    url = os.getenv("TEST_DATABASE_URL") or settings.DATABASE_URL
+    if not url.rstrip("/").endswith("_test"):
+        url = url.rsplit("/", 1)[0] + "/bytefrost_test"
+    return url.replace("postgresql://", "postgresql+asyncpg://")
+
+
+TEST_DATABASE_URL = _test_db_url()
 
 TRUNCATE_SQL = (
     "TRUNCATE payments, shipments, allocations, order_items, orders, "

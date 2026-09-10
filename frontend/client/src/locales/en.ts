@@ -8,6 +8,8 @@ const en = {
   "common.scrollTo": "Scroll to explore",
   "common.switchToDark": "Switch to dark mode",
   "common.switchToLight": "Switch to light mode",
+  "common.loading": "Loading…",
+  "common.loginRequired": "Please sign in to continue.",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "Home",
@@ -349,6 +351,19 @@ const en = {
   "dash.inMotion": "In motion",
   "dash.liveOps": "Live operations",
   "dash.noActiveShipments": "No active shipments at the moment.",
+  "dash.routesTitle": "Logistics & Active Routes",
+  "dash.routesSub": "Real-time multi-stop farm-to-buyer routes, consolidation batches, and GPS tracking.",
+  "dash.openGps": "Open Driver GPS",
+  "dash.shipments": "Shipments:",
+  "dash.shipment": "Shipment",
+  "dash.loadingRoute": "Loading route details...",
+  "dash.selectShipment": "Select a shipment above to view its route and milestones.",
+  "dash.noRoutes": "No active routes or shipments",
+  "dash.noRoutesBody": "When bulk orders or multi-farmer requirements are fulfilled, optimal consolidated routes, vehicle assignments, and live tracking will appear here.",
+  "dash.activeShipment": "Active Shipment",
+  "dash.totalDistance": "{km} km total distance",
+  "dash.routeDispatched": "Route dispatched",
+  "dash.viewRoute": "View Route & GPS Tracking",
   "dash.footerBuilt": "Built for the people who grow with the people who need.",
   "dash.dataUpdates": "Data updates on demand.",
   "dash.systemStatus": "System status",
@@ -521,6 +536,12 @@ const en = {
   "signup.err.emailExists": "An account with this email already exists.",
   "signup.err.tooMany": "Too many attempts. Please try again shortly.",
   "signup.err.generic": "Unable to create your account. Please try again.",
+
+  // ── Buyer dashboard ──────────────────────────────────────
+  "buyer.dashboard.title": "Buyer Procurement & Fulfillment Dashboard",
+  "buyer.cart.title": "Order cart",
+  "buyer.addToCart": "Add to Order",
+  "buyer.checkout": "Checkout",
 };
 
 export default en;

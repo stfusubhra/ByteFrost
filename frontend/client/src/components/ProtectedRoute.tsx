@@ -9,11 +9,31 @@ interface Props {
 }
 
 export const ProtectedRoute: React.FC<Props> = ({ path, component: Component, allowedRoles }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   return (
     <Route path={path}>
       {(params) => {
+        // Wait for auth state to hydrate from localStorage before deciding.
+        // Redirecting during the first render (before useEffect runs) bounces
+        // logged-in users back to /login.
+        if (isLoading) {
+          return (
+            <div
+              style={{
+                minHeight: "60vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--ink-soft)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+              }}
+            >
+              Loading…
+            </div>
+          );
+        }
         if (!isAuthenticated) {
           return <Redirect to="/login" />;
         }

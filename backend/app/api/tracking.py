@@ -21,7 +21,7 @@ from app.schemas.schemas import (
 )
 from app.services.maps_service import build_google_maps_url
 
-router = APIRouter(prefix="/tracking", tags=["Logistics - Tracking"])
+router = APIRouter(tags=["Logistics - Tracking"])
 
 
 @router.get("/{shipment_id}", response_model=TrackingStatus)

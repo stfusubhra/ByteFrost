@@ -291,9 +291,9 @@ export default function Dashboard() {
               <div className="dash-head">
                 <div>
                   <p className="eyebrow">{t("dash.inMotion")} · Google OR-Tools VRP Optimization</p>
-                  <h1>Logistics & Active Routes</h1>
+                  <h1>{t("dash.routesTitle")}</h1>
                   <p className="state-body" style={{ marginTop: 6 }}>
-                    Real-time multi-stop farm-to-buyer routes, consolidation batches, and GPS tracking.
+                    {t("dash.routesSub")}
                   </p>
                 </div>
                 {selectedShipment?.maps_url && (
@@ -304,7 +304,7 @@ export default function Dashboard() {
                     className="btn btn-primary inline-flex items-center gap-2"
                   >
                     <Navigation size={17} />
-                    <span>Open Driver GPS</span>
+                    <span>{t("dash.openGps")}</span>
                   </a>
                 )}
               </div>
@@ -313,7 +313,7 @@ export default function Dashboard() {
               {shipments.length > 0 ? (
                 <div className="space-y-6">
                   <div className="flex flex-wrap items-center gap-2 pb-2 border-b">
-                    <span className="text-xs font-semibold text-muted-foreground mr-2">Shipments:</span>
+                    <span className="text-xs font-semibold text-muted-foreground mr-2">{t("dash.shipments")}</span>
                     {shipments.map((s, idx) => (
                       <button
                         key={s.id}
@@ -325,13 +325,13 @@ export default function Dashboard() {
                         }`}
                       >
                         <Truck className="w-3.5 h-3.5" />
-                        <span>Shipment #{idx + 1} ({s.status})</span>
+                        <span>{t("dash.shipment")} #{idx + 1} ({s.status})</span>
                       </button>
                     ))}
                   </div>
 
                   {shipmentLoading ? (
-                    <div className="p-8 text-center text-muted-foreground">Loading route details...</div>
+                    <div className="p-8 text-center text-muted-foreground">{t("dash.loadingRoute")}</div>
                   ) : selectedShipment ? (
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                       <div className="xl:col-span-2 space-y-6">
@@ -358,16 +358,16 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className="card p-6 text-center text-muted-foreground">
-                      Select a shipment above to view its route and milestones.
+                      {t("dash.selectShipment")}
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="card p-8 text-center space-y-3">
                   <Truck className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
-                  <h3 className="font-semibold text-lg text-foreground">No active routes or shipments</h3>
+                  <h3 className="font-semibold text-lg text-foreground">{t("dash.noRoutes")}</h3>
                   <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    When bulk orders or multi-farmer requirements are fulfilled, optimal consolidated routes, vehicle assignments, and live tracking will appear here.
+                    {t("dash.noRoutesBody")}
                   </p>
                 </div>
               )}
@@ -397,9 +397,9 @@ export default function Dashboard() {
                     <h3>{listing?.crop_name ?? "Crop"} · {listing?.variety ?? ""}</h3>
                     <div className="intel-current">
                       <strong>
-                        {priceRec.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}
+                        {priceRec.recommended_price ? `₹${priceRec.recommended_price.toFixed(2)}` : "—"}
                       </strong>
-                      <span>/kg {t("dash.recPrice")}</span>
+                      <span>{t("dash.recPrice")}</span>
                     </div>
                     <p className="intel-recommended">
                       {priceRec.factors?.length ? `${t("dash.basedOn")} ${priceRec.factors.join(", ")}.` : t("dash.priceBand")}
@@ -509,10 +509,10 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-foreground">
-                            Active Shipment ({shipments[0].route_mode?.toUpperCase() || "DIRECT"})
+                            {t("dash.activeShipment")} ({shipments[0].route_mode?.toUpperCase() || "DIRECT"})
                           </h4>
                           <p className="text-xs text-muted-foreground">
-                            {shipments[0].estimated_distance_km ? `${shipments[0].estimated_distance_km} km total distance` : "Route dispatched"}
+                            {shipments[0].estimated_distance_km ? t("dash.totalDistance").replace("{km}", String(shipments[0].estimated_distance_km)) : t("dash.routeDispatched")}
                           </p>
                         </div>
                       </div>
@@ -526,7 +526,7 @@ export default function Dashboard() {
                         className="btn btn-secondary btn-sm flex items-center gap-1.5"
                         onClick={() => setActiveNav("routes")}
                       >
-                        <span>View Route & GPS Tracking</span>
+                        <span>{t("dash.viewRoute")}</span>
                         <ArrowUpRight size={14} />
                       </button>
                     </div>
