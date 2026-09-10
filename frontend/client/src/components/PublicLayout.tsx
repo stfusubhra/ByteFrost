@@ -1,7 +1,7 @@
 /* KisanSetu public shell: minimal header + footer for public pages.
    Header: wordmark left, four links, auth actions right. Sticky with a
    hairline border; solid background once scrolled. */
-import { Link } from "wouter";
+import { useEffect, useState } from "react";
 import { Menu, Moon, Sprout, Sun, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
