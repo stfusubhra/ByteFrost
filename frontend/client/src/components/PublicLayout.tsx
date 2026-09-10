@@ -1,7 +1,8 @@
 /* KisanSetu public shell: minimal header + footer for public pages.
    Header: wordmark left, four links, auth actions right. Sticky with a
    hairline border; solid background once scrolled. */
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { Menu, Moon, Sprout, Sun, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -79,7 +80,7 @@ export default function PublicLayout({
 
           <div className="site-header-actions">
             <LanguageSelector variant="dark" />
-{toggleTheme && null}
+            {toggleTheme && null}
             <div className="header-auth-desktop">
               {hasToken ? (
                 <>
