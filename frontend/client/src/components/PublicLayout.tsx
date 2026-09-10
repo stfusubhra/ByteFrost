@@ -3,7 +3,8 @@
    hairline border; solid background once scrolled. */
 import { Link } from "wouter";
 import { Menu, Moon, Sprout, Sun, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useReveal } from "../hooks/useReveal";
@@ -19,6 +20,7 @@ export default function PublicLayout({
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated } = useAuth();
   useReveal();
 
   useEffect(() => {
@@ -38,12 +40,23 @@ export default function PublicLayout({
     window.location.href = "/";
   };
 
-  const navLinks = [
+  const farmerLinks = [
     { href: "/marketplace", label: t("nav.marketplace") },
     { href: "/market-match", label: t("nav.findmatch") },
     { href: "/story", label: t("nav.story") },
     { href: "/about", label: t("nav.about") },
   ];
+
+  const buyerLinks = [
+    { href: "/buyer-dashboard", label: t("nav.dashboard") },
+    { href: "/story", label: t("nav.story") },
+    { href: "/about", label: t("nav.about") },
+  ];
+
+  const navLinks = isAuthenticated && user?.role === "buyer"
+    ? buyerLinks
+    : farmerLinks;
+
 
   return (
     <div className="site">
