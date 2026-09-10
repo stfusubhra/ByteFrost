@@ -66,16 +66,9 @@ export default function PublicLayout({
 
           <div className="site-header-actions">
             <LanguageSelector variant="dark" />
-            {toggleTheme && (
-              <button
-                className="theme-toggle"
-                onClick={toggleTheme}
-                aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
-                title={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
-              >
-                {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            )}
+{toggleTheme && (
+                <!-- theme toggle removed -->
+              )}
             <div className="header-auth-desktop">
               {hasToken ? (
                 <>

@@ -246,16 +246,9 @@ export default function Dashboard() {
         </div>
         <div className="dash-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LanguageSelector variant="dark" />
-          {toggleTheme && (
-            <button
-              className="theme-toggle"
-              onClick={toggleTheme}
-              aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
-              title={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-          )}
+{toggleTheme && (
+                {/* theme toggle removed */}
+              )}
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => action(t("dash.dataUpdates"))}
