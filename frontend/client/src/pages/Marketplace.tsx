@@ -280,9 +280,6 @@ export default function Marketplace() {
             >
               {t("marketplace.listProduce")} <ArrowRight size={15} />
             </button>
-            <Link className="btn btn-secondary" href="/market-match">
-              {t("marketplace.findMatch")} <ArrowRight size={15} />
-            </Link>
           </div>
         </div>
       </section>
