@@ -5,7 +5,7 @@
    4. Why KisanSetu — split editorial layout with photography
    5. Final CTA — one line, one action, minimal footer
 */
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";

@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";

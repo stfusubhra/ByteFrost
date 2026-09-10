@@ -1,4 +1,5 @@
 /* KisanSetu About: short editorial page — what we do, why, and how to reach us. */
+import React from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";

@@ -93,6 +93,21 @@ export interface PriceRecommendation {
   factors: string[];
 }
 
+// --- Demand Forecast Types ---
+export interface DemandForecastItem {
+  week: number;
+  predicted_demand_kg: number;
+  confidence: number;
+}
+
+export interface DemandForecastData {
+  crop: string;
+  region: string;
+  forecast: DemandForecastItem[];
+  horizon_days?: number[];
+  message?: string;
+}
+
 // --- Public endpoints (no auth) ---
 export async function fetchListings(params?: {
    crop_name?: string;
@@ -497,6 +512,18 @@ export async function fetchPriceRecommendation(
     "/matching/price-recommendation",
     null,
     { params: { listing_id: listingId } }
+  );
+  return data;
+}
+
+export async function fetchDemandForecast(
+  cropName: string,
+  region: string
+): Promise<DemandForecastData> {
+  const { data } = await client.post<DemandForecastData>(
+    "/matching/demand-forecast",
+    null,
+    { params: { crop_name: cropName, region } }
   );
   return data;
 }

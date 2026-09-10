@@ -7,7 +7,7 @@
  * clearly labeled demo data only when the backend is unreachable, preserving
  * the user experience while being transparent about data provenance.
  */
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
 import { fetchListings, ApiError } from "@/lib/api";

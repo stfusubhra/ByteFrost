@@ -1,4 +1,5 @@
 /* KisanSetu Dashboard entry: public transition page; existing application/dashboard stays untouched. */
+import React from "react";
 import { Link } from "wouter";
 import { ArrowRight, BarChart3, MapPin, Users } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";

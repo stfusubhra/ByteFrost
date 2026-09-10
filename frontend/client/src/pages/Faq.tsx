@@ -1,5 +1,5 @@
 /* KisanSetu FAQ: compact public answers for farmers, buyers, and first-time visitors. */
-import { useState } from "react";
+import React, { useState } from "react";
 import { Plus, Minus } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "../contexts/LanguageContext";

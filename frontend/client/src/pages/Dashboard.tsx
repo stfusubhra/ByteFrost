@@ -2,6 +2,7 @@
  * This component now fetches real data from the backend:
  *   - Active listings for the logged-in farmer
  *   - Price recommendation for the selected listing
+ *   - Demand forecast for the active crop
  *   - Buyer matching scores (real API)
  * The UI falls back to a friendly empty state when no data is available.
  */
@@ -41,6 +42,7 @@ import {
   fetchListings,
   fetchMatches,
   fetchPriceRecommendation,
+  fetchDemandForecast,
   fetchShipments,
   fetchShipment,
   fetchTracking,
@@ -51,6 +53,7 @@ import {
   ShipmentDetailItem,
   TrackingStatusData,
   ApiError,
+  DemandForecastData,
 } from "@/lib/api";
 
 function SignalBars({ value, tone = "green" }: { value: number; tone?: string }) {
@@ -73,6 +76,7 @@ export default function Dashboard() {
   const [showWhy, setShowWhy] = useState(false);
   const [listing, setListing] = useState(null as any);
   const [priceRec, setPriceRec] = useState(null as any);
+  const [demandForecast, setDemandForecast] = useState<DemandForecastData | null>(null);
   const [matches, setMatches] = useState<Array<any>>([]);
   const [shipments, setShipments] = useState<ShipmentItem[]>([]);
   const [selectedShipment, setSelectedShipment] = useState<ShipmentDetailItem | null>(null);
@@ -145,6 +149,15 @@ export default function Dashboard() {
           setPriceRec(price);
         } catch {
           // Price recommendation optional
+        }
+        try {
+          const forecast = await fetchDemandForecast(
+            active.crop_name,
+            active.pickup_location || "India"
+          );
+          setDemandForecast(forecast);
+        } catch {
+          // Demand forecast optional
         }
         try {
           const matchResults = await fetchMatches(active.id, 5);
@@ -246,9 +259,10 @@ export default function Dashboard() {
         </div>
         <div className="dash-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LanguageSelector variant="dark" />
-{toggleTheme && (
-                {/* theme toggle removed */}
-              )}
+          {toggleTheme && (
+            /* theme toggle removed */
+            null
+          )}
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => action(t("dash.dataUpdates"))}
@@ -615,6 +629,45 @@ export default function Dashboard() {
                 ) : (
                   <div className="card intel-card">
                     <p>{t("dash.noPriceRec")}</p>
+                  </div>
+                )}
+              </section>
+
+              {/* Demand forecast */}
+              <section className="intel">
+                {demandForecast && !demandForecast.message ? (
+                  <div className="card intel-card">
+                    <h3>{demandForecast.crop} · {demandForecast.region}</h3>
+                    <div className="intel-current">
+                      <strong>
+                        {demandForecast.forecast?.length > 0
+                          ? `${demandForecast.forecast[0].predicted_demand_kg.toFixed(0)} kg`
+                          : "—"}
+                      </strong>
+                      <span>{t("dash.nextWeekDemand")}</span>
+                    </div>
+                    <p className="intel-recommended">
+                      {demandForecast.forecast?.map((f, i) => (
+                        <span key={i}>
+                          Week {f.week}: {f.predicted_demand_kg.toFixed(0)} kg
+                          {i < demandForecast.forecast!.length - 1 ? " · " : ""}
+                        </span>
+                      )) ?? "—"}
+                    </p>
+                    <div className="intel-factors">
+                      <span className="badge badge-primary">
+                        {t("dash.confidence")} {demandForecast.forecast?.[0]?.confidence ?? "?"}
+                      </span>
+                      <span className="badge badge-neutral" style={{ marginLeft: 8 }}>
+                        {t("dash.historicalData")}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="card intel-card">
+                    <p>
+                      {demandForecast?.message || t("dash.noDemandForecast")}
+                    </p>
                   </div>
                 )}
               </section>
