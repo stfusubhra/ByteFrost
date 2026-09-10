@@ -2679,45 +2679,91 @@ img {
   margin-bottom: 16px;
 }
 
-/* Impact stats */
-.story-impact-stats {
+/* Story section custom styles */
+.story-relationship {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-top: 24px;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
 }
-.story-impact-stat {
-  text-align: center;
-  flex: 1;
-}
-.story-impact-stat-num {
-  font-size: clamp(24px, 4vw, 32px);
+.story-node {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 4px;
 }
-.story-impact-stat-primary {
-  color: var(--primary);
-}
-.story-impact-stat-label {
-  font-size: 14px;
-  color: var(--ink-muted);
-  margin-top: 4px;
-}
-.story-impact-stat-divider {
-  width: 1px;
-  height: 48px;
+.story-connector {
+  width: 24px;
+  height: 2px;
   background: var(--line);
-  flex-shrink: 0;
 }
-.story-impact-note {
-  margin-top: 16px;
-  font-size: 14px;
-  color: var(--ink-soft);
+.story-visual-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.story-circle {
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
   text-align: center;
+}
+.story-connector-vertical {
+  width: 2px;
+  height: 24px;
+  background: var(--line);
+}
+.story-disconnect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+.story-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.story-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.story-list li {
+  margin-bottom: 0.25rem;
+}
+.story-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+.story-stats li {
+  background: var(--surface);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .story-disconnect-grid {
+    grid-template-columns: 1fr;
+  }
+  .story-relationship {
+    flex-direction: column;
+  }
 }
 
-/* FAQ */
 .faq-list {
   max-width: 720px;
   margin: 0 auto;
