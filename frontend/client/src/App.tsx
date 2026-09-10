@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import Marketplace from "./pages/Marketplace";
 import MarketMatch from "./pages/MarketMatch";
 import Story from "./pages/Story";
+import About from "./pages/About";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
 import BuyerDashboard from "./pages/BuyerDashboard";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/market-match" component={MarketMatch} />
       <Route path="/listing/:id" component={ListingDetail} />
       <Route path="/story" component={Story} />
+      <Route path="/about" component={About} />
       <Route path="/faq" component={Faq} />
       <Route path="/contact" component={Contact} />
       <ProtectedRoute path="/dashboard" component={Dashboard} allowedRoles={["farmer","fpo_manager"]} />

@@ -7,7 +7,7 @@ export default function NotFound() {
   const { t } = useLanguage();
 
   return (
-    <PublicLayout eyebrow={t("notfound.eyebrow")}>
+    <PublicLayout>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">{t("marketplace.backendError")}</span>

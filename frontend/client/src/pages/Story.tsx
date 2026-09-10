@@ -38,7 +38,7 @@ const Section01Problem = () => {
           </p>
         </div>
 
-        <div className="max-w-3xl mx-auto border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-8 md:p-10">
+        <div className="max-w-3xl mx-auto border border-[var(--line)] rounded-none bg-[var(--surface)] p-8 md:p-10">
           <div className="grid md:grid-cols-3 gap-8 items-center">
             <div className="text-center">
               <Sprout className="mx-auto mb-3 text-[var(--primary)]" size={28} />
@@ -92,11 +92,11 @@ const Section02Network = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-2xl overflow-hidden">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-none overflow-hidden">
           {nodes.map((node, i) => (
             <FadeIn key={i} delay={i * 0.08} className="bg-[var(--surface)]">
               <div className="p-6 h-full">
-                <div className="w-10 h-10 rounded-lg bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center mb-4">
+                <div className="text-[var(--primary)] mb-4">
                   <node.icon size={20} />
                 </div>
                 <h3 className="h3 mb-2">{node.title}</h3>
@@ -128,7 +128,7 @@ const Section03SupplyMeet = () => {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-6 md:p-10">
+        <div className="max-w-4xl mx-auto border border-[var(--line)] rounded-none bg-[var(--surface)] p-6 md:p-10">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div>
               <span className="eyebrow mb-3">{t("story.sec3.availableSupply")}</span>
@@ -155,9 +155,9 @@ const Section03SupplyMeet = () => {
               </div>
             </div>
 
-            <div className="border border-[var(--line)] rounded-2xl bg-[var(--bg-subtle)] p-6">
+            <div className="border border-[var(--line)] rounded-none bg-[var(--bg-subtle)] p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-[var(--primary-strong)] text-white flex items-center justify-center">
+                <div className="text-[var(--primary)]">
                   <Store size={20} />
                 </div>
                 <div>
@@ -231,9 +231,9 @@ const Section0405LogisticsEngine = () => {
 
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
           {/* Route summary */}
-          <div className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6">
+          <div className="border border-[var(--line)] rounded-none bg-[var(--bg)] p-6">
             <div className="flex items-center gap-3 mb-5 pb-4 border-b border-[var(--line)]">
-              <div className="w-10 h-10 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center">
+              <div className="text-[var(--primary)]">
                 <Route size={20} />
               </div>
               <div>
@@ -259,7 +259,7 @@ const Section0405LogisticsEngine = () => {
           </div>
 
           {/* Route visual */}
-          <div className="border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-center">
+          <div className="border border-[var(--line)] rounded-none bg-[var(--surface)] p-6 flex flex-col justify-center">
             <div className="flex items-center justify-between mb-6">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-11 h-11 bg-[var(--primary-soft)] border border-[var(--line-strong)] rounded-full flex items-center justify-center">
@@ -326,7 +326,7 @@ const Section06SmartHub = () => {
           </p>
         </div>
 
-        <div className="border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-8 md:p-10">
+        <div className="border border-[var(--line)] rounded-none bg-[var(--surface)] p-8 md:p-10">
           <div className="flex items-center justify-between max-w-lg mx-auto mb-8">
             <div className="flex flex-col items-center gap-2">
               <Sprout className="text-[var(--primary)]" size={24} />
@@ -376,7 +376,7 @@ const Section07DataStory = () => {
 
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {/* Chart 1 */}
-          <FadeIn className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6 flex flex-col justify-between">
+          <FadeIn className="border border-[var(--line)] rounded-none bg-[var(--bg)] p-6 flex flex-col justify-between">
             <div>
               <h3 className="h3 mb-1">{t("story.sec7.valRet")}</h3>
               <p className="meta mb-6">{t("story.sec7.valRetSub")}</p>
@@ -384,12 +384,12 @@ const Section07DataStory = () => {
             <div className="flex h-44 items-end gap-8 justify-center pt-4 pb-2">
               <div className="w-28 h-full flex flex-col justify-end items-center">
                 <span className="text-xs font-bold text-[var(--ink-muted)] mb-1.5">38%</span>
-                <div className="w-full bg-[var(--line-strong)] rounded-t-lg" style={{ height: "65px" }} />
+                <div className="w-full bg-[var(--line-strong)] rounded-none" style={{ height: "65px" }} />
                 <span className="text-xs text-[var(--ink-soft)] text-center leading-tight font-medium mt-2">{t("story.sec7.tradModel")}</span>
               </div>
               <div className="w-28 h-full flex flex-col justify-end items-center">
                 <span className="text-xs font-bold text-[var(--primary)] mb-1.5">82%</span>
-                <div className="w-full bg-[var(--primary)] rounded-t-lg shadow-sm" style={{ height: "135px" }} />
+                <div className="w-full bg-[var(--primary)] rounded-none shadow-sm" style={{ height: "135px" }} />
                 <span className="text-xs font-bold text-[var(--ink)] text-center leading-tight mt-2">{t("story.sec7.directModel")}</span>
               </div>
             </div>
@@ -397,7 +397,7 @@ const Section07DataStory = () => {
           </FadeIn>
 
           {/* Chart 2 */}
-          <FadeIn delay={0.1} className="border border-[var(--line)] rounded-2xl bg-[var(--bg)] p-6 flex flex-col justify-between">
+          <FadeIn delay={0.1} className="border border-[var(--line)] rounded-none bg-[var(--bg)] p-6 flex flex-col justify-between">
             <div>
               <h3 className="h3 mb-1">{t("story.sec7.logEff")}</h3>
               <p className="meta mb-6">{t("story.sec7.logEffSub")}</p>
@@ -434,7 +434,7 @@ export default function Story() {
   const { t } = useLanguage();
 
   return (
-    <PublicLayout eyebrow={t("story.eyebrow")}>
+    <PublicLayout>
       {/* Hero */}
       <section className="py-24 md:py-32 bg-[var(--bg)] border-b border-[var(--line)]">
         <div className="container max-w-4xl text-center flex flex-col items-center mx-auto">

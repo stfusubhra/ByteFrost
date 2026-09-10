@@ -1,254 +1,221 @@
-/* KisanSetu landing: a concise scroll-story from farmer to market. Uses the shared public shell (header/footer) and the unified design system. */
+/* KisanSetu landing: five focused sections.
+   1. Hero — editorial, short, photography-led
+   2. How it works — four numbered steps, thin dividers
+   3. Marketplace preview — real listings as a clean table
+   4. Why KisanSetu — split editorial layout with photography
+   5. Final CTA — one line, one action, minimal footer
+*/
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  BadgeCheck,
-  MapPin,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useReveal } from "../hooks/useReveal";
+import { fetchListings } from "@/lib/api";
 
 const img = {
-  tomatoes: "https://images.unsplash.com/photo-1595855759920-86582396756a?w=1200&q=80",
-  market: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200&q=80",
-  farmer: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1200&q=80",
-  landscape: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&q=80",
+  hero: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1600&q=80",
+  field: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&q=80",
   crates: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&q=80",
 };
 
+type PreviewRow = {
+  id: string;
+  crop: string;
+  location: string;
+  quantity: string;
+  price: string;
+  status: string;
+};
+
+const FALLBACK_ROWS: PreviewRow[] = [
+  { id: "f1", crop: "Tomato · Grade A", location: "Nashik, MH", quantity: "500 kg", price: "₹45/kg", status: "Ready to move" },
+  { id: "f2", crop: "Onion · Grade A", location: "Pune, MH", quantity: "300 kg", price: "₹25/kg", status: "Ready to move" },
+  { id: "f3", crop: "Potato · Grade B", location: "Satara, MH", quantity: "400 kg", price: "₹18/kg", status: "Ready to move" },
+];
+
 export default function Home() {
   const { t } = useLanguage();
+  const [rows, setRows] = useState<PreviewRow[]>(FALLBACK_ROWS);
   useReveal({ threshold: 0.16, rootMargin: "0px 0px -12% 0px" });
 
+  useEffect(() => {
+    let alive = true;
+    fetchListings({ limit: 6 })
+      .then((listings) => {
+        if (!alive || !listings?.length) return;
+        setRows(
+          listings.map((l) => ({
+            id: l.id,
+            crop: l.variety ? `${l.crop_name} · ${l.variety}` : l.crop_name,
+            location: l.pickup_location ?? "—",
+            quantity: `${l.quantity_kg} kg`,
+            price: l.price_per_kg != null ? `₹${l.price_per_kg}/kg` : "—",
+            status: l.is_active ? "Ready to move" : "Inactive",
+          }))
+        );
+      })
+      .catch(() => {
+        /* keep fallback rows */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
-    <PublicLayout eyebrow={t("announce.default")}>
-    <main>
-      {/* HERO */}
-      <section className="home-hero">
-        <div className="container home-hero-grid">
-          <div className="home-hero-copy">
-            <span className="eyebrow">{t("home.hero.eyebrow")}</span>
-            <h1>
-              {t("home.hero.h1a")} <em>{t("home.hero.h1b")}</em>
-            </h1>
-            <p>{t("home.hero.p")}</p>
-            <div className="home-hero-cta">
-              <Link className="btn btn-primary btn-lg" href="/marketplace">
-                {t("home.hero.cta1")} <ArrowRight size={16} />
-              </Link>
-              <Link className="btn btn-secondary btn-lg" href="/market-match">
-                {t("home.hero.cta2")}
-              </Link>
+    <PublicLayout>
+      <main>
+        {/* 1 · HERO */}
+        <section className="land-hero">
+          <div className="container land-hero-grid">
+            <div className="land-hero-copy">
+              <span className="eyebrow">{t("home.hero.eyebrow")}</span>
+              <h1>
+                {t("home.hero.h1a")}
+                <br />
+                <em>{t("home.hero.h1b")}</em>
+              </h1>
+              <p>{t("home.hero.p")}</p>
+              <div className="land-hero-cta">
+                <Link className="btn btn-primary btn-lg" href="/marketplace">
+                  {t("home.hero.cta1")} <ArrowRight size={16} />
+                </Link>
+                <Link className="btn btn-secondary btn-lg" href="/signup">
+                  {t("home.hero.cta2")}
+                </Link>
+              </div>
+            </div>
+            <div className="land-hero-media">
+              <img
+                src={img.hero}
+                alt="A farmer standing in a green field at harvest time"
+                fetchPriority="high"
+              />
             </div>
           </div>
+        </section>
 
-          {/* Product preview — a real KisanSetu decision, not decoration */}
-          <div className="home-hero-media" aria-label="KisanSetu product preview">
-            <div className="hero-preview">
-              <div className="hero-preview-head">
-                <span className="hero-preview-badge">
-                  <span className="hero-preview-dot" /> {t("home.preview.badge")}
-                </span>
-                <span className="hero-preview-crop">
-                  {t("home.preview.crop")} · {t("home.preview.grade")}
-                </span>
+        {/* 2 · HOW IT WORKS */}
+        <section className="land-how">
+          <div className="container">
+            <div className="land-section-head">
+              <span className="eyebrow">{t("home.how.label")}</span>
+              <h2>{t("home.how.h2")}</h2>
+            </div>
+            <ol className="land-steps">
+              <li className="land-step">
+                <span className="land-step-num">01</span>
+                <div>
+                  <h3>{t("home.how.step1.title")}</h3>
+                  <p>{t("home.how.step1.p")}</p>
+                </div>
+              </li>
+              <li className="land-step">
+                <span className="land-step-num">02</span>
+                <div>
+                  <h3>{t("home.how.step2.title")}</h3>
+                  <p>{t("home.how.step2.p")}</p>
+                </div>
+              </li>
+              <li className="land-step">
+                <span className="land-step-num">03</span>
+                <div>
+                  <h3>{t("home.how.step3.title")}</h3>
+                  <p>{t("home.how.step3.p")}</p>
+                </div>
+              </li>
+              <li className="land-step">
+                <span className="land-step-num">04</span>
+                <div>
+                  <h3>{t("home.how.step4.title")}</h3>
+                  <p>{t("home.how.step4.p")}</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        {/* 3 · MARKETPLACE PREVIEW */}
+        <section className="land-market">
+          <div className="container">
+            <div className="land-section-head land-section-head-row">
+              <div>
+                <span className="eyebrow">{t("home.preview.label")}</span>
+                <h2>{t("home.preview.h2")}</h2>
               </div>
-
-              <div className="hero-preview-price">
-                <span className="hero-preview-price-label">
-                  {t("home.preview.priceLabel")}
-                </span>
-                <span className="hero-preview-price-value">
-                  {t("home.preview.price")}
-                </span>
-                <span className="hero-preview-place">
-                  <MapPin size={13} /> {t("home.preview.place")} ·{" "}
-                  {t("home.preview.qty")}
-                </span>
-              </div>
-
-              <div className="hero-preview-market">
-                <span className="hero-preview-section-title">
-                  <TrendingUp size={13} /> {t("home.preview.marketTitle")}
-                </span>
-                <div className="hero-preview-market-row">
-                  <span>{t("home.preview.market1")}</span>
-                  <span className="hero-preview-market-high">
-                    {t("home.preview.market1p")}
-                  </span>
-                </div>
-                <div className="hero-preview-market-row">
-                  <span>{t("home.preview.market2")}</span>
-                  <span>{t("home.preview.market2p")}</span>
-                </div>
-                <div className="hero-preview-market-row">
-                  <span>{t("home.preview.market3")}</span>
-                  <span>{t("home.preview.market3p")}</span>
-                </div>
-              </div>
-
-              <div className="hero-preview-foot">
-                <div className="hero-preview-demand">
-                  <Users size={14} />
-                  <div>
-                    <span className="hero-preview-section-title">
-                      {t("home.preview.demandTitle")}
-                    </span>
-                    <span className="hero-preview-demand-value">
-                      {t("home.preview.demand")}
-                    </span>
-                  </div>
-                </div>
-                <div className="hero-preview-match">
-                  <BadgeCheck size={14} />
-                  <div>
-                    <span className="hero-preview-section-title">
-                      {t("home.preview.matchTitle")}
-                    </span>
-                    <span className="hero-preview-match-value">
-                      {t("home.preview.match")}
-                    </span>
-                    <span className="hero-preview-match-sub">
-                      {t("home.preview.matchSub")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <Link className="hero-preview-cta" href="/marketplace">
-                {t("home.preview.cta")} <ArrowUpRight size={14} />
+              <Link className="text-link" href="/marketplace">
+                {t("home.preview.viewAll")} <ArrowRight size={14} />
               </Link>
             </div>
-          </div>
-        </div>
-
-        {/* Trust / product signal */}
-        <div className="container">
-          <div className="home-trust">
-            <span className="home-trust-item">
-              <BadgeCheck size={15} /> {t("home.trust.1")}
-            </span>
-            <span className="home-trust-item">
-              <TrendingUp size={15} /> {t("home.trust.2")}
-            </span>
-            <span className="home-trust-item">
-              <Users size={15} /> {t("home.trust.3")}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* STORY — the gap KisanSetu closes */}
-      <section className="home-story">
-        <div className="container section">
-          <div className="home-story-grid">
-            <div>
-              <span className="eyebrow">{t("home.feature.label")}</span>
-              <h2>
-                {t("home.feature.h2a")} {t("home.feature.h2b")}{" "}
-                <em>{t("home.feature.h2c")}</em>
-              </h2>
-            </div>
-            <div className="home-story-copy">
-              <p>{t("home.feature.p")}</p>
-              <p>{t("home.intro.p")}</p>
-              <Link className="text-link" href="/story">
-                {t("home.intro.link")} <ArrowRight size={14} />
-              </Link>
+            <div className="land-table-wrap">
+              <table className="land-table">
+                <thead>
+                  <tr>
+                    <th>{t("home.preview.colCrop")}</th>
+                    <th>{t("home.preview.colLocation")}</th>
+                    <th>{t("home.preview.colQty")}</th>
+                    <th>{t("home.preview.colPrice")}</th>
+                    <th>{t("home.preview.colStatus")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id}>
+                      <td className="land-table-crop">{r.crop}</td>
+                      <td>{r.location}</td>
+                      <td>{r.quantity}</td>
+                      <td className="land-table-price">{r.price}</td>
+                      <td>
+                        <span className="land-table-status">{r.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FEATURE — supply chain */}
-      <section className="container">
-        <div className="feature-row reveal">
-          <div className="feature-media">
-            <img src={img.tomatoes} alt="Fresh tomatoes ready for market" loading="lazy" />
+        {/* 4 · WHY KISANSETU */}
+        <section className="land-why">
+          <div className="container">
+            <div className="land-section-head">
+              <span className="eyebrow">{t("home.why.label")}</span>
+              <h2>{t("home.why.h2")}</h2>
+            </div>
+            <div className="land-why-grid">
+              <div className="land-why-media">
+                <img src={img.field} alt="Green farmland stretching to the horizon" loading="lazy" />
+              </div>
+              <div className="land-why-list">
+                <div className="land-why-item">
+                  <h3>{t("home.why.b1.title")}</h3>
+                  <p>{t("home.why.b1.p")}</p>
+                </div>
+                <div className="land-why-item">
+                  <h3>{t("home.why.b2.title")}</h3>
+                  <p>{t("home.why.b2.p")}</p>
+                </div>
+                <div className="land-why-item">
+                  <h3>{t("home.why.b3.title")}</h3>
+                  <p>{t("home.why.b3.p")}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="feature-copy">
-            <span className="eyebrow">{t("home.collection.label")}</span>
-            <h2>{t("home.collection.h2")}</h2>
-            <p>{t("home.collection.p")}</p>
-            <Link className="text-link" href="/marketplace">
-              {t("home.collection.link")} <ArrowRight size={14} />
+        </section>
+
+        {/* 5 · FINAL CTA */}
+        <section className="land-cta">
+          <div className="container land-cta-inner">
+            <h2>{t("home.closing.h2")}</h2>
+            <Link className="btn btn-primary btn-lg" href="/signup">
+              {t("home.closing.cta")} <ArrowRight size={16} />
             </Link>
           </div>
-        </div>
-
-        <div className="feature-row reverse reveal">
-          <div className="feature-media">
-            <img src={img.market} alt="Produce waiting at a market" loading="lazy" />
-          </div>
-          <div className="feature-copy">
-            <span className="eyebrow">{t("home.match.label")}</span>
-            <h2>
-              {t("home.match.h2a")} <em>{t("home.match.h2b")}</em>
-            </h2>
-            <p>{t("home.match.p")}</p>
-            <Link className="text-link" href="/market-match">
-              {t("home.match.cta")} <ArrowRight size={14} />
-            </Link>
-          </div>
-        </div>
-
-        <div className="feature-row reveal">
-          <div className="feature-media">
-            <img src={img.crates} alt="Harvest crates ready to move" loading="lazy" />
-          </div>
-          <div className="feature-copy">
-            <span className="eyebrow">{t("home.intro.label")}</span>
-            <h2>
-              {t("home.intro.h2a")} {t("home.intro.h2b")}{" "}
-              <em>{t("home.intro.h2c")}</em>
-            </h2>
-            <p>{t("home.hero.p")}</p>
-            <Link className="text-link" href="/dashboard">
-              {t("footer.product")} <ArrowRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* STEPS — how it works */}
-      <section className="container section-tight reveal">
-        <span className="eyebrow">{t("home.steps.label")}</span>
-        <div className="steps" style={{ marginTop: 28 }}>
-          <div className="step">
-            <b>01</b>
-            <h3>{t("story.step1.title")}</h3>
-            <p>{t("story.step1.p")}</p>
-          </div>
-          <div className="step">
-            <b>02</b>
-            <h3>{t("story.step2.title")}</h3>
-            <p>{t("story.step2.p")}</p>
-          </div>
-          <div className="step">
-            <b>03</b>
-            <h3>{t("story.step3.title")}</h3>
-            <p>{t("story.step3.p")}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="home-cta">
-        <div className="container">
-          <h2>
-            {t("home.closing.h2a")} <em>{t("home.closing.h2b")}</em>
-          </h2>
-          <p>{t("footer.cta.p")}</p>
-          <Link className="btn btn-primary btn-lg" href="/market-match">
-            {t("home.match.cta")} <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
     </PublicLayout>
   );
 }

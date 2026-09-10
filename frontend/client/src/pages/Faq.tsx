@@ -18,7 +18,7 @@ export default function Faq() {
   ];
 
   return (
-    <PublicLayout eyebrow={t("faq.eyebrow")}>
+    <PublicLayout>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">{t("faq.section")}</span>

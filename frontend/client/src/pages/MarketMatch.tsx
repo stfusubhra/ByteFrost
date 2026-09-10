@@ -134,7 +134,7 @@ export default function MarketMatch() {
   if (!hasToken) {
     const done = step >= demoSteps.length;
     return (
-      <PublicLayout eyebrow={`${t("match.eyebrow")} / KisanSetu`}>
+      <PublicLayout>
         <section className="page-hero">
           <div className="container">
             <span className="eyebrow">{t("match.eyebrow")}</span>
@@ -225,7 +225,7 @@ export default function MarketMatch() {
 
   // --- REAL FLOW (has auth) ---
   return (
-    <PublicLayout eyebrow={`${t("match.eyebrow")} / KisanSetu`}>
+    <PublicLayout>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">{t("match.eyebrow")}</span>

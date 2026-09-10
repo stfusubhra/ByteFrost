@@ -8,7 +8,7 @@ export default function DashboardEntry() {
   const { t } = useLanguage();
 
   return (
-    <PublicLayout eyebrow={t("entry.eyebrow")}>
+    <PublicLayout>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">{t("footer.product")}</span>

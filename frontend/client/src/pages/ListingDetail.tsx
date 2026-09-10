@@ -102,7 +102,7 @@ export default function ListingDetail() {
 
   if (loading) {
     return (
-      <PublicLayout eyebrow={t("listing.loading")}>
+      <PublicLayout>
         <div className="container stack" style={{ alignItems: "center", paddingTop: 40, paddingBottom: 40 }}>
           <Loader2 size={32} />
           <p className="state-body">{t("listing.loading")}</p>
@@ -113,7 +113,7 @@ export default function ListingDetail() {
 
   if (error) {
     return (
-      <PublicLayout eyebrow={t("marketplace.backendError")}>
+      <PublicLayout>
         <div className="container stack">
           <div className="badge badge-error">{t("marketplace.backendError")}</div>
           <p className="state-body">{error}</p>
@@ -127,7 +127,7 @@ export default function ListingDetail() {
 
   if (!listing) {
     return (
-      <PublicLayout eyebrow={t("notfound.eyebrow")}>
+      <PublicLayout>
         <div className="container stack">
           <div className="badge badge-error">{t("listing.notFound")}</div>
           <p className="state-body">{t("listing.notFound")}: {id}</p>
@@ -140,7 +140,7 @@ export default function ListingDetail() {
   }
 
   return (
-    <PublicLayout eyebrow={`${listing.crop_name} / KisanSetu`}>
+    <PublicLayout>
       {toast && <div className="public-toast">{toast}</div>}
       <section className="container py-8 md:py-12">
         <div className="listing-detail-layout">

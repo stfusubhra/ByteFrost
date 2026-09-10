@@ -129,7 +129,7 @@ export default function Contact() {
   };
 
   return (
-    <PublicLayout eyebrow={t("contact.eyebrow")}>
+    <PublicLayout>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">{t("contact.section")}</span>

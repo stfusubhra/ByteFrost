@@ -15,43 +15,6 @@ import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
- * ListingImage renders the listing photo with a clean KisanSetu-styled
- * placeholder fallback. If the image fails to load (missing asset, network
- * error, etc.) we swap to a colored placeholder showing the crop initial
- * instead of leaving a raw broken-image icon or ugly alt text on screen.
- */
-function ListingImage({
-  src,
-  alt,
-  crop,
-  className,
-}: {
-  src: string;
-  alt: string;
-  crop: string;
-  className?: string;
-}) {
-  const [failed, setFailed] = useState(false);
-
-  if (failed || !src) {
-    return (
-      <div className={`market-image-fallback ${className || ""}`} aria-label={alt}>
-        <span>{crop ? crop.charAt(0).toUpperCase() : "P"}</span>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      className={className || ""}
-      src={src}
-      alt={alt}
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
-/**
  * Shape of a listing as used by the Marketplace UI.
  */
 type MarketListing = {
@@ -303,17 +266,8 @@ export default function Marketplace() {
     return st;
   };
 
-  const formatFreshness = (f: string) => {
-    if (f === "Harvested today") return t("marketplace.harvestedToday");
-    if (f === "Harvested yesterday") return t("marketplace.harvestedYesterday");
-    if (f === "Harvested 2 days ago") return t("marketplace.harvested2DaysAgo");
-    if (f === "Harvested recently") return t("marketplace.harvestedRecently");
-    if (f === "Freshness info TBA") return t("marketplace.freshnessTBA");
-    return f;
-  };
-
   return (
-    <PublicLayout eyebrow={t("marketplace.eyebrow")}>
+    <PublicLayout>
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow">{t("nav.marketplace")}</span>
@@ -422,21 +376,24 @@ export default function Marketplace() {
           ))}
         </div>
 
-        <div className="market-grid">
+        <div className="market-table-wrap">
           {loading ? (
-            <>
-              {[0, 1, 2].map((i) => (
-                <div className="card" key={i} style={{ padding: 0, overflow: "hidden" }}>
-                  <div className="skeleton" style={{ aspectRatio: "4 / 3" }} />
-                  <div style={{ padding: 18 }}>
-                    <div className="skeleton" style={{ height: 16, width: "60%", marginBottom: 10 }} />
-                    <div className="skeleton" style={{ height: 13, width: "80%" }} />
-                  </div>
-                </div>
-              ))}
-            </>
+            <table className="market-table">
+              <tbody>
+                {[0, 1, 2].map((i) => (
+                  <tr key={i}>
+                    <td><div className="skeleton" style={{ height: 15, width: "55%" }} /></td>
+                    <td><div className="skeleton" style={{ height: 15, width: "40%" }} /></td>
+                    <td><div className="skeleton" style={{ height: 15, width: "30%" }} /></td>
+                    <td><div className="skeleton" style={{ height: 15, width: "25%" }} /></td>
+                    <td><div className="skeleton" style={{ height: 15, width: "20%" }} /></td>
+                    <td><div className="skeleton" style={{ height: 15, width: "25%" }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : filtered.length === 0 ? (
-            <div className="state" style={{ gridColumn: "1 / -1" }}>
+            <div className="state" style={{ padding: "48px 0" }}>
               <div className="state-icon"><Search size={20} /></div>
               <div className="state-title">{t("marketplace.emptyTitle")}</div>
               <div className="state-body">
@@ -444,56 +401,43 @@ export default function Marketplace() {
               </div>
             </div>
           ) : (
-            filtered.map((item) => (
-              <Link href={`/listing/${item.id}`} key={item.id}>
-                <article
-                  className="card market-card"
-                  style={{ padding: 0, overflow: "hidden" }}
-                >
-                  <div className="market-card-image">
-                    <ListingImage
-                      src={item.image}
-                      alt={`${item.crop} listing`}
-                      crop={item.crop}
-                    />
-                    <span className="badge badge-neutral" style={{ position: "absolute", top: 12, left: 12 }}>
-                      {formatStatus(item.status)}
-                    </span>
-                  </div>
-                  <div className="market-card-body">
-                    <div className="market-card-top">
-                      <h3>{item.crop}</h3>
-                      <span className="badge badge-primary">
-                        {item.match.includes("%") ? `${item.match} ${t("marketplace.matchBadge")}` : item.match}
-                      </span>
-                    </div>
-                    <div className="market-card-meta">
-                      <span className="market-card-seller">
-                        <span className="seller-avatar">{item.seller.charAt(0)}</span>
+            <table className="market-table">
+              <thead>
+                <tr>
+                  <th>{t("marketplace.colCrop")}</th>
+                  <th>{t("marketplace.colLocation")}</th>
+                  <th>{t("marketplace.colQty")}</th>
+                  <th>{t("marketplace.colPrice")}</th>
+                  <th>{t("marketplace.colMatch")}</th>
+                  <th>{t("marketplace.colStatus")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((item) => (
+                  <tr key={item.id} className="market-row" onClick={() => (window.location.href = `/listing/${item.id}`)}>
+                    <td>
+                      <div className="market-row-crop">{item.crop}</div>
+                      <div className="market-row-sub">
                         {item.seller === "Verified producer" ? t("marketplace.verifiedProducer") : item.seller}
-                      </span>
-                      <span><MapPin size={12} /> {item.place}</span>
-                      <span className="market-card-specs">
-                        <b>{item.quantity}</b>
                         <span className="dot" aria-hidden="true" />
                         {item.grade}
-                        <span className="dot" aria-hidden="true" />
-                        {formatFreshness(item.freshness)}
+                      </div>
+                    </td>
+                    <td><span className="market-row-loc"><MapPin size={13} /> {item.place}</span></td>
+                    <td>{item.quantity}</td>
+                    <td className="market-row-price">{item.price}</td>
+                    <td>
+                      <span className="market-row-match">
+                        {item.match.includes("%") ? `${item.match} ${t("marketplace.matchBadge")}` : item.match}
                       </span>
-                    </div>
-                    <div className="market-card-bottom">
-                      <span className="market-card-price">{item.price}</span>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        aria-label={`${t("marketplace.contactAria")} ${item.crop}`}
-                      >
-                        <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))
+                    </td>
+                    <td>
+                      <span className="market-row-status">{formatStatus(item.status)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </section>

@@ -1,43 +1,22 @@
-/* KisanSetu public shell: shared header + footer for public pages. Includes auth links, responsive drawer, scroll progress, footer, and language selector. */
+/* KisanSetu public shell: minimal header + footer for public pages.
+   Header: wordmark left, four links, auth actions right. Sticky with a
+   hairline border; solid background once scrolled. */
 import { Link } from "wouter";
-import { ArrowUpRight, Mail, MapPin, Menu, Moon, Sprout, Sun, X, LogOut } from "lucide-react";
+import { Menu, Moon, Sprout, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useReveal } from "../hooks/useReveal";
 import LanguageSelector from "./LanguageSelector";
 
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    let frame = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        setProgress(max > 0 ? window.scrollY / max : 0);
-      });
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-  return progress;
-}
-
 export default function PublicLayout({
   children,
-  eyebrow = "Direct market intelligence for everyday farming",
 }: {
   children: React.ReactNode;
-  eyebrow?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
-  const progress = useScrollProgress();
+  const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   useReveal();
@@ -46,38 +25,31 @@ export default function PublicLayout({
     setHasToken(!!localStorage.getItem("kisansetu_token"));
   }, []);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("kisansetu_token");
     setHasToken(false);
     window.location.href = "/";
   };
 
-  const menuLinks = [
-    { href: "/", label: t("nav.home") },
+  const navLinks = [
     { href: "/marketplace", label: t("nav.marketplace") },
-    { href: "/market-match", label: t("nav.findmatchFull") },
+    { href: "/market-match", label: t("nav.findmatch") },
     { href: "/story", label: t("nav.story") },
-    { href: "/faq", label: t("nav.faq") },
-    { href: "/contact", label: t("nav.contact") },
-    ...(hasToken
-      ? [{ href: "/dashboard", label: t("nav.dashboard") }]
-      : [
-          { href: "/login", label: t("nav.signin") },
-          { href: "/signup", label: t("nav.createAccount") },
-        ]),
+    { href: "/about", label: t("nav.about") },
   ];
 
   return (
     <div className="site">
-      <div
-        className="site-scrollbar"
-        style={{ transform: `scaleX(${progress})` }}
-        aria-hidden="true"
-      />
-
-      <header className="site-header">
+      <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
         <div className="container site-header-inner">
-          <Link href="/" className="wordmark">
+          <Link href="/" className="wordmark" aria-label="KisanSetu home">
             <span className="wordmark-mark">
               <Sprout size={15} />
             </span>
@@ -85,10 +57,11 @@ export default function PublicLayout({
           </Link>
 
           <nav className="site-nav" aria-label="Primary">
-            <Link href="/marketplace">{t("nav.marketplace")}</Link>
-            <Link href="/market-match">{t("nav.findmatch")}</Link>
-            <Link href="/story">{t("nav.story")}</Link>
-            <Link href="/faq">{t("nav.faq")}</Link>
+            {navLinks.map((l) => (
+              <Link key={l.href} href={l.href}>
+                {l.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="site-header-actions">
@@ -104,32 +77,29 @@ export default function PublicLayout({
               </button>
             )}
             <div className="header-auth-desktop">
-                          {hasToken ? (
-              <>
-                <Link href="/dashboard" className="btn btn-secondary btn-sm">
-                  {t("nav.dashboard")}
-                </Link>
-                <Link href="/buyer-dashboard" className="btn btn-primary btn-sm">
-                  {t("nav.buyerDashboard")}
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-ghost btn-sm"
-                  style={{ cursor: "pointer" }}
-                >
-                  {t("nav.logout")}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="btn btn-ghost btn-sm">
-                  {t("nav.signin")}
-                </Link>
-                <Link href="/signup" className="btn btn-primary btn-sm">
-                  {t("nav.signup")}
-                </Link>
-              </>
-            )}
+              {hasToken ? (
+                <>
+                  <Link href="/dashboard" className="btn btn-secondary btn-sm">
+                    {t("nav.dashboard")}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="btn btn-ghost btn-sm"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {t("nav.logout")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="btn btn-ghost btn-sm">
+                    {t("nav.signin")}
+                  </Link>
+                  <Link href="/signup" className="btn btn-primary btn-sm">
+                    {t("nav.signup")}
+                  </Link>
+                </>
+              )}
             </div>
             <button
               className="menu-btn"
@@ -166,26 +136,34 @@ export default function PublicLayout({
               </button>
             </div>
             <div className="drawer-links">
-              {menuLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                >
+              {navLinks.map((link) => (
+                <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>
                   {link.label}
-                  <ArrowUpRight size={18} />
                 </Link>
               ))}
-              {hasToken && (
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    handleLogout();
-                  }}
-                >
-                  {t("nav.signout")}
-                  <LogOut size={18} />
-                </button>
+              {hasToken ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setOpen(false)}>
+                    {t("nav.dashboard")}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    {t("nav.signout")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setOpen(false)}>
+                    {t("nav.signin")}
+                  </Link>
+                  <Link href="/signup" onClick={() => setOpen(false)}>
+                    {t("nav.signup")}
+                  </Link>
+                </>
               )}
             </div>
             <div className="drawer-foot">
@@ -209,14 +187,7 @@ export default function PublicLayout({
                 KisanSetu
               </Link>
               <p>{t("footer.brand.p")}</p>
-              <div className="site-footer-contact">
-                <span>
-                  <MapPin size={13} /> {t("footer.contact.locations")}
-                </span>
-                <a href="mailto:hello@kisansetu.in">
-                  <Mail size={13} /> hello@kisansetu.in
-                </a>
-              </div>
+              <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
             </div>
 
             <div className="site-footer-col">
@@ -248,14 +219,6 @@ export default function PublicLayout({
                   <Link href="/signup">{t("nav.createAccount")}</Link>
                 </>
               )}
-            </div>
-
-            <div className="site-footer-cta">
-              <span className="site-footer-head">{t("footer.getStarted")}</span>
-              <p>{t("footer.cta.p")}</p>
-              <Link className="btn btn-primary" href="/market-match">
-                {t("footer.cta.link")} <ArrowUpRight size={14} />
-              </Link>
             </div>
           </div>
 
