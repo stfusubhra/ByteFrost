@@ -11,6 +11,8 @@
      only where it earns its place.
    - One motion language: 150–250ms micro, 250–400ms standard,
      400–700ms major. Always reduced-motion safe.
+   - Story page uses a tighter editorial rhythm — no cards, no
+     centered-repeat blocks, no dashboard mockups on editorial pages.
    ================================================================ */
 
 @import "tailwindcss";
@@ -39,19 +41,29 @@
   --shadow-lg: 0 4px 14px -4px rgba(28, 43, 35, 0.14), 0 0 1px rgba(28, 43, 35, 0.12);
   --shadow-xl: 0 8px 24px -8px rgba(28, 43, 35, 0.18), 0 0 1px rgba(28, 43, 35, 0.12);
 
-  /* Emerald → agricultural green (design system). Tailwind emerald-* utilities
-     (used across dashboards) now match the brand instead of clashing. */
-  --color-emerald-50: #eef4ef;
-  --color-emerald-100: #e9f3ec;
-  --color-emerald-200: #d3e5d8;
-  --color-emerald-300: #a8c9b2;
-  --color-emerald-400: #6fae8d;
-  --color-emerald-500: #3d8a63;
-  --color-emerald-600: #2f6e3a;
-  --color-emerald-700: #24562c;
-  --color-emerald-800: #1c4523;
-  --color-emerald-900: #16381c;
-  --color-emerald-950: #22352a;
+  /* Updated colors to match design system */
+  --color-background: #F5F5F2; /* Warm cream */
+  --color-background-subtle: #EFEBE4;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F3F1E9;
+  --color-ink: #1A1A1A; /* Deep charcoal */
+  --color-ink-muted: #555555;
+  --color-primary: #2E593C; /* Agricultural green */
+  --color-primary-strong: #24562C;
+  --color-primary-soft: #EAF1E8;
+  --color-accent: #8A8F55; /* Earth accent */
+  --color-success: #0F9D58;
+  --color-warning: #F9A825;
+  --color-error: --color-error: #D93025;
+  --color-info: #2F6F8F;
+  --color-border: #E8E4DA;
+  --color-border-strong: #D5D1C8;
+
+  /* Semantic color variants for UI */
+  --color-success-light: #E8F5E9;
+  --color-warning-light: #FFFBEB;
+  --color-error-light: #FDE8E7;
+  --color-info-light: #E1F5FE;
 }
 
 /* ================================================================
@@ -883,7 +895,7 @@ img {
   top: 0;
   z-index: 40;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(3px);
   border-bottom: 1px solid transparent;
   transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
 }
@@ -984,8 +996,8 @@ img {
   position: fixed;
   inset: 0;
   background: rgba(12, 20, 16, 0.48);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   z-index: 99;
   animation: ks-fade-in 180ms ease both;
 }

@@ -44,17 +44,17 @@ export default function RouteMap({
   const formattedDuration = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
   return (
-    <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-5">
+    <div className="bg-card border rounded-lg p-5 shadow-sm space-y-5">
       {/* Top Header Summary */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50">
               <Navigation className="w-3 h-3" />
               {(routeMode || "direct").toUpperCase()} ROUTE
             </span>
             {vehicle && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground border">
                 <Truck className="w-3 h-3" />
                 {vehicle.vehicle_type} ({vehicle.capacity_kg} kg)
               </span>
@@ -122,7 +122,7 @@ export default function RouteMap({
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
                         isDrop
                           ? "bg-emerald-600 text-white"
                           : isHub
@@ -162,7 +162,7 @@ export default function RouteMap({
                 </div>
 
                 {idx < stops.length - 1 && (
-                  <div className="hidden lg:block absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 bg-background border rounded-full p-0.5 shadow-sm text-muted-foreground">
+                  <div className="hidden lg:block absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 bg-background border rounded-md p-0.5 shadow-sm text-muted-foreground">
                     <ArrowRight className="w-3 h-3" />
                   </div>
                 )}

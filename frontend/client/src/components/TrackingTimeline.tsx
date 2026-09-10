@@ -98,20 +98,20 @@ export default function TrackingTimeline({
   const isDelivered = currentStatus.toLowerCase() === "delivered" || hasEvent("DELIVERED");
 
   return (
-    <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-6">
+    <div className="bg-card border rounded-lg p-5 shadow-sm space-y-6">
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-foreground">Shipment Tracking</span>
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                isDelivered
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                  : currentStatus.toLowerCase().includes("rerout")
-                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                  : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-              }`}
+<span
+               className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider ${
+                 isDelivered
+                   ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                   : currentStatus.toLowerCase().includes("rerout")
+                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                   : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+               }`}
             >
               {currentStatus}
             </span>
@@ -145,8 +145,8 @@ export default function TrackingTimeline({
             const completed = hasEvent(m.key) || (isDelivered && idx < 4);
             return (
               <div key={m.key} className="flex flex-col items-center text-center space-y-1.5">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+<div
+                   className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
                     completed
                       ? "bg-emerald-600 text-white"
                       : "bg-muted text-muted-foreground border"
@@ -179,7 +179,7 @@ export default function TrackingTimeline({
               return (
                 <div key={ev.id || idx} className="relative space-y-0.5">
                   <div
-                    className={`absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full ${
+                    className={`absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-md ${
                       isIncident
                         ? "bg-destructive"
                         : isReroute
@@ -245,7 +245,7 @@ export default function TrackingTimeline({
 
       {/* Incident Form Drawer */}
       {reportingIncident && (
-        <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 space-y-3 animate-in fade-in duration-200">
+        <div className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 space-y-3 animate-in fade-in duration-200">
           <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
             Report Transit Incident & Re-Optimize
           </div>

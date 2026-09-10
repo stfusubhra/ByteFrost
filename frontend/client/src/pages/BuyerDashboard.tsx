@@ -226,7 +226,7 @@ export default function BuyerDashboard() {
       </div>
 
       {/* SECTION 1: SMART SUPPLIER MATCHING & QUANTITY ALLOCATION CALCULATOR */}
-      <section className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
+      <section className="bg-card border rounded-lg p-6 shadow-sm space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -239,7 +239,7 @@ export default function BuyerDashboard() {
               Evaluates quantity, distance, quality, freshness, reliability, and transport economics across multiple farmers.
             </p>
           </div>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-medium border border-emerald-200/50">
+          <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-medium border border-emerald-200/50">
             Automated Aggregation
           </span>
         </div>
@@ -403,7 +403,7 @@ export default function BuyerDashboard() {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
+                            <span className="w-5 h-5 rounded-md bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
                               {idx + 1}
                             </span>
                             <h4 className="font-bold text-sm text-foreground">
@@ -523,7 +523,7 @@ export default function BuyerDashboard() {
 
         {/* Order Cart Drawer */}
         <div className="space-y-4">
-          <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-card border rounded-lg p-5 shadow-sm space-y-4">
             <h3 className="font-bold text-base text-foreground flex items-center gap-2 border-b pb-3">
               <ShoppingBag className="w-5 h-5 text-primary" />
               <span>{tr("buyer.cart.title", "Procurement Cart")} ({cart.length})</span>
@@ -645,7 +645,7 @@ export default function BuyerDashboard() {
             ) : null}
           </div>
         ) : (
-          <div className="bg-card border rounded-2xl p-8 text-center space-y-2">
+          <div className="bg-card border rounded-lg p-8 text-center space-y-2">
             <Truck className="w-8 h-8 mx-auto text-muted-foreground opacity-50" />
             <p className="text-sm font-semibold text-foreground">No active shipments in transit</p>
             <p className="text-xs text-muted-foreground">
