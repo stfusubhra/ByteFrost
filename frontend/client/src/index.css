@@ -2609,15 +2609,64 @@ img {
   background: var(--warning);
 }
 
-/* ================================================================
-   Story / FAQ / Contact / NotFound / DashboardEntry
-   ================================================================ */
-.story-flow {
+/* === Story page custom styles === */
+.story-hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  padding: 88px 0;
-  border-bottom: 1px solid var(--line);
+  gap: 32px;
+  align-items: center;
+}
+.story-hero-copy {
+  max-width: 560px;
+}
+.story-hero-h1 {
+  font-size: clamp(28px,4vw,44px);
+  line-height: 1.2;
+  margin: 0 0 0.5rem 0;
+}
+.story-hero-h1-em {
+  color: var(--primary);
+}
+.story-hero-cta {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.story-hero-cta .btn {
+  white-space: nowrap;
+}
+.story-connect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.story-connect-left,
+.story-connect-right {
+  max-width: 540px;
+}
+.story-impact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.story-impact-media img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+.story-cta-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+@media (max-width: 860px) {
+  .story-hero-grid,
+  .story-connect-grid,
+  .story-impact-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .story-flow h2 {
