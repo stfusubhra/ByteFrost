@@ -48,7 +48,7 @@ try:
 except Exception:
     ML_AVAILABLE = False
 
-router = APIRouter(prefix="/intelligence", tags=["marketplace-intelligence"])
+router = APIRouter(tags=["marketplace-intelligence"])
 
 BUYER_ROLES = {
     UserRole.BUYER_BULK,

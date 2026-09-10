@@ -255,8 +255,6 @@ export default function ListingDetail() {
         <Link href="/marketplace" className="btn btn-ghost">
           {t("listing.backMarketplace")}
         </Link>
-          {t("listing.findMatch")} <ArrowRight size={15} />
-        </Link>
       </div>
     </PublicLayout>
   );

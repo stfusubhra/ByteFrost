@@ -102,7 +102,7 @@ async def find_matches(
         ).group_by(Order.buyer_id)
     )
     order_stats = {
-        row[0]: {"total": row[1], "completed": row[2] or 0}
+        row[0]: {"total": int(row[1]), "completed": int(row[2] or 0)}
         for row in result.all()
     }
 
@@ -123,7 +123,11 @@ async def find_matches(
             .group_by(Order.buyer_id)
         )
         item_stats = {
-            row[0]: {"avg_qty": row[1], "avg_price": row[2], "total_volume": row[3]}
+            row[0]: {
+                "avg_qty": float(row[1]) if row[1] else None,
+                "avg_price": float(row[2]) if row[2] else None,
+                "total_volume": float(row[3]) if row[3] else 0.0
+            }
             for row in item_result.all()
         }
 
@@ -132,10 +136,10 @@ async def find_matches(
         # models are deployed. This is a strict improvement over the simple
         # heuristic below and still uses real buyer/order data.
         listing_dict = {
-            "quantity_kg": listing.quantity_kg,
-            "price_per_kg": listing.price_per_kg,
-            "pickup_latitude": listing.pickup_latitude,
-            "pickup_longitude": listing.pickup_longitude,
+            "quantity_kg": float(listing.quantity_kg) if listing.quantity_kg else 0.0,
+            "price_per_kg": float(listing.price_per_kg) if listing.price_per_kg else 0.0,
+            "pickup_latitude": float(listing.pickup_latitude) if listing.pickup_latitude else 0.0,
+            "pickup_longitude": float(listing.pickup_longitude) if listing.pickup_longitude else 0.0,
         }
         buyer_features = []
         for buyer in buyers:
@@ -143,8 +147,8 @@ async def find_matches(
             is_ = item_stats.get(buyer.id)
             buyer_features.append({
                 "buyer_id": str(buyer.id),
-                "latitude": buyer.latitude,
-                "longitude": buyer.longitude,
+                "latitude": float(buyer.latitude) if buyer.latitude else 0.0,
+                "longitude": float(buyer.longitude) if buyer.longitude else 0.0,
                 "is_verified": buyer.is_verified,
                 "avg_order_quantity_kg": float(is_["avg_qty"]) if is_ and is_["avg_qty"] else None,
                 "avg_price_per_kg": float(is_["avg_price"]) if is_ and is_["avg_price"] else None,

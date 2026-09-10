@@ -149,7 +149,6 @@ const hi: Record<LocaleKeys, string> = {
   // ── Menu links ───────────────────────────────────────────
   "home.menu.home": "होम",
   "home.menu.marketplace": "बाज़ार",
-  "home.menu.findmatch": "अपना बाज़ार खोजें",
   "home.menu.story": "हमारी कहानी",
   "home.menu.faq": "सवाल-जवाब",
   "home.menu.contact": "संपर्क",
@@ -217,7 +216,6 @@ const hi: Record<LocaleKeys, string> = {
   "about.contact": "हमसे बात करें",
   "about.contact.p": "सवाल, सुझाव, या कोई बाज़ार जोड़ना चाहते हैं? हमें लिखें।",
   "story.exploreMarketplace": "बाज़ार देखें",
-  "story.findMatch": "अपना बाज़ार खोजें",
   "story.sec1.eyebrow": "01 / समस्या",
   "story.sec1.h2": "बिखरी हुई आपूर्ति श्रृंखला मूल्य बर्बाद करती है।",
   "story.sec1.p": "पारंपरिक मॉडल कई असंबद्ध बिचौलियों पर निर्भर करते हैं, जिससे अनावश्यक ढुलाई, समय की बर्बादी और अस्पष्ट मूल्य निर्धारण होता है।",
@@ -407,7 +405,6 @@ const hi: Record<LocaleKeys, string> = {
   "listing.loading": "लिस्टिंग विवरण लोड हो रहा है…",
   "listing.backHome": "← होम पर वापस",
   "listing.backMarketplace": "← बाज़ार पर वापस",
-  "listing.findMatch": "बाज़ार मिलान खोजें",
   "listing.seller": "विक्रेता:",
   "listing.verifiedProducer": "सत्यापित उत्पादक",
   "listing.qtyAvailable": "उपलब्ध मात्रा",

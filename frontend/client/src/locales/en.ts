@@ -72,7 +72,6 @@ const en = {
   "home.preview.market3p": "₹25/kg",
   "home.preview.demandTitle": "Buyer demand",
   "home.preview.demand": "3 buyers within 30 km",
-  "home.preview.matchTitle": "MarketMatch",
   "home.preview.match": "92% match",
   "home.preview.matchSub": "GreenValley Farms",
   "home.preview.cta": "View listing",
