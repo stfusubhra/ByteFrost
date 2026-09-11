@@ -118,27 +118,6 @@ export default function Story() {
         </div>
       </section>
 
-      {/* INTELLIGENCE */}
-      <section className="story-intelligence" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
-        <div className="container">
-          <h3 className="story-section-title">Intelligence</h3>
-          <ul className="story-stats">
-            <li>Demand ↑ 12%</li>
-            <li>Recommended price ₹31–34/kg</li>
-            <li>Match 92%</li>
-          </ul>
-        </div>
-      </section>
-
-      {/* MOVEMENT */}
-      <section className="story-movement" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
-        <div className="container">
-          <h3 className="story-section-title">Movement</h3>
-          <p>Pickup → Consolidation → Buyer</p>
-          <p>Recommended route 1 h 30 min – estimated logistics saving ₹1,200</p>
-        </div>
-      </section>
-
       {/* IMPACT */}
       <section className="story-impact" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
         <div className="container">
