@@ -118,43 +118,6 @@ export default function Story() {
         </div>
       </section>
 
-      {/* DISCONNECT */}
-      <section className="story-disconnect" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
-        <div className="container">
-          <div className="story-disconnect-grid">
-            <div className="story-supply">
-              <h3 className="story-section-title">Supply</h3>
-              <ul className="story-list">
-                <li>400 kg – Tomatoes · Nashik</li>
-                <li>300 kg – Tomatoes · Pune</li>
-                <li>300 kg – Tomatoes · Satara</li>
-              </ul>
-            </div>
-            <div className="story-demand">
-              <h3 className="story-section-title">Demand</h3>
-              <p>Buyer needs 1,000 kg – one shipment, one route.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CONNECTION */}
-      <section className="story-connection" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
-        <div className="container">
-          <h2 className="story-connection-h2">What if they could see the same market?</h2>
-          <p className="story-connection-copy">KisanSetu brings supply, demand, information and logistics together.</p>
-          <div className="story-connection-visual">
-            <div className="story-visual-grid">
-              <div className="story-circle">Supply</div>
-              <div className="story-connector-vertical" />
-              <div className="story-circle">KisanSetu</div>
-              <div className="story-connector-vertical" />
-              <div className="story-circle">Demand</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* INTELLIGENCE */}
       <section className="story-intelligence" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
         <div className="container">
