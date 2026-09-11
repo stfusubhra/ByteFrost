@@ -467,9 +467,9 @@ export default function Dashboard() {
                     {t("dash.myListingsSub")}
                   </p>
                 </div>
-                <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
+                <Link href="/create-listing" className="btn btn-primary">
                   <FilePlus2 size={17} /> {t("dash.createListing")}
-                </button>
+                </Link>
               </div>
 
               {allListings.filter((l) => l.seller_id === user?.id).length > 0 ? (
@@ -588,9 +588,9 @@ export default function Dashboard() {
                     <span className="badge badge-warning mt-2 inline-block">Demo Data — Sign in for real data</span>
                   )}
                 </div>
-                <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
+                <Link href="/create-listing" className="btn btn-primary">
                   <FilePlus2 size={17} /> {t("dash.newListing")}
-                </button>
+                </Link>
               </div>
 
               {/* Market intelligence – price recommendation */}

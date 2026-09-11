@@ -197,6 +197,26 @@ export async function fetchListing(id: string): Promise<Listing> {
    return data;
  }
 
+export interface ListingCreatePayload {
+  crop_name: string;
+  variety?: string;
+  quantity_kg: number;
+  quality_grade?: string;
+  price_per_kg?: number;
+  harvest_date?: string;
+  availability_start?: string;
+  availability_end?: string;
+  pickup_location?: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
+  description?: string;
+}
+
+export async function createListing(payload: ListingCreatePayload): Promise<Listing> {
+  const { data } = await client.post<Listing>("/listings/", payload);
+  return data;
+}
+
 // --- Order types ---
 export interface OrderItemCreate {
    listing_id: string;
