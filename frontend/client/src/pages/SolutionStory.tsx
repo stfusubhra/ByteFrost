@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { LocaleKeys } from "@/locales";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -136,7 +137,7 @@ export default function SolutionStory() {
                   {pts.map((p) => (
                     <div key={p} className="flex items-start gap-1.5 text-xs">
                       <BadgeCheck className="mt-0.5 size-3 shrink-0 text-primary" />
-                      <span className="text-muted-foreground">{t(p)}</span>
+                      <span className="text-muted-foreground">{t(p as LocaleKeys)}</span>
                     </div>
                   ))}
                 </CardContent>
@@ -156,7 +157,7 @@ export default function SolutionStory() {
                   <Icon className="size-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">{t(label)}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">{t(label as LocaleKeys)}</p>
                   <p className="text-lg font-bold leading-none">{value}</p>
                   <Progress value={pct} className="mt-1.5 h-1" />
                 </div>

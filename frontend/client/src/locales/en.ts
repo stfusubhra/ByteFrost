@@ -10,6 +10,8 @@ const en = {
   "common.switchToLight": "Switch to light mode",
   "common.loading": "Loading…",
   "common.loginRequired": "Please sign in to continue.",
+  "common.cancel": "Cancel",
+  "common.close": "Close",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "Home",
@@ -474,6 +476,8 @@ const en = {
   "dash.emptyListingsBody": "Create a listing to start selling your harvest at the best market price.",
   "dash.createListing": "Create a listing",
   "dash.viewListing": "View",
+  "dash.active": "Active",
+  "dash.inactive": "Inactive",
   "dash.footerBuilt": "Built for the people who grow with the people who need.",
   "dash.dataUpdates": "Data updates on demand.",
   "dash.systemStatus": "System status",

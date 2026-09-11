@@ -12,6 +12,8 @@ const hi: Record<LocaleKeys, string> = {
   "common.switchToLight": "लाइट मोड पर जाएं",
   "common.loading": "लोड हो रहा है…",
   "common.loginRequired": "जारी रखने के लिए कृपया साइन इन करें।",
+  "common.cancel": "रद्द करें",
+  "common.close": "बंद करें",
 
   // ── Nav / Auth buttons ───────────────────────────────────
   "nav.home": "होम",
@@ -19,6 +21,7 @@ const hi: Record<LocaleKeys, string> = {
   "nav.findmatch": "अपना बाज़ार खोजें",
   "nav.findmatchFull": "अपना बाज़ार खोजें — ताज़ा, सीधा, उचित",
   "nav.story": "हमारी कहानी",
+  "nav.solutionStory": "हमारी कहानी",
   "nav.faq": "सवाल-जवाब",
   "nav.contact": "संपर्क",
   "nav.signin": "लॉग इन करें",
@@ -476,6 +479,8 @@ const hi: Record<LocaleKeys, string> = {
   "dash.emptyListingsBody": "सर्वोत्तम बाजार मूल्य पर अपनी उपज बेचने के लिए लिस्टिंग बनाएं।",
   "dash.createListing": "लिस्टिंग बनाएं",
   "dash.viewListing": "देखें",
+  "dash.active": "सक्रिय",
+  "dash.inactive": "निष्क्रिय",
   "dash.footerBuilt": "उगाने वालों और ज़रूरत वालों के लिए निर्मित।",
   "dash.dataUpdates": "माँग पर डेटा अपडेट।",
   "dash.systemStatus": "सिस्टम स्थिति",

@@ -5,6 +5,8 @@
  *   - Demand forecast for the active crop
  *   - Buyer matching scores (real API)
  * The UI falls back to a friendly empty state when no data is available.
+ *
+ * UI: shadcn/ui primitives (Card, Table, Badge, Dialog, Tabs, Progress…).
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
@@ -16,7 +18,6 @@ import {
   Bell,
   Boxes,
   ChevronRight,
-  CircleHelp,
   CloudSun,
   Edit,
   FilePlus2,
@@ -30,7 +31,6 @@ import {
   Sprout,
   Truck,
   UsersRound,
-  X,
   Navigation,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,18 +60,45 @@ import {
   DemandForecastData,
 } from "@/lib/api";
 import type { LocaleKeys } from "@/locales";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-function SignalBars({ value, tone = "green" }: { value: number; tone?: string }) {
-  return (
-    <div className={`signal-bars ${tone}`} aria-label={`${value}% match`}>
-      <span style={{ height: `${Math.max(28, value * 0.62)}%` }} />
-      <span style={{ height: `${Math.max(35, value * 0.74)}%` }} />
-      <span style={{ height: `${Math.max(45, value * 0.86)}%` }} />
-      <span style={{ height: `${value}%` }} />
-    </div>
-  );
-}
-
+/* ────────────────────────────────────────────────────────────
+ * Create Listing modal (shadcn Dialog)
+ * ──────────────────────────────────────────────────────────── */
 function CreateListingModal({
   isOpen,
   onClose,
@@ -100,7 +127,7 @@ function CreateListingModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -156,110 +183,203 @@ function CreateListingModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="create-listing-title">
-        <div className="modal-head">
-          <div>
-            <span className="eyebrow">{t("createListing.subtitle")}</span>
-            <h2 id="create-listing-title">{t("createListing.title")}</h2>
-          </div>
-          <button className="icon-btn" onClick={onClose} aria-label={t("common.close")}>
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{t("createListing.title")}</DialogTitle>
+          <DialogDescription>{t("createListing.subtitle")}</DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="modal-form space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("createListing.basicInfo")}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("createListing.basicInfo")}</h3>
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label={t("createListing.cropName")} required>
-                <input name="crop_name" value={form.crop_name} onChange={handleChange} placeholder={t("createListing.cropNamePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("createListing.variety")}>
-                <input name="variety" value={form.variety} onChange={handleChange} placeholder={t("createListing.varietyPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("createListing.quantity")} required>
-                <input name="quantity_kg" type="number" min="1" step="0.01" value={form.quantity_kg} onChange={handleChange} placeholder={t("createListing.quantityPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("createListing.price")} required>
-                <input name="price_per_kg" type="number" min="1" step="0.01" value={form.price_per_kg} onChange={handleChange} placeholder={t("createListing.pricePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
+              <div className="space-y-2">
+                <Label htmlFor="cl-crop_name">
+                  {t("createListing.cropName")} <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="cl-crop_name"
+                  name="crop_name"
+                  value={form.crop_name}
+                  onChange={handleChange}
+                  placeholder={t("createListing.cropNamePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cl-variety">{t("createListing.variety")}</Label>
+                <Input
+                  id="cl-variety"
+                  name="variety"
+                  value={form.variety}
+                  onChange={handleChange}
+                  placeholder={t("createListing.varietyPlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cl-quantity">
+                  {t("createListing.quantity")} <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="cl-quantity"
+                  name="quantity_kg"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={form.quantity_kg}
+                  onChange={handleChange}
+                  placeholder={t("createListing.quantityPlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cl-price">
+                  {t("createListing.price")} <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="cl-price"
+                    name="price_per_kg"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={form.price_per_kg}
+                    onChange={handleChange}
+                    placeholder={t("createListing.pricePlaceholder")}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("createListing.qualityGrade")}</Label>
+                <Select
+                  value={form.quality_grade}
+                  onValueChange={(value) => {
+                    setForm((prev) => ({ ...prev, quality_grade: value }));
+                    setError(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("createListing.qualityGrade")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">{t("createListing.gradeA")}</SelectItem>
+                    <SelectItem value="B">{t("createListing.gradeB")}</SelectItem>
+                    <SelectItem value="C">{t("createListing.gradeC")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <FormField label={t("createListing.qualityGrade")}>
-              <select name="quality_grade" value={form.quality_grade} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-                <option value="A">{t("createListing.gradeA")}</option>
-                <option value="B">{t("createListing.gradeB")}</option>
-                <option value="C">{t("createListing.gradeC")}</option>
-              </select>
-            </FormField>
           </div>
 
+          <Separator />
+
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("createListing.dates")}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("createListing.dates")}</h3>
             <div className="grid gap-4 md:grid-cols-3">
-              <FormField label={t("createListing.harvestDate")}>
-                <input name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("createListing.availStart")}>
-                <input name="availability_start" type="date" value={form.availability_start} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("createListing.availEnd")}>
-                <input name="availability_end" type="date" value={form.availability_end} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
+              <div className="space-y-2">
+                <Label htmlFor="cl-harvest">{t("createListing.harvestDate")}</Label>
+                <Input id="cl-harvest" name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cl-avail-start">{t("createListing.availStart")}</Label>
+                <Input id="cl-avail-start" name="availability_start" type="date" value={form.availability_start} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cl-avail-end">{t("createListing.availEnd")}</Label>
+                <Input id="cl-avail-end" name="availability_end" type="date" value={form.availability_end} onChange={handleChange} />
+              </div>
             </div>
           </div>
 
+          <Separator />
+
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("createListing.location")}</h3>
-            <FormField label={t("createListing.pickupLocation")} required>
-              <input name="pickup_location" value={form.pickup_location} onChange={handleChange} placeholder={t("createListing.pickupLocationPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-            </FormField>
+            <h3 className="text-sm font-semibold text-foreground">{t("createListing.location")}</h3>
+            <div className="space-y-2">
+              <Label htmlFor="cl-pickup">
+                {t("createListing.pickupLocation")} <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cl-pickup"
+                name="pickup_location"
+                value={form.pickup_location}
+                onChange={handleChange}
+                placeholder={t("createListing.pickupLocationPlaceholder")}
+              />
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label={t("createListing.latitude")}>
-                <input name="pickup_latitude" type="number" step="any" value={form.pickup_latitude} onChange={handleChange} placeholder={t("createListing.latitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("createListing.longitude")}>
-                <input name="pickup_longitude" type="number" step="any" value={form.pickup_longitude} onChange={handleChange} placeholder={t("createListing.longitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
+              <div className="space-y-2">
+                <Label htmlFor="cl-lat">{t("createListing.latitude")}</Label>
+                <Input
+                  id="cl-lat"
+                  name="pickup_latitude"
+                  type="number"
+                  step="any"
+                  value={form.pickup_latitude}
+                  onChange={handleChange}
+                  placeholder={t("createListing.latitudePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cl-lng">{t("createListing.longitude")}</Label>
+                <Input
+                  id="cl-lng"
+                  name="pickup_longitude"
+                  type="number"
+                  step="any"
+                  value={form.pickup_longitude}
+                  onChange={handleChange}
+                  placeholder={t("createListing.longitudePlaceholder")}
+                />
+              </div>
             </div>
           </div>
 
+          <Separator />
+
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("createListing.description")}</h3>
-            <FormField label={t("createListing.descriptionLabel")}>
-              <textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder={t("createListing.descriptionPlaceholder")} className="w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-            </FormField>
+            <h3 className="text-sm font-semibold text-foreground">{t("createListing.description")}</h3>
+            <div className="space-y-2">
+              <Label htmlFor="cl-desc">{t("createListing.descriptionLabel")}</Label>
+              <Textarea
+                id="cl-desc"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                rows={4}
+                placeholder={t("createListing.descriptionPlaceholder")}
+              />
+            </div>
           </div>
 
-          {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
 
-          <div className="flex justify-end gap-3 border-t pt-5">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>{t("common.cancel")}</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="size-4 animate-spin" />}
               {t("createListing.submit")}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
-        {label} {required && <span className="text-error">*</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
+/* ────────────────────────────────────────────────────────────
+ * Edit Listing modal (shadcn Dialog)
+ * ──────────────────────────────────────────────────────────── */
 function EditListingModal({
   isOpen,
   onClose,
@@ -311,7 +431,7 @@ function EditListingModal({
     }
   }, [isOpen, listing]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -372,115 +492,216 @@ function EditListingModal({
     }
   };
 
-  if (!isOpen || !listing) return null;
-
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-listing-title">
-        <div className="modal-head">
-          <div>
-            <span className="eyebrow">{t("editListing.subtitle")}</span>
-            <h2 id="edit-listing-title">{t("editListing.title")}</h2>
-          </div>
-          <button className="icon-btn" onClick={onClose} aria-label={t("common.close")}>
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{t("editListing.title")}</DialogTitle>
+          <DialogDescription>{t("editListing.subtitle")}</DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="modal-form space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("editListing.basicInfo")}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("editListing.basicInfo")}</h3>
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label={t("editListing.cropName")} required>
-                <input name="crop_name" value={form.crop_name} onChange={handleChange} placeholder={t("editListing.cropNamePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("editListing.variety")}>
-                <input name="variety" value={form.variety} onChange={handleChange} placeholder={t("editListing.varietyPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("editListing.quantity")} required>
-                <input name="quantity_kg" type="number" min="1" step="0.01" value={form.quantity_kg} onChange={handleChange} placeholder={t("editListing.quantityPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("editListing.price")} required>
-                <input name="price_per_kg" type="number" min="1" step="0.01" value={form.price_per_kg} onChange={handleChange} placeholder={t("editListing.pricePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
+              <div className="space-y-2">
+                <Label htmlFor="el-crop_name">
+                  {t("editListing.cropName")} <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="el-crop_name"
+                  name="crop_name"
+                  value={form.crop_name}
+                  onChange={handleChange}
+                  placeholder={t("editListing.cropNamePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="el-variety">{t("editListing.variety")}</Label>
+                <Input
+                  id="el-variety"
+                  name="variety"
+                  value={form.variety}
+                  onChange={handleChange}
+                  placeholder={t("editListing.varietyPlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="el-quantity">
+                  {t("editListing.quantity")} <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="el-quantity"
+                  name="quantity_kg"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={form.quantity_kg}
+                  onChange={handleChange}
+                  placeholder={t("editListing.quantityPlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="el-price">
+                  {t("editListing.price")} <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="el-price"
+                    name="price_per_kg"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={form.price_per_kg}
+                    onChange={handleChange}
+                    placeholder={t("editListing.pricePlaceholder")}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("editListing.qualityGrade")}</Label>
+                <Select
+                  value={form.quality_grade}
+                  onValueChange={(value) => {
+                    setForm((prev) => ({ ...prev, quality_grade: value }));
+                    setError(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("editListing.qualityGrade")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">{t("editListing.gradeA")}</SelectItem>
+                    <SelectItem value="B">{t("editListing.gradeB")}</SelectItem>
+                    <SelectItem value="C">{t("editListing.gradeC")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <FormField label={t("editListing.qualityGrade")}>
-              <select name="quality_grade" value={form.quality_grade} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-                <option value="A">{t("editListing.gradeA")}</option>
-                <option value="B">{t("editListing.gradeB")}</option>
-                <option value="C">{t("editListing.gradeC")}</option>
-              </select>
-            </FormField>
           </div>
 
+          <Separator />
+
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("editListing.dates")}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("editListing.dates")}</h3>
             <div className="grid gap-4 md:grid-cols-3">
-              <FormField label={t("editListing.harvestDate")}>
-                <input name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("editListing.availStart")}>
-                <input name="availability_start" type="date" value={form.availability_start} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("editListing.availEnd")}>
-                <input name="availability_end" type="date" value={form.availability_end} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
+              <div className="space-y-2">
+                <Label htmlFor="el-harvest">{t("editListing.harvestDate")}</Label>
+                <Input id="el-harvest" name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="el-avail-start">{t("editListing.availStart")}</Label>
+                <Input id="el-avail-start" name="availability_start" type="date" value={form.availability_start} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="el-avail-end">{t("editListing.availEnd")}</Label>
+                <Input id="el-avail-end" name="availability_end" type="date" value={form.availability_end} onChange={handleChange} />
+              </div>
             </div>
           </div>
 
+          <Separator />
+
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("editListing.location")}</h3>
-            <FormField label={t("editListing.pickupLocation")} required>
-              <input name="pickup_location" value={form.pickup_location} onChange={handleChange} placeholder={t("editListing.pickupLocationPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-            </FormField>
+            <h3 className="text-sm font-semibold text-foreground">{t("editListing.location")}</h3>
+            <div className="space-y-2">
+              <Label htmlFor="el-pickup">
+                {t("editListing.pickupLocation")} <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="el-pickup"
+                name="pickup_location"
+                value={form.pickup_location}
+                onChange={handleChange}
+                placeholder={t("editListing.pickupLocationPlaceholder")}
+              />
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label={t("editListing.latitude")}>
-                <input name="pickup_latitude" type="number" step="any" value={form.pickup_latitude} onChange={handleChange} placeholder={t("editListing.latitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
-              <FormField label={t("editListing.longitude")}>
-                <input name="pickup_longitude" type="number" step="any" value={form.pickup_longitude} onChange={handleChange} placeholder={t("editListing.longitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              </FormField>
+              <div className="space-y-2">
+                <Label htmlFor="el-lat">{t("editListing.latitude")}</Label>
+                <Input
+                  id="el-lat"
+                  name="pickup_latitude"
+                  type="number"
+                  step="any"
+                  value={form.pickup_latitude}
+                  onChange={handleChange}
+                  placeholder={t("editListing.latitudePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="el-lng">{t("editListing.longitude")}</Label>
+                <Input
+                  id="el-lng"
+                  name="pickup_longitude"
+                  type="number"
+                  step="any"
+                  value={form.pickup_longitude}
+                  onChange={handleChange}
+                  placeholder={t("editListing.longitudePlaceholder")}
+                />
+              </div>
             </div>
           </div>
 
+          <Separator />
+
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t("editListing.description")}</h3>
-            <FormField label={t("editListing.descriptionLabel")}>
-              <textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder={t("editListing.descriptionPlaceholder")} className="w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-            </FormField>
+            <h3 className="text-sm font-semibold text-foreground">{t("editListing.description")}</h3>
+            <div className="space-y-2">
+              <Label htmlFor="el-desc">{t("editListing.descriptionLabel")}</Label>
+              <Textarea
+                id="el-desc"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                rows={4}
+                placeholder={t("editListing.descriptionPlaceholder")}
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-            <input
-              id="edit-listing-active"
-              name="is_active"
-              type="checkbox"
+          <div className="flex items-center gap-2 rounded-lg border px-3 py-2.5">
+            <Checkbox
+              id="el-active"
               checked={form.is_active}
-              onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.checked }))}
-              className="size-4 rounded border-primary text-primary focus:ring-primary"
+              onCheckedChange={(checked) => setForm((prev) => ({ ...prev, is_active: !!checked }))}
             />
-            <label htmlFor="edit-listing-active" className="text-sm text-muted-foreground">
+            <Label htmlFor="el-active" className="text-sm text-muted-foreground">
               {t("editListing.active")}
-            </label>
+            </Label>
           </div>
 
-          {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
 
-          <div className="flex justify-end gap-3 border-t pt-5">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>{t("common.cancel")}</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="size-4 animate-spin" />}
               {t("editListing.submit")}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
+/* ────────────────────────────────────────────────────────────
+ * Dashboard shell
+ * ──────────────────────────────────────────────────────────── */
 export default function Dashboard() {
-  const { user, isAuthenticated, login, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { t, lang } = useLanguage();
   const [activeNav, setActiveNav] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -527,117 +748,120 @@ export default function Dashboard() {
     }
   };
 
-   const loadData = useCallback(async () => {
-     if (!isAuthenticated) {
-       // Show demo data for screenshots when not authenticated
-       setListing({
-         id: "listing-1",
-         crop_name: "Tomato",
-         variety: "Cherry",
-         quantity_kg: 500,
-         quality_grade: "A",
-         price_per_kg: 45,
-         pickup_location: "Village Vinchur, Nashik, MH",
-         is_active: true,
-       });
-       setPriceRec({
-         recommended_price: 42,
-         confidence: 0.87,
-         factors: ["comparable_active_listings", "crop_market"],
-       });
-       setMatches([
-         { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
-         { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
-         { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
-       ]);
-       setLoading(false);
-       return;
-     }
-     try {
-       // 1️⃣ Fetch all listings once (limit 30 is enough for overview + marketplace)
-       const all = await fetchListings({ limit: 30 });
-       setAllListings(all);
-       const active = all.find((l) => l.is_active);
-       if (active) {
-         setListing(active);
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated) {
+      // Show demo data for screenshots when not authenticated
+      setListing({
+        id: "listing-1",
+        seller_id: "demo",
+        crop_name: "Tomato",
+        variety: "Cherry",
+        quantity_kg: 500,
+        quality_grade: "A",
+        price_per_kg: 45,
+        pickup_location: "Village Vinchur, Nashik, MH",
+        harvest_date: null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      });
+      setPriceRec({
+        recommended_price: 42,
+        confidence: 0.87,
+        factors: ["comparable_active_listings", "crop_market"],
+      });
+      setMatches([
+        { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
+        { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
+        { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
+      ]);
+      setLoading(false);
+      return;
+    }
+    try {
+      // 1️⃣ Fetch all listings once (limit 30 is enough for overview + marketplace)
+      const all = await fetchListings({ limit: 30 });
+      setAllListings(all);
+      const active = all.find((l) => l.is_active);
+      if (active) {
+        setListing(active);
 
-         // 2️⃣ Fire price, forecast, matches in parallel with fallback to demo data
-         const [priceRes, forecastRes, matchesRes] = await Promise.allSettled([
-           fetchPriceRecommendation(active.id),
-           fetchDemandForecast(active.crop_name, active.pickup_location || "India"),
-           fetchMatches(active.id, 5),
-         ]);
-         if (priceRes.status === "fulfilled") setPriceRec(priceRes.value);
-         else setPriceRec({ recommended_price: 42, confidence: 0.87, factors: ["comparable_active_listings", "crop_market"] });
-         if (forecastRes.status === "fulfilled") setDemandForecast(forecastRes.value);
-         else setDemandForecast({ crop: active.crop_name, region: "Nashik, MH", forecast: [{ week: 1, predicted_demand_kg: 450, confidence: 0.82 }, { week: 2, predicted_demand_kg: 480, confidence: 0.79 }] });
-         if (matchesRes.status === "fulfilled") setMatches(matchesRes.value);
-         else setMatches([
-           { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
-           { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
-           { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
-         ]);
-       }
+        // 2️⃣ Fire price, forecast, matches in parallel with fallback to demo data
+        const [priceRes, forecastRes, matchesRes] = await Promise.allSettled([
+          fetchPriceRecommendation(active.id),
+          fetchDemandForecast(active.crop_name, active.pickup_location || "India"),
+          fetchMatches(active.id, 5),
+        ]);
+        if (priceRes.status === "fulfilled") setPriceRec(priceRes.value);
+        else setPriceRec({ recommended_price: 42, confidence: 0.87, factors: ["comparable_active_listings", "crop_market"] });
+        if (forecastRes.status === "fulfilled") setDemandForecast(forecastRes.value);
+        else setDemandForecast({ crop: active.crop_name, region: "Nashik, MH", forecast: [{ week: 1, predicted_demand_kg: 450, confidence: 0.82 }, { week: 2, predicted_demand_kg: 480, confidence: 0.79 }] });
+        if (matchesRes.status === "fulfilled") setMatches(matchesRes.value);
+        else setMatches([
+          { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
+          { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
+          { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
+        ]);
+      }
 
-       // 3️⃣ Shipments, incoming orders – parallel, non‑blocking
-       const [shipRes, ordersRes] = await Promise.allSettled([
-         fetchShipments({ limit: 10 }),
-         fetchIncomingOrders({ limit: 20 }),
-       ]);
-       if (shipRes.status === "fulfilled") {
-         const shipList = shipRes.value;
-         setShipments(shipList);
-         if (shipList.length > 0) {
-           // load first shipment detail in background
-           loadShipmentDetail(shipList[0].id);
-         }
-       } else {
-         // Demo shipment data
-         setShipments([{
-           id: "shipment-1",
-           allocation_id: "alloc-1",
-           order_id: "order-1",
-           route_id: "route-1",
-           vehicle_id: "vehicle-1",
-           status: "IN_TRANSIT",
-           landed_cost: 25000,
-           route_mode: "hub",
-           estimated_distance_km: 185.5,
-           estimated_duration_min: 210,
-           pickup_latitude: 19.9975,
-           pickup_longitude: 73.7898,
-           drop_latitude: 12.9716,
-           drop_longitude: 77.5946,
-           pickup_time: "2024-01-20T06:00:00Z",
-           delivery_time: "2024-01-21T12:00:00Z",
-           created_at: "2024-01-19T14:30:00Z",
-           stops: [
-             { id: "stop-1", stop_type: "PICKUP", farmer_id: "farmer-1", quantity_kg: 500, sequence: 1, time_window_earliest: "2024-01-20T05:00:00Z", time_window_latest: "2024-01-20T07:00:00Z", latitude: 19.9975, longitude: 73.7898 },
-             { id: "stop-2", stop_type: "DROP", buyer_id: "buyer-1", quantity_kg: 500, sequence: 2, time_window_earliest: "2024-01-21T11:00:00Z", time_window_latest: "2024-01-21T13:00:00Z", latitude: 12.9716, longitude: 77.5946 }
-           ]
-         } as ShipmentItem]);
-       }
-       if (ordersRes.status === "fulfilled") setIncomingOrders(ordersRes.value);
-       else {
-         // Demo orders
-         setIncomingOrders([{
-           id: "order-1",
-           buyer_id: "buyer-1",
-           status: "CONFIRMED",
-           total_amount: 22500,
-           delivery_address: "FreshMart Supermarket, Mumbai",
-           delivery_deadline: "2024-01-22T10:00:00Z",
-           created_at: "2024-01-19T09:15:00Z",
-           items: [{ id: "item-1", listing_id: "listing-1", quantity_kg: 500, price_per_kg: 45 }]
-         } as OrderResponse]);
-       }
-     } catch (err) {
-       if (err instanceof ApiError) setError(err.message);
-       else setError(t("dash.failed"));
-     } finally {
-       setLoading(false);
-     }
-   }, [isAuthenticated, t]);
+      // 3️⃣ Shipments, incoming orders – parallel, non‑blocking
+      const [shipRes, ordersRes] = await Promise.allSettled([
+        fetchShipments({ limit: 10 }),
+        fetchIncomingOrders({ limit: 20 }),
+      ]);
+      if (shipRes.status === "fulfilled") {
+        const shipList = shipRes.value;
+        setShipments(shipList);
+        if (shipList.length > 0) {
+          // load first shipment detail in background
+          loadShipmentDetail(shipList[0].id);
+        }
+      } else {
+        // Demo shipment data
+        setShipments([{
+          id: "shipment-1",
+          allocation_id: "alloc-1",
+          order_id: "order-1",
+          route_id: "route-1",
+          vehicle_id: "vehicle-1",
+          status: "IN_TRANSIT",
+          landed_cost: 25000,
+          route_mode: "hub",
+          estimated_distance_km: 185.5,
+          estimated_duration_min: 210,
+          pickup_latitude: 19.9975,
+          pickup_longitude: 73.7898,
+          drop_latitude: 12.9716,
+          drop_longitude: 77.5946,
+          pickup_time: "2024-01-20T06:00:00Z",
+          delivery_time: "2024-01-21T12:00:00Z",
+          created_at: "2024-01-19T14:30:00Z",
+          stops: [
+            { id: "stop-1", stop_type: "PICKUP", farmer_id: "farmer-1", quantity_kg: 500, sequence: 1, time_window_earliest: "2024-01-20T05:00:00Z", time_window_latest: "2024-01-20T07:00:00Z", latitude: 19.9975, longitude: 73.7898 },
+            { id: "stop-2", stop_type: "DROP", buyer_id: "buyer-1", quantity_kg: 500, sequence: 2, time_window_earliest: "2024-01-21T11:00:00Z", time_window_latest: "2024-01-21T13:00:00Z", latitude: 12.9716, longitude: 77.5946 }
+          ]
+        } as ShipmentItem]);
+      }
+      if (ordersRes.status === "fulfilled") setIncomingOrders(ordersRes.value);
+      else {
+        // Demo orders
+        setIncomingOrders([{
+          id: "order-1",
+          buyer_id: "buyer-1",
+          status: "CONFIRMED",
+          total_amount: 22500,
+          delivery_address: "FreshMart Supermarket, Mumbai",
+          delivery_deadline: "2024-01-22T10:00:00Z",
+          created_at: "2024-01-19T09:15:00Z",
+          items: [{ id: "item-1", listing_id: "listing-1", quantity_kg: 500, price_per_kg: 45 }]
+        } as OrderResponse]);
+      }
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message);
+      else setError(t("dash.failed"));
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, t]);
 
   useEffect(() => {
     loadData();
@@ -645,12 +869,12 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="dash-shell flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-            <Loader2 className="size-5 animate-spin text-primary" />
-          </div>
-          <p className="text-sm font-medium text-muted-foreground">{t("dash.loading")}</p>
+      <div className="dash-shell flex min-h-screen items-center justify-center">
+        <div className="flex w-full max-w-md flex-col gap-4 p-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-24 w-full" />
         </div>
       </div>
     );
@@ -658,19 +882,19 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="dash-shell flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-3 p-6">
-          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
+      <div className="dash-shell flex min-h-screen items-center justify-center">
+        <Card className="w-full max-w-md p-6 text-center">
+          <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-full bg-destructive/10">
             <svg className="size-5 text-destructive" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-foreground">Something went wrong</p>
-            <p className="mt-1 text-sm text-muted-foreground">{error}</p>
-          </div>
-          <Link href="/" className="mt-2 btn btn-sm btn-outline">
-            <ArrowLeft className="size-3.5" /> Back to home
-          </Link>
-        </div>
+          <h2 className="text-base font-semibold text-foreground">Something went wrong</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" size="sm" className="mt-4" asChild>
+            <Link href="/">
+              <ArrowLeft className="size-3.5" /> Back to home
+            </Link>
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -679,44 +903,54 @@ export default function Dashboard() {
 
   const dateLocale = lang === "hi" ? "hi-IN" : lang === "bn" ? "bn-BD" : "en-US";
 
+  const statusBadge = (status: string) => {
+    const s = status.toUpperCase();
+    if (s === "PENDING") return <Badge variant="secondary">{status}</Badge>;
+    if (s === "CONFIRMED" || s === "IN_TRANSIT") return <Badge>{status}</Badge>;
+    if (s === "CANCELLED" || s === "FAILED") return <Badge variant="destructive">{status}</Badge>;
+    return <Badge variant="outline">{status}</Badge>;
+  };
+
   return (
     <div className="dash-shell">
       <header className="dash-topbar">
         <div className="dash-topbar-left">
-          <Link
-            href="/"
-            className="btn btn-ghost btn-sm dash-back-link"
-            aria-label={t("dash.backToSite")}
-            title={t("dash.backToSite")}
-          >
-            <ArrowLeft size={16} />
-            <span>{t("dash.backToSite")}</span>
-          </Link>
-          <button
-            className="btn btn-ghost btn-sm dash-menu-btn"
+          <Button variant="ghost" size="sm" className="dash-back-link" asChild>
+            <Link href="/" aria-label={t("dash.backToSite")} title={t("dash.backToSite")}>
+              <ArrowLeft className="size-4" />
+              <span>{t("dash.backToSite")}</span>
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="dash-menu-btn"
             onClick={() => setSidebarOpen(true)}
             aria-label={t("common.openMenu")}
           >
-            <Menu size={18} />
-          </button>
+            <Menu className="size-[18px]" />
+          </Button>
           <div className="breadcrumb">
             <span>{t("dash.workspace")}</span>
-            <ChevronRight size={14} />
+            <ChevronRight className="size-3.5" />
             <strong>{activeNavLabel}</strong>
           </div>
         </div>
         <div className="dash-topbar-right flex items-center gap-2.5">
           <LanguageSelector variant="dark" />
-          <button
-            className="btn btn-ghost btn-sm"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => action(t("dash.dataUpdates"))}
             aria-label="Notifications"
           >
-            <Bell size={18} />
-          </button>
-          <div className="dash-avatar">
-            {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
-          </div>
+            <Bell className="size-[18px]" />
+          </Button>
+          <Avatar className="dash-avatar size-8">
+            <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+              {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
+            </AvatarFallback>
+          </Avatar>
         </div>
       </header>
 
@@ -737,7 +971,7 @@ export default function Dashboard() {
                 className={`dash-nav-item ${activeNav === id ? "active" : ""}`}
                 onClick={() => { setActiveNav(id); setSidebarOpen(false); }}
               >
-                <Icon size={18} />
+                <Icon className="size-[18px]" />
                 <span>{label}</span>
               </button>
             ))}
@@ -745,26 +979,26 @@ export default function Dashboard() {
           <div className="dash-nav-label">{t("dash.manage")}</div>
           <nav className="dash-nav" aria-label="Manage navigation">
             <button className="dash-nav-item" onClick={() => action("Team management is coming next.")}>
-              <UsersRound size={18} />
+              <UsersRound className="size-[18px]" />
               <span>{t("dash.team")}</span>
             </button>
             <button className="dash-nav-item" onClick={() => action("Settings are ready for the next release.")}>
-              <Settings2 size={18} />
+              <Settings2 className="size-[18px]" />
               <span>{t("dash.settings")}</span>
             </button>
           </nav>
           <div className="dash-sidebar-foot">
             <div className="season-note">
-              <CloudSun size={18} />
+              <CloudSun className="size-[18px]" />
               <div>
                 <strong>{t("dash.rabiSeason")}</strong>
                 <span>{t("dash.seasonDay")}</span>
               </div>
             </div>
             <div className="mt-4 flex items-center space-x-3">
-              <button className="btn btn-sm btn-primary" onClick={() => setCreateListingModal(true)}>
-                <FilePlus2 size={16} /> {t("dash.createListing")}
-              </button>
+              <Button size="sm" onClick={() => setCreateListingModal(true)}>
+                <FilePlus2 className="size-4" /> {t("dash.createListing")}
+              </Button>
               <span className="text-xs text-muted-foreground">{t("dash.needHand")}</span>
             </div>
           </div>
@@ -782,82 +1016,86 @@ export default function Dashboard() {
                   </p>
                 </div>
                 {selectedShipment?.maps_url && (
-                  <a
-                    href={selectedShipment.maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary inline-flex items-center gap-2"
-                  >
-                    <Navigation size={17} />
-                    <span>{t("dash.openGps")}</span>
-                  </a>
+                  <Button asChild>
+                    <a
+                      href={selectedShipment.maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2"
+                    >
+                      <Navigation className="size-4" />
+                      <span>{t("dash.openGps")}</span>
+                    </a>
+                  </Button>
                 )}
               </div>
 
-              {/* Shipment selector tabs */}
               {shipments.length > 0 ? (
                 <div className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-2 pb-2 border-b">
-                    <span className="text-xs font-semibold text-muted-foreground mr-2">{t("dash.shipments")}</span>
-                    {shipments.map((s, idx) => (
-                      <button
-                        key={s.id}
-                        onClick={() => loadShipmentDetail(s.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
-                          selectedShipment?.id === s.id
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card text-foreground hover:bg-muted"
-                        }`}
-                      >
-                        <Truck className="w-3.5 h-3.5" />
-                        <span>{t("dash.shipment")} #{idx + 1} ({s.status})</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {shipmentLoading ? (
-                    <div className="p-8 flex flex-col items-center gap-2 text-muted-foreground">
-                      <Loader2 className="size-5 animate-spin" />
-                      <span className="text-sm">{t("dash.loadingRoute")}</span>
-                    </div>
-                  ) : selectedShipment ? (
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                      <div className="xl:col-span-2 space-y-6">
-                        <RouteMap
-                          stops={selectedShipment.stops || []}
-                          vehicle={selectedShipment.vehicle}
-                          distanceKm={selectedShipment.estimated_distance_km}
-                          durationMin={selectedShipment.estimated_duration_min}
-                          routeMode={selectedShipment.route_mode || "direct"}
-                          mapsUrl={selectedShipment.maps_url}
-                        />
-                      </div>
-                      <div className="space-y-6">
-                        <TrackingTimeline
-                          shipmentId={selectedShipment.id}
-                          currentStatus={selectedShipment.status}
-                          events={trackingData?.events || []}
-                          estimatedArrival={trackingData?.estimated_arrival || selectedShipment.delivery_time}
-                          currentLat={trackingData?.current_latitude}
-                          currentLng={trackingData?.current_longitude}
-                          onRefresh={() => loadShipmentDetail(selectedShipment.id)}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="card p-6 text-center text-muted-foreground">
-                      {t("dash.selectShipment")}
-                    </div>
-                  )}
+                  <Tabs
+                    value={selectedShipment?.id ?? shipments[0]?.id}
+                    onValueChange={(v) => loadShipmentDetail(v)}
+                  >
+                    <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
+                      {shipments.map((s, idx) => (
+                        <TabsTrigger
+                          key={s.id}
+                          value={s.id}
+                          className="gap-1.5 border data-[state=active]:border-primary"
+                        >
+                          <Truck className="size-3.5" />
+                          <span>{t("dash.shipment")} #{idx + 1} ({s.status})</span>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    <TabsContent value={selectedShipment?.id ?? ""} className="mt-6">
+                      {shipmentLoading ? (
+                        <div className="flex flex-col items-center gap-2 p-8 text-muted-foreground">
+                          <Loader2 className="size-5 animate-spin" />
+                          <span className="text-sm">{t("dash.loadingRoute")}</span>
+                        </div>
+                      ) : selectedShipment ? (
+                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                          <div className="space-y-6 xl:col-span-2">
+                            <RouteMap
+                              stops={selectedShipment.stops || []}
+                              vehicle={selectedShipment.vehicle}
+                              distanceKm={selectedShipment.estimated_distance_km}
+                              durationMin={selectedShipment.estimated_duration_min}
+                              routeMode={selectedShipment.route_mode || "direct"}
+                              mapsUrl={selectedShipment.maps_url}
+                            />
+                          </div>
+                          <div className="space-y-6">
+                            <TrackingTimeline
+                              shipmentId={selectedShipment.id}
+                              currentStatus={selectedShipment.status}
+                              events={trackingData?.events || []}
+                              estimatedArrival={trackingData?.estimated_arrival || selectedShipment.delivery_time}
+                              currentLat={trackingData?.current_latitude}
+                              currentLng={trackingData?.current_longitude}
+                              onRefresh={() => loadShipmentDetail(selectedShipment.id)}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <Card className="p-6 text-center text-muted-foreground">
+                          {t("dash.selectShipment")}
+                        </Card>
+                      )}
+                    </TabsContent>
+                  </Tabs>
                 </div>
               ) : (
-                <div className="card p-8 text-center space-y-3">
-                  <Truck className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
-                  <h3 className="font-semibold text-lg text-foreground">{t("dash.noRoutes")}</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    {t("dash.noRoutesBody")}
-                  </p>
-                </div>
+                <Card className="p-8 text-center">
+                  <div className="space-y-3">
+                    <Truck className="mx-auto size-10 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-semibold text-foreground">{t("dash.noRoutes")}</h3>
+                    <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                      {t("dash.noRoutesBody")}
+                    </p>
+                  </div>
+                </Card>
               )}
             </div>
           ) : activeNav === "marketplace" ? (
@@ -870,55 +1108,59 @@ export default function Dashboard() {
                     {t("dash.marketplaceSub")}
                   </p>
                 </div>
-                <Link href="/marketplace" className="btn btn-primary inline-flex items-center gap-2">
-                  <ArrowUpRight size={17} /> {t("dash.openMarketplace")}
-                </Link>
+                <Button asChild>
+                  <Link href="/marketplace" className="inline-flex items-center gap-2">
+                    <ArrowUpRight className="size-4" /> {t("dash.openMarketplace")}
+                  </Link>
+                </Button>
               </div>
 
               {allListings.length > 0 ? (
-                <div className="card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="dash-table">
-                      <thead>
-                        <tr>
-                          <th>{t("dash.colCrop")}</th>
-                          <th>{t("dash.colQty")}</th>
-                          <th>{t("dash.colPrice")}</th>
-                          <th>{t("dash.colGrade")}</th>
-                          <th>{t("dash.colLocation")}</th>
-                          <th className="text-right">{t("dash.colStatus")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allListings.map((l) => (
-                          <tr key={l.id}>
-                            <td className="font-medium">
-                              {l.crop_name}
-                              {l.variety ? ` · ${l.variety}` : ""}
-                            </td>
-                            <td>{l.quantity_kg} kg</td>
-                            <td>{l.price_per_kg ? `₹${l.price_per_kg}/kg` : "—"}</td>
-                            <td>{l.quality_grade ?? "—"}</td>
-                            <td>{l.pickup_location ?? "—"}</td>
-                            <td className="text-right">
-                              <Link href={`/listing/${l.id}`} className="text-link inline-flex items-center gap-1">
-                                {t("dash.viewListing")} <ArrowUpRight size={14} />
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("dash.colCrop")}</TableHead>
+                        <TableHead>{t("dash.colQty")}</TableHead>
+                        <TableHead>{t("dash.colPrice")}</TableHead>
+                        <TableHead>{t("dash.colGrade")}</TableHead>
+                        <TableHead>{t("dash.colLocation")}</TableHead>
+                        <TableHead className="text-right">{t("dash.colStatus")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allListings.map((l) => (
+                        <TableRow key={l.id}>
+                          <TableCell className="font-medium">
+                            {l.crop_name}
+                            {l.variety ? ` · ${l.variety}` : ""}
+                          </TableCell>
+                          <TableCell>{l.quantity_kg} kg</TableCell>
+                          <TableCell>{l.price_per_kg ? `₹${l.price_per_kg}/kg` : "—"}</TableCell>
+                          <TableCell>{l.quality_grade ?? "—"}</TableCell>
+                          <TableCell>{l.pickup_location ?? "—"}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="link" size="sm" className="h-auto p-0" asChild>
+                              <Link href={`/listing/${l.id}`} className="inline-flex items-center gap-1">
+                                {t("dash.viewListing")} <ArrowUpRight className="size-3.5" />
                               </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
               ) : (
-                <div className="card p-8 text-center space-y-3">
-                  <Boxes className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
-                  <h3 className="font-semibold text-lg text-foreground">{t("dash.emptyMarketplace")}</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    {t("dash.emptyMarketplaceBody")}
-                  </p>
-                </div>
+                <Card className="p-8 text-center">
+                  <div className="space-y-3">
+                    <Boxes className="mx-auto size-10 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-semibold text-foreground">{t("dash.emptyMarketplace")}</h3>
+                    <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                      {t("dash.emptyMarketplaceBody")}
+                    </p>
+                  </div>
+                </Card>
               )}
             </div>
           ) : activeNav === "mylistings" ? (
@@ -931,69 +1173,76 @@ export default function Dashboard() {
                     {t("dash.myListingsSub")}
                   </p>
                 </div>
-                <Link href="/create-listing" className="btn btn-primary">
-                  <FilePlus2 size={17} /> {t("dash.createListing")}
-                </Link>
+                <Button asChild>
+                  <Link href="/create-listing">
+                    <FilePlus2 className="size-4" /> {t("dash.createListing")}
+                  </Link>
+                </Button>
               </div>
 
               {allListings.filter((l) => l.seller_id === user?.id).length > 0 ? (
-                <div className="card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="dash-table">
-                      <thead>
-                        <tr>
-                          <th>{t("dash.colCrop")}</th>
-                          <th>{t("dash.colQty")}</th>
-                          <th>{t("dash.colPrice")}</th>
-                          <th>{t("dash.colGrade")}</th>
-                          <th>{t("dash.colLocation")}</th>
-                          <th className="text-right">{t("dash.colStatus")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allListings
-                          .filter((l) => l.seller_id === user?.id)
-                          .map((l) => (
-                            <tr key={l.id}>
-                              <td className="font-medium">
-                                {l.crop_name}
-                                {l.variety ? ` · ${l.variety}` : ""}
-                              </td>
-                              <td>{l.quantity_kg} kg</td>
-                              <td>{l.price_per_kg ? `₹${l.price_per_kg}/kg` : "—"}</td>
-                              <td>{l.quality_grade ?? "—"}</td>
-                              <td>{l.pickup_location ?? "—"}</td>
-                              <td className="text-right">
-                                <span className={`badge ${l.is_active ? "badge-primary" : "badge-neutral"}`}>
-                                  {l.is_active ? "Active" : "Inactive"}
-                                </span>
-                              </td>
-                              <td className="text-right">
-                                <button
-                                  className="btn btn-ghost btn-sm text-link edit-listing-btn"
-                                  onClick={() => {
-                                    setListingToEdit(l);
-                                    setEditListingModal(true);
-                                  }}
-                                  aria-label={`Edit listing ${l.id}`}
-                                >
-                                  <Edit size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("dash.colCrop")}</TableHead>
+                        <TableHead>{t("dash.colQty")}</TableHead>
+                        <TableHead>{t("dash.colPrice")}</TableHead>
+                        <TableHead>{t("dash.colGrade")}</TableHead>
+                        <TableHead>{t("dash.colLocation")}</TableHead>
+                        <TableHead>{t("dash.colStatus")}</TableHead>
+                        <TableHead className="text-right">{t("dash.colStatus")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allListings
+                        .filter((l) => l.seller_id === user?.id)
+                        .map((l) => (
+                          <TableRow key={l.id}>
+                            <TableCell className="font-medium">
+                              {l.crop_name}
+                              {l.variety ? ` · ${l.variety}` : ""}
+                            </TableCell>
+                            <TableCell>{l.quantity_kg} kg</TableCell>
+                            <TableCell>{l.price_per_kg ? `₹${l.price_per_kg}/kg` : "—"}</TableCell>
+                            <TableCell>{l.quality_grade ?? "—"}</TableCell>
+                            <TableCell>{l.pickup_location ?? "—"}</TableCell>
+                            <TableCell>
+                              {l.is_active ? (
+                                <Badge>{t("dash.active")}</Badge>
+                              ) : (
+                                <Badge variant="secondary">{t("dash.inactive")}</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-primary"
+                                onClick={() => {
+                                  setListingToEdit(l);
+                                  setEditListingModal(true);
+                                }}
+                                aria-label={`Edit listing ${l.id}`}
+                              >
+                                <Edit className="size-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </Card>
               ) : (
-                <div className="card p-8 text-center space-y-3">
-                  <Sprout className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
-                  <h3 className="font-semibold text-lg text-foreground">{t("dash.emptyListings")}</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    {t("dash.emptyListingsBody")}
-                  </p>
-                </div>
+                <Card className="p-8 text-center">
+                  <div className="space-y-3">
+                    <Sprout className="mx-auto size-10 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-semibold text-foreground">{t("dash.emptyListings")}</h3>
+                    <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                      {t("dash.emptyListingsBody")}
+                    </p>
+                  </div>
+                </Card>
               )}
             </div>
           ) : activeNav === "orders" ? (
@@ -1009,46 +1258,42 @@ export default function Dashboard() {
               </div>
 
               {incomingOrders.length > 0 ? (
-                <div className="card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="dash-table">
-                      <thead>
-                        <tr>
-                          <th>{t("dash.colOrder")}</th>
-                          <th>{t("dash.colStatus")}</th>
-                          <th>{t("dash.colItems")}</th>
-                          <th>{t("dash.colTotal")}</th>
-                          <th>{t("dash.colPlaced")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {incomingOrders.map((o) => (
-                          <tr key={o.id}>
-                            <td className="font-mono text-xs">#{o.id.slice(0, 8)}</td>
-                            <td>
-                              <span className={`badge ${o.status === "PENDING" ? "badge-warning" : "badge-primary"}`}>
-                                {o.status}
-                              </span>
-                            </td>
-                            <td>
-                              {o.items.map((i) => `${i.quantity_kg} kg`).join(", ")}
-                            </td>
-                            <td>{o.total_amount != null ? `₹${o.total_amount.toFixed(2)}` : "—"}</td>
-                            <td>{new Date(o.created_at).toLocaleDateString(dateLocale)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("dash.colOrder")}</TableHead>
+                        <TableHead>{t("dash.colStatus")}</TableHead>
+                        <TableHead>{t("dash.colItems")}</TableHead>
+                        <TableHead>{t("dash.colTotal")}</TableHead>
+                        <TableHead>{t("dash.colPlaced")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {incomingOrders.map((o) => (
+                        <TableRow key={o.id}>
+                          <TableCell className="font-mono text-xs">#{o.id.slice(0, 8)}</TableCell>
+                          <TableCell>{statusBadge(o.status)}</TableCell>
+                          <TableCell>
+                            {o.items.map((i) => `${i.quantity_kg} kg`).join(", ")}
+                          </TableCell>
+                          <TableCell>{o.total_amount != null ? `₹${o.total_amount.toFixed(2)}` : "—"}</TableCell>
+                          <TableCell>{new Date(o.created_at).toLocaleDateString(dateLocale)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
               ) : (
-                <div className="card p-8 text-center space-y-3">
-                  <PackageCheck className="w-10 h-10 mx-auto text-muted-foreground opacity-50" />
-                  <h3 className="font-semibold text-lg text-foreground">{t("dash.noOrders")}</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    {t("dash.noOrdersBody")}
-                  </p>
-                </div>
+                <Card className="p-8 text-center">
+                  <div className="space-y-3">
+                    <PackageCheck className="mx-auto size-10 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-semibold text-foreground">{t("dash.noOrders")}</h3>
+                    <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                      {t("dash.noOrdersBody")}
+                    </p>
+                  </div>
+                </Card>
               )}
             </div>
           ) : (
@@ -1061,77 +1306,93 @@ export default function Dashboard() {
                     {t("dash.supplyNext")}
                   </p>
                   {!isAuthenticated && (
-                    <span className="badge badge-warning mt-2 inline-block">Demo Data — Sign in for real data</span>
+                    <Badge variant="secondary" className="mt-2">Demo Data — Sign in for real data</Badge>
                   )}
                 </div>
-                <Link href="/create-listing" className="btn btn-primary">
-                  <FilePlus2 size={17} /> {t("dash.newListing")}
-                </Link>
+                <Button asChild>
+                  <Link href="/create-listing">
+                    <FilePlus2 className="size-4" /> {t("dash.newListing")}
+                  </Link>
+                </Button>
               </div>
 
-              {/* Market intelligence – price recommendation */}
-              <section className="intel">
-                {priceRec ? (
-                  <div className="card intel-card">
-                    <h3>{listing?.crop_name ?? "Crop"} · {listing?.variety ?? ""}</h3>
-                    <div className="intel-current">
-                      <strong>
-                        {priceRec.recommended_price ? `₹${priceRec.recommended_price.toFixed(2)}` : "—"}
-                      </strong>
-                      <span>{t("dash.recPrice")}</span>
+              {/* Market intelligence – price recommendation + demand forecast */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                      <BarChart3 className="size-4.5 text-primary" />
                     </div>
-                    <p className="intel-recommended">
-                      {priceRec.factors?.length ? `${t("dash.basedOn")} ${priceRec.factors.join(", ")}.` : t("dash.priceBand")}
-                    </p>
-                    <div className="intel-factors">
-                      <span className="badge badge-primary">{t("dash.confidence")} {priceRec.confidence ?? "?"}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="card intel-card">
-                    <p>{t("dash.noPriceRec")}</p>
-                  </div>
-                )}
-              </section>
+                    <CardTitle className="text-base">
+                      {listing?.crop_name ?? "Crop"}{listing?.variety ? ` · ${listing.variety}` : ""}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {priceRec ? (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-3xl font-bold tracking-tight text-foreground">
+                            {priceRec.recommended_price ? `₹${priceRec.recommended_price.toFixed(2)}` : "—"}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{t("dash.recPrice")}</p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {priceRec.factors?.length ? `${t("dash.basedOn")} ${priceRec.factors.join(", ")}.` : t("dash.priceBand")}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">
+                            {t("dash.confidence")} {priceRec.confidence != null ? `${Math.round(priceRec.confidence * 100)}%` : "?"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">{t("dash.noPriceRec")}</p>
+                    )}
+                  </CardContent>
+                </Card>
 
-              {/* Demand forecast */}
-              <section className="intel">
-                {demandForecast && !demandForecast.message ? (
-                  <div className="card intel-card">
-                    <h3>{demandForecast.crop} · {demandForecast.region}</h3>
-                    <div className="intel-current">
-                      <strong>
-                        {demandForecast.forecast?.length > 0
-                          ? `${demandForecast.forecast[0].predicted_demand_kg.toFixed(0)} kg`
-                          : "—"}
-                      </strong>
-                      <span>{t("dash.nextWeekDemand")}</span>
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                      <Sprout className="size-4.5 text-primary" />
                     </div>
-                    <p className="intel-recommended">
-                      {demandForecast.forecast?.map((f, i) => (
-                        <span key={i}>
-                          Week {f.week}: {f.predicted_demand_kg.toFixed(0)} kg
-                          {i < demandForecast.forecast!.length - 1 ? " · " : ""}
-                        </span>
-                      )) ?? "—"}
-                    </p>
-                    <div className="intel-factors">
-                      <span className="badge badge-primary">
-                        {t("dash.confidence")} {demandForecast.forecast?.[0]?.confidence ?? "?"}
-                      </span>
-                      <span className="badge badge-neutral ml-2">
-                        {t("dash.historicalData")}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="card intel-card">
-                    <p>
-                      {demandForecast?.message || t("dash.noDemandForecast")}
-                    </p>
-                  </div>
-                )}
-              </section>
+                    <CardTitle className="text-base">
+                      {demandForecast?.crop ?? "Crop"}{demandForecast?.region ? ` · ${demandForecast.region}` : ""}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {demandForecast && !demandForecast.message ? (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-3xl font-bold tracking-tight text-foreground">
+                            {demandForecast.forecast?.length > 0
+                              ? `${demandForecast.forecast[0].predicted_demand_kg.toFixed(0)} kg`
+                              : "—"}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{t("dash.nextWeekDemand")}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          {demandForecast.forecast?.map((f, i) => (
+                            <span key={i}>
+                              Week {f.week}: {f.predicted_demand_kg.toFixed(0)} kg
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">
+                            {t("dash.confidence")} {demandForecast.forecast?.[0]?.confidence != null ? `${Math.round(demandForecast.forecast[0].confidence * 100)}%` : "?"}
+                          </Badge>
+                          <Badge variant="outline">{t("dash.historicalData")}</Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {demandForecast?.message || t("dash.noDemandForecast")}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Recommended listing */}
               <section className="dash-section">
@@ -1140,39 +1401,77 @@ export default function Dashboard() {
                     <span className="eyebrow">{t("dash.decisionLayer")}</span>
                     <h2>{t("dash.whatMove")}</h2>
                   </div>
-                  <button className="text-link" onClick={() => action("All opportunities are already ranked by fit.")}>{t("dash.viewAll")} <ArrowUpRight size={15} /></button>
+                  <Button variant="link" size="sm" className="text-primary" onClick={() => action("All opportunities are already ranked by fit.")}>
+                    {t("dash.viewAll")} <ArrowUpRight className="size-3.5" />
+                  </Button>
                 </div>
                 {listing && (
-                  <div className="card">
-                    <div className="recommendation-top">
-                      <div className="crop-badge">{listing.crop_name?.[0] ?? "C"}</div>
-                      <div className="recommendation-title">
-                        <div className="card-label">{t("dash.recListing")}</div>
-                        <h3>{listing.crop_name} <span>· {listing.quality_grade ?? ""}</span></h3>
-                        <p>{listing.pickup_location ?? t("marketplace.locationTBA")}</p>
+                  <Card>
+                    <CardContent className="space-y-4 p-6">
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-lg font-bold text-primary">
+                          {listing.crop_name?.[0] ?? "C"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {t("dash.recListing")}
+                          </p>
+                          <h3 className="truncate text-lg font-semibold text-foreground">
+                            {listing.crop_name} {listing.quality_grade ? <span className="text-muted-foreground">· {listing.quality_grade}</span> : null}
+                          </h3>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {listing.pickup_location ?? t("marketplace.locationTBA")}
+                          </p>
+                        </div>
+                        <Badge>{t("dash.highOpp")}</Badge>
                       </div>
-                      <span className="badge badge-primary">{t("dash.highOpp")}</span>
-                    </div>
-                    <div className="recommendation-metrics">
-                      <div><span>{t("dash.available")}</span><strong>{listing.quantity_kg} kg</strong></div>
-                      <div><span>{t("dash.recommendedPrice")}</span><strong>{priceRec?.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}</strong></div>
-                    </div>
-                    <div className="recommendation-bottom">
-                      <div className="reason-copy">
-                        <ShieldCheck size={16} />
-                        <span><b>{t("dash.whyPrice")}</b> {t("dash.whyPriceDesc")}</span>
-                        <button className="why-button" onClick={() => setShowWhy(!showWhy)}>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="rounded-lg border bg-muted/40 p-3">
+                          <p className="text-xs text-muted-foreground">{t("dash.available")}</p>
+                          <p className="mt-0.5 text-lg font-semibold text-foreground">{listing.quantity_kg} kg</p>
+                        </div>
+                        <div className="rounded-lg border bg-muted/40 p-3">
+                          <p className="text-xs text-muted-foreground">{t("dash.recommendedPrice")}</p>
+                          <p className="mt-0.5 text-lg font-semibold text-foreground">
+                            {priceRec?.recommended_price ? `₹${priceRec.recommended_price}/kg` : "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2.5">
+                        <ShieldCheck className="size-4 shrink-0 text-primary" />
+                        <span className="text-sm text-muted-foreground">
+                          <b className="text-foreground">{t("dash.whyPrice")}</b> {t("dash.whyPriceDesc")}
+                        </span>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-primary"
+                          onClick={() => setShowWhy(!showWhy)}
+                        >
                           {showWhy ? t("dash.hide") : t("dash.seeWhy")}
-                        </button>
+                        </Button>
                       </div>
-                    </div>
-                    {showWhy && (
-                      <div className="why-panel">
-                        <div><strong>{t("dash.confidence")}</strong><span>{priceRec?.confidence ?? "?"}</span></div>
-                        <div><strong>{t("dash.factors")}</strong><span>{priceRec?.factors?.join(", ") ?? "—"}</span></div>
-                      </div>
-                    )}
-                  </div>
+
+                      {showWhy && (
+                        <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/20 p-4 sm:grid-cols-2">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">{t("dash.confidence")}</p>
+                            <p className="text-sm font-semibold text-foreground">
+                              {priceRec?.confidence != null ? `${Math.round(priceRec.confidence * 100)}%` : "?"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">{t("dash.factors")}</p>
+                            <p className="text-sm font-semibold text-foreground">
+                              {priceRec?.factors?.join(", ") ?? "—"}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 )}
               </section>
 
@@ -1183,28 +1482,49 @@ export default function Dashboard() {
                     <span className="eyebrow">{t("dash.buyerMatching")}</span>
                     <h2>{t("dash.bestMatches")}</h2>
                   </div>
-                  <button className="text-link" onClick={() => action("Matching preferences opened.")}>{t("dash.tuneMatching")} <Settings2 size={14} /></button>
+                  <Button variant="link" size="sm" className="text-primary" onClick={() => action("Matching preferences opened.")}>
+                    {t("dash.tuneMatching")} <Settings2 className="size-3.5" />
+                  </Button>
                 </div>
-                <div className="card">
-                  {matches.map((m) => (
-                    <div className="match-row" key={m.buyer_id}>
-                      <div className="match-avatar">{shortBuyerId(m.buyer_id)}</div>
-                      <div className="match-main"><strong>{shortBuyerId(m.buyer_id)}</strong><span>{m.explanation?.distance_km ? `${m.explanation.distance_km} km` : ""}</span></div>
-                      <div className="match-cell"><span>{t("dash.score")}</span><strong>{Math.round(m.score * 100)}%</strong></div>
-                      <div className="match-score">
-                        <SignalBars value={Math.round(m.score * 100)} tone="green" />
+                <Card>
+                  <CardContent className="divide-y p-0">
+                    {matches.map((m) => (
+                      <div key={m.buyer_id} className="flex items-center gap-4 p-4">
+                        <Avatar className="size-9">
+                          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                            {shortBuyerId(m.buyer_id)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground">{shortBuyerId(m.buyer_id)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {m.explanation?.distance_km ? `${m.explanation.distance_km} km` : ""}
+                          </p>
+                        </div>
+                        <div className="hidden w-32 sm:block">
+                          <Progress value={Math.round(m.score * 100)} className="h-2" />
+                        </div>
+                        <div className="w-14 text-right">
+                          <p className="text-sm font-bold text-foreground">{Math.round(m.score * 100)}%</p>
+                          <p className="text-xs text-muted-foreground">{t("dash.score")}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => action(`Match ${shortBuyerId(m.buyer_id)} opened.`)}
+                          aria-label={`Open match ${shortBuyerId(m.buyer_id)}`}
+                        >
+                          <ArrowUpRight className="size-4" />
+                        </Button>
                       </div>
-                      <button className="btn btn-ghost btn-sm" onClick={() => action(`Match ${shortBuyerId(m.buyer_id)} opened.`)} aria-label={`Open match ${shortBuyerId(m.buyer_id)}`}>
-                        <ArrowUpRight size={16} />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="p-4 border-t border-border">
-                    <button className="btn btn-secondary btn-block" onClick={() => action("Marketplace opened with matches.")}>
-                      {t("dash.exploreMarketplace")} <ArrowUpRight size={15} />
-                    </button>
+                    ))}
+                  </CardContent>
+                  <div className="border-t p-4">
+                    <Button variant="outline" className="w-full" onClick={() => action("Marketplace opened with matches.")}>
+                      {t("dash.exploreMarketplace")} <ArrowUpRight className="size-4" />
+                    </Button>
                   </div>
-                </div>
+                </Card>
               </section>
 
               {/* Live operations – real shipment status */}
@@ -1214,52 +1534,58 @@ export default function Dashboard() {
                     <span className="eyebrow">{t("dash.inMotion")}</span>
                     <h2>{t("dash.liveOps")}</h2>
                   </div>
-                  <button className="btn btn-ghost btn-sm" onClick={() => { loadData(); action("Operations refreshed."); }} aria-label="Refresh operations">
-                    <BarChart3 size={17} />
-                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => { loadData(); action("Operations refreshed."); }}
+                    aria-label="Refresh operations"
+                  >
+                    <BarChart3 className="size-4" />
+                  </Button>
                 </div>
                 {shipments.length > 0 ? (
-                  <div className="card p-5 space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                          <Truck size={18} />
+                  <Card>
+                    <CardContent className="space-y-4 p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                            <Truck className="size-[18px]" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground">
+                              {t("dash.activeShipment")} ({shipments[0].route_mode?.toUpperCase() || "DIRECT"})
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {shipments[0].estimated_distance_km ? t("dash.totalDistance").replace("{km}", String(shipments[0].estimated_distance_km)) : t("dash.routeDispatched")}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-foreground">
-                            {t("dash.activeShipment")} ({shipments[0].route_mode?.toUpperCase() || "DIRECT"})
-                          </h4>
-                          <p className="text-xs text-muted-foreground">
-                            {shipments[0].estimated_distance_km ? t("dash.totalDistance").replace("{km}", String(shipments[0].estimated_distance_km)) : t("dash.routeDispatched")}
-                          </p>
-                        </div>
+                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300">
+                          {shipments[0].status}
+                        </Badge>
                       </div>
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        {shipments[0].status}
-                      </span>
-                    </div>
 
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        className="btn btn-secondary btn-sm flex items-center gap-1.5"
-                        onClick={() => setActiveNav("routes")}
-                      >
-                        <span>{t("dash.viewRoute")}</span>
-                        <ArrowUpRight size={14} />
-                      </button>
-                    </div>
-                  </div>
+                      <div className="flex justify-end pt-2">
+                        <Button variant="outline" size="sm" onClick={() => setActiveNav("routes")}>
+                          <span>{t("dash.viewRoute")}</span>
+                          <ArrowUpRight className="size-3.5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ) : (
-                  <div className="card">
-                    <p className="state-body">{t("dash.noActiveShipments")}</p>
-                  </div>
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground">{t("dash.noActiveShipments")}</p>
+                    </CardContent>
+                  </Card>
                 )}
               </section>
             </>
           )}
 
           <footer className="footer-note">
-            <span><Sprout size={14} /> {t("dash.footerBuilt")}</span>
+            <span><Sprout className="size-3.5" /> {t("dash.footerBuilt")}</span>
             <span>
               {t("dash.dataUpdates")} <button className="text-link" onClick={() => action("System status: all services operational.")}>{t("dash.systemStatus")}</button>
             </span>

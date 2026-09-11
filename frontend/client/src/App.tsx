@@ -28,7 +28,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 const CreateListing = lazy(() => import("./pages/CreateListing"));
 
-function LazyRoute({ path, component: Component, fallback }: { path: string; component: React.LazyExoticComponent<() => JSX.Element>; fallback?: React.ReactNode }) {
+function LazyRoute({ path, component: Component, fallback }: { path: string; component: React.LazyExoticComponent<() => React.JSX.Element>; fallback?: React.ReactNode }) {
   return (
     <Route path={path}>
       <Suspense fallback={fallback ?? <PageLoader label="Loading…" />}>

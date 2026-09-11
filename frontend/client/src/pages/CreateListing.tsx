@@ -1,12 +1,33 @@
 /* KisanSetu Create Listing — farmer/FPO create a new produce listing */
 import React, { useState } from "react";
-import { Link } from "wouter";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Link, Redirect } from "wouter";
+import {
+  ArrowLeft,
+  CalendarDays,
+  FileText,
+  Loader2,
+  MapPin,
+  Package,
+  Sprout,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { createListing } from "@/lib/api";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 export default function CreateListingPage() {
   const { user, isAuthenticated } = useAuth();
@@ -29,7 +50,7 @@ export default function CreateListingPage() {
     description: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -89,255 +110,281 @@ export default function CreateListingPage() {
   };
 
   if (!isAuthenticated) {
-    return (
-      <ProtectedRoute allowedRoles={["farmer", "fpo_manager"]}>
-        <div className="dash-shell">
-          <div className="dash-body">
-            <p className="state">{t("common.loginRequired")}</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
+    return <Redirect to="/login" />;
   }
 
   return (
-    <div className="dash-shell">
-      <header className="dash-topbar">
-        <div className="dash-topbar-left">
-          <Link
-            href="/dashboard"
-            className="btn btn-ghost btn-sm dash-back-link"
-            aria-label={t("dash.backToSite")}
-          >
-            <ArrowLeft size={16} />
-            <span>{t("dash.backToSite")}</span>
-          </Link>
-          <div className="breadcrumb">
-            <span>{t("dash.workspace")}</span>
-            <ArrowLeft size={14} style={{ transform: "rotate(180deg)" }} />
-            <strong>{t("createListing.title")}</strong>
+    <div className="min-h-screen bg-background">
+      {/* Top bar */}
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={t("dash.backToSite")}
+            >
+              <ArrowLeft className="size-4" />
+              <span className="hidden sm:inline">{t("dash.backToSite")}</span>
+            </Link>
+            <Separator orientation="vertical" className="h-4" />
+            <span className="text-sm font-semibold text-foreground">{t("createListing.title")}</span>
           </div>
-        </div>
-        <div className="dash-topbar-right">
-          <div className="dash-avatar">
-            {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="dash-body">
-        <main className="dash-main" style={{ maxWidth: 720, margin: "0 auto", padding: "24px 18px 48px" }}>
-          <div className="dash-head" style={{ marginBottom: 24 }}>
-            <div>
-              <p className="eyebrow">{t("createListing.subtitle")}</p>
-              <h1>{t("createListing.title")}</h1>
-              <p className="state-body" style={{ marginTop: 6 }}>
-                {t("createListing.description")}
-              </p>
-            </div>
-          </div>
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        {/* Page heading */}
+        <div className="mb-8">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">
+            {t("createListing.subtitle")}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {t("createListing.title")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("createListing.description")}</p>
+        </div>
 
-          {error && (
-            <div className="card" style={{ padding: 16, marginBottom: 24, borderColor: "var(--error)", background: "var(--error-soft)" }}>
-              <p style={{ color: "var(--error)" }}>{error}</p>
-            </div>
-          )}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-            <div className="card p-6 space-y-6">
-              <h3 className="text-lg font-semibold">{t("createListing.basicInfo")}</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="auth-field">
-                  <label htmlFor="crop_name">{t("createListing.cropName")} <span className="text-error">*</span></label>
-                  <input
-                    type="text"
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          {/* Basic Information */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                <Package className="size-4.5 text-primary" />
+              </div>
+              <CardTitle className="text-base">{t("createListing.basicInfo")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="crop_name">
+                    {t("createListing.cropName")} <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
                     id="crop_name"
                     name="crop_name"
                     value={form.crop_name}
                     onChange={handleChange}
-                    className="auth-input"
                     placeholder={t("createListing.cropNamePlaceholder")}
                     autoFocus
                     required
                   />
                 </div>
-
-                <div className="auth-field">
-                  <label htmlFor="variety">{t("createListing.variety")}</label>
-                  <input
-                    type="text"
+                <div className="space-y-2">
+                  <Label htmlFor="variety">{t("createListing.variety")}</Label>
+                  <Input
                     id="variety"
                     name="variety"
                     value={form.variety}
                     onChange={handleChange}
-                    className="auth-input"
                     placeholder={t("createListing.varietyPlaceholder")}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="auth-field">
-                  <label htmlFor="quantity_kg">{t("createListing.quantity")} <span className="text-error">*</span></label>
-                  <input
-                    type="number"
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="quantity_kg">
+                    {t("createListing.quantity")} <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
                     id="quantity_kg"
                     name="quantity_kg"
+                    type="number"
                     value={form.quantity_kg}
                     onChange={handleChange}
-                    className="auth-input"
                     placeholder={t("createListing.quantityPlaceholder")}
                     min="0.1"
                     step="0.1"
                     required
                   />
                 </div>
-
-                <div className="auth-field">
-                  <label htmlFor="quality_grade">{t("createListing.qualityGrade")}</label>
-                  <select
-                    id="quality_grade"
-                    name="quality_grade"
+                <div className="space-y-2">
+                  <Label>{t("createListing.qualityGrade")}</Label>
+                  <Select
                     value={form.quality_grade}
-                    onChange={handleChange}
-                    className="auth-input"
+                    onValueChange={(value) => {
+                      setForm((prev) => ({ ...prev, quality_grade: value }));
+                      setError(null);
+                    }}
                   >
-                    <option value="A">{t("createListing.gradeA")}</option>
-                    <option value="B">{t("createListing.gradeB")}</option>
-                    <option value="C">{t("createListing.gradeC")}</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("createListing.qualityGrade")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">{t("createListing.gradeA")}</SelectItem>
+                      <SelectItem value="B">{t("createListing.gradeB")}</SelectItem>
+                      <SelectItem value="C">{t("createListing.gradeC")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-
-                <div className="auth-field">
-                  <label htmlFor="price_per_kg">{t("createListing.price")} <span className="text-error">*</span></label>
-                  <input
-                    type="number"
-                    id="price_per_kg"
-                    name="price_per_kg"
-                    value={form.price_per_kg}
-                    onChange={handleChange}
-                    className="auth-input"
-                    placeholder={t("createListing.pricePlaceholder")}
-                    min="0.01"
-                    step="0.01"
-                    required
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="price_per_kg">
+                    {t("createListing.price")} <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                      ₹
+                    </span>
+                    <Input
+                      id="price_per_kg"
+                      name="price_per_kg"
+                      type="number"
+                      value={form.price_per_kg}
+                      onChange={handleChange}
+                      placeholder={t("createListing.pricePlaceholder")}
+                      className="pl-7"
+                      min="0.01"
+                      step="0.01"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="card p-6 space-y-6">
-              <h3 className="text-lg font-semibold">{t("createListing.dates")}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="auth-field">
-                  <label htmlFor="harvest_date">{t("createListing.harvestDate")}</label>
-                  <input
-                    type="date"
+          {/* Availability Dates */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                <CalendarDays className="size-4.5 text-primary" />
+              </div>
+              <CardTitle className="text-base">{t("createListing.dates")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="harvest_date">{t("createListing.harvestDate")}</Label>
+                  <Input
                     id="harvest_date"
                     name="harvest_date"
+                    type="date"
                     value={form.harvest_date}
                     onChange={handleChange}
-                    className="auth-input"
                   />
                 </div>
-                <div className="auth-field">
-                  <label htmlFor="availability_start">{t("createListing.availStart")}</label>
-                  <input
-                    type="date"
+                <div className="space-y-2">
+                  <Label htmlFor="availability_start">{t("createListing.availStart")}</Label>
+                  <Input
                     id="availability_start"
                     name="availability_start"
+                    type="date"
                     value={form.availability_start}
                     onChange={handleChange}
-                    className="auth-input"
                   />
                 </div>
-                <div className="auth-field">
-                  <label htmlFor="availability_end">{t("createListing.availEnd")}</label>
-                  <input
-                    type="date"
+                <div className="space-y-2">
+                  <Label htmlFor="availability_end">{t("createListing.availEnd")}</Label>
+                  <Input
                     id="availability_end"
                     name="availability_end"
+                    type="date"
                     value={form.availability_end}
                     onChange={handleChange}
-                    className="auth-input"
                   />
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="card p-6 space-y-6">
-              <h3 className="text-lg font-semibold">{t("createListing.location")}</h3>
-              <div className="auth-field">
-                <label htmlFor="pickup_location">{t("createListing.pickupLocation")} <span className="text-error">*</span></label>
-                <input
-                  type="text"
+          {/* Pickup Location */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                <MapPin className="size-4.5 text-primary" />
+              </div>
+              <CardTitle className="text-base">{t("createListing.location")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="pickup_location">
+                  {t("createListing.pickupLocation")} <span className="text-destructive">*</span>
+                </Label>
+                <Input
                   id="pickup_location"
                   name="pickup_location"
                   value={form.pickup_location}
                   onChange={handleChange}
-                  className="auth-input"
                   placeholder={t("createListing.pickupLocationPlaceholder")}
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="auth-field">
-                  <label htmlFor="pickup_latitude">{t("createListing.latitude")}</label>
-                  <input
-                    type="number"
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="pickup_latitude">{t("createListing.latitude")}</Label>
+                  <Input
                     id="pickup_latitude"
                     name="pickup_latitude"
+                    type="number"
                     value={form.pickup_latitude}
                     onChange={handleChange}
-                    className="auth-input"
                     placeholder={t("createListing.latitudePlaceholder")}
                     step="any"
                   />
                 </div>
-                <div className="auth-field">
-                  <label htmlFor="pickup_longitude">{t("createListing.longitude")}</label>
-                  <input
-                    type="number"
+                <div className="space-y-2">
+                  <Label htmlFor="pickup_longitude">{t("createListing.longitude")}</Label>
+                  <Input
                     id="pickup_longitude"
                     name="pickup_longitude"
+                    type="number"
                     value={form.pickup_longitude}
                     onChange={handleChange}
-                    className="auth-input"
                     placeholder={t("createListing.longitudePlaceholder")}
                     step="any"
                   />
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="card p-6 space-y-6">
-              <h3 className="text-lg font-semibold">{t("createListing.description")}</h3>
-              <div className="auth-field">
-                <label htmlFor="description">{t("createListing.descriptionLabel")}</label>
-                <textarea
+          {/* Description */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                <FileText className="size-4.5 text-primary" />
+              </div>
+              <CardTitle className="text-base">{t("createListing.description")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="description">{t("createListing.descriptionLabel")}</Label>
+                <Textarea
                   id="description"
                   name="description"
                   value={form.description}
                   onChange={handleChange}
-                  className="auth-input"
                   placeholder={t("createListing.descriptionPlaceholder")}
                   rows={4}
                 />
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="flex gap-4">
-              <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                {loading ? <Loader2 size={18} className="animate-spin" /> : t("createListing.submit")}
-              </button>
-              <Link href="/dashboard" className="btn btn-secondary flex-1">
-                {t("common.cancel")}
-              </Link>
-            </div>
-          </form>
-        </main>
-      </div>
+          {/* Actions */}
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" asChild className="sm:flex-1 sm:max-w-[160px]">
+              <Link href="/dashboard">{t("common.cancel")}</Link>
+            </Button>
+            <Button type="submit" disabled={loading} className="sm:flex-1 sm:max-w-[220px]">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Sprout className="size-4" />}
+              {t("createListing.submit")}
+            </Button>
+          </div>
+        </form>
+      </main>
     </div>
   );
 }
