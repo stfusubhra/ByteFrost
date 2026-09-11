@@ -98,9 +98,9 @@
   --ink-soft: #6b6b65;
   --ink-muted: #9a9a93;
 
-  /* Brand — agricultural green */
-  --primary: #2f6e3a;
-  --primary-strong: #24562c;
+  /* Brand — agricultural green (darker for better contrast on white text) */
+  --primary: #255a30;
+  --primary-strong: #1e4d28;
   --primary-soft: #eaf1e8;
   --accent: #b98a2f;
 
@@ -181,6 +181,28 @@ html.dark {
   --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 4px 14px -4px rgba(0, 0, 0, 0.6), 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark mode button overrides — use darker green for better contrast */
+html.dark .btn-primary {
+  background: #255a30;
+  color: #fff;
+}
+html.dark .btn-primary:hover:not(:disabled) {
+  background: #1e4d28;
+}
+html.dark .market-card-add:hover,
+html.dark .market-card-stepper,
+html.dark .auth-submit {
+  background: #255a30;
+  color: #fff;
+}
+html.dark .market-card-stepper button {
+  color: #fff;
+}
+html.dark .market-card-match {
+  background: #255a30;
+  color: #fff;
 }
 
 /* ================================================================
