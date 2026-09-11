@@ -182,6 +182,7 @@ const en = {
   "marketplace.categoryVegetables": "Vegetables",
   "marketplace.categoryFruits": "Fruits",
   "marketplace.categoryGrains": "Grains",
+  "marketplace.categoryDairy": "Dairy",
   "marketplace.add": "ADD",
   "marketplace.cartItems": "items selected",
   "marketplace.viewCart": "View cart",

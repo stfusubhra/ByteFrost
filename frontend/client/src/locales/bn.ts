@@ -179,6 +179,7 @@ const bn: Record<LocaleKeys, string> = {
   "marketplace.categoryVegetables": "সবজি",
   "marketplace.categoryFruits": "ফল",
   "marketplace.categoryGrains": "শস্য",
+  "marketplace.categoryDairy": "দুগ্ধ",
   "marketplace.add": "যোগ করুন",
   "marketplace.cartItems": "আইটেম নির্বাচিত",
   "marketplace.viewCart": "কার্ট দেখুন",

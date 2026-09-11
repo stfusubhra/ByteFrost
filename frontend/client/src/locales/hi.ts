@@ -180,6 +180,7 @@ const hi: Record<LocaleKeys, string> = {
   "marketplace.categoryVegetables": "सब्ज़ियाँ",
   "marketplace.categoryFruits": "फल",
   "marketplace.categoryGrains": "अनाज",
+  "marketplace.categoryDairy": "डेयरी",
   "marketplace.add": "जोड़ें",
   "marketplace.cartItems": "आइटम चुने गए",
   "marketplace.viewCart": "कार्ट देखें",
