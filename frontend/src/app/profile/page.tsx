@@ -3,16 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, token, setAuth, logout } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
   const [loading, setLoading] = useState(!user);
-  const [error, setError] = useState("");
 
-  // If we only have a token (e.g. after page refresh), fetch the full user
   useEffect(() => {
     if (!token) {
       router.replace("/login");
@@ -22,17 +19,8 @@ export default function ProfilePage() {
       setLoading(false);
       return;
     }
-    auth
-      .me()
-      .then((res) => {
-        setAuth(res.data, token);
-        setLoading(false);
-      })
-      .catch(() => {
-        logout();
-        router.replace("/login");
-      });
-  }, [token, user, setAuth, logout, router]);
+    setLoading(false);
+  }, [token, user, router]);
 
   const handleLogout = () => {
     logout();
@@ -75,6 +63,22 @@ export default function ProfilePage() {
             <dt className="text-sm text-gray-500">Email</dt>
             <dd className="text-sm font-medium text-gray-900">{user.email}</dd>
           </div>
+          {user.phone && (
+            <div className="flex justify-between py-3">
+              <dt className="text-sm text-gray-500">Mobile</dt>
+              <dd className="text-sm font-medium text-gray-900">
+                {user.phone}
+              </dd>
+            </div>
+          )}
+          {user.address && (
+            <div className="flex justify-between py-3">
+              <dt className="text-sm text-gray-500">Address</dt>
+              <dd className="text-sm font-medium text-gray-900">
+                {user.address}
+              </dd>
+            </div>
+          )}
           <div className="flex justify-between py-3">
             <dt className="text-sm text-gray-500">Role</dt>
             <dd className="text-sm font-medium text-gray-900 capitalize">
@@ -89,10 +93,10 @@ export default function ProfilePage() {
 
         <div className="mt-6 flex gap-3">
           <Link
-            href={user.role === "farmer" ? "/farmer/dashboard" : "/marketplace"}
+            href={user.role === "farmer" ? "/farmer/dashboard" : "/buyer/dashboard"}
             className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
           >
-            Go to {user.role === "farmer" ? "Dashboard" : "Marketplace"}
+            Go to {user.role === "farmer" ? "Dashboard" : "Dashboard"}
           </Link>
           <button
             onClick={handleLogout}

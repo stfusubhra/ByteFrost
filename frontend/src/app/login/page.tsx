@@ -1,39 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/api";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore, demoLogin } from "@/store/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const setToken = useAuthStore((s) => s.setToken);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const { user, token, hasHydrated } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // If already logged in, go straight to the dashboard
+  useEffect(() => {
+    if (hasHydrated && token && user) {
+      router.replace(
+        user.role === "farmer" ? "/farmer/dashboard" : "/buyer/dashboard"
+      );
+    }
+  }, [hasHydrated, token, user, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const res = await auth.login({ email, password });
-      const { access_token, role } = res.data;
-      // Persist token first so the axios interceptor attaches it to /auth/me
-      setToken(access_token);
-      const me = await auth.me();
-      setAuth(me.data, access_token);
-      router.push(role === "farmer" ? "/farmer/dashboard" : "/marketplace");
+      const { user, token } = demoLogin(email, password);
+      setAuth(user, token);
+      router.push(user.role === "farmer" ? "/farmer/dashboard" : "/buyer/dashboard");
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail || "Login failed. Please try again."
-      );
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fillDemo = (role: "farmer" | "buyer") => {
+    setError("");
+    if (role === "farmer") {
+      setEmail("+919999999999");
+      setPassword("demo1234");
+    } else {
+      setEmail("+918888888888");
+      setPassword("demo1234");
     }
   };
 
@@ -44,7 +57,7 @@ export default function LoginPage() {
           Welcome back
         </h2>
         <p className="mb-6 text-sm text-gray-500">
-          Sign in to your ByteFrost account
+          Sign in to your Kisan Setu account
         </p>
 
         {error && (
@@ -59,7 +72,7 @@ export default function LoginPage() {
               htmlFor="email"
               className="mb-1 block text-sm font-medium text-gray-700"
             >
-              Email or mobile number
+              Mobile number or email
             </label>
             <input
               id="email"
@@ -67,7 +80,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com or +91 98765 43210"
+              placeholder="+91 98765 43210"
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
             />
           </div>
@@ -98,6 +111,28 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        <div className="mt-6 rounded-lg border border-green-100 bg-green-50 p-4">
+          <p className="mb-2 text-xs font-semibold text-green-800">
+            Demo Accounts — click to autofill
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => fillDemo("farmer")}
+              className="rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100"
+            >
+              🌾 Farmer / Lister
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemo("buyer")}
+              className="rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100"
+            >
+              🏪 Buyer
+            </button>
+          </div>
+        </div>
 
         <p className="mt-6 text-center text-sm text-gray-500">
           Don&apos;t have an account?{" "}

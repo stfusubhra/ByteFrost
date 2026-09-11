@@ -49,7 +49,10 @@ class UserResponse(BaseModel):
 class ListingCreate(BaseModel):
     crop_name: str
     variety: Optional[str] = None
+    category: Optional[str] = None
+    unit: Optional[str] = "kg"
     quantity_kg: float
+    min_order_quantity: Optional[float] = 1.0
     quality_grade: Optional[str] = None
     price_per_kg: Optional[float] = None
     harvest_date: Optional[datetime] = None
@@ -59,19 +62,42 @@ class ListingCreate(BaseModel):
     pickup_latitude: Optional[float] = None
     pickup_longitude: Optional[float] = None
     description: Optional[str] = None
+    images: Optional[List[str]] = None
+
+
+class ListingUpdate(BaseModel):
+    crop_name: Optional[str] = None
+    variety: Optional[str] = None
+    category: Optional[str] = None
+    unit: Optional[str] = None
+    quantity_kg: Optional[float] = None
+    min_order_quantity: Optional[float] = None
+    quality_grade: Optional[str] = None
+    price_per_kg: Optional[float] = None
+    availability_start: Optional[datetime] = None
+    availability_end: Optional[datetime] = None
+    pickup_location: Optional[str] = None
+    description: Optional[str] = None
+    images: Optional[List[str]] = None
+    is_active: Optional[bool] = None
 
 
 class ListingResponse(BaseModel):
     id: UUID
     seller_id: UUID
     crop_name: str
-    variety: Optional[str]
+    variety: Optional[str] = None
+    category: Optional[str] = None
+    unit: Optional[str] = "kg"
     quantity_kg: float
-    quality_grade: Optional[str]
-    price_per_kg: Optional[float]
-    harvest_date: Optional[datetime]
-    pickup_location: Optional[str]
+    min_order_quantity: Optional[float] = 1.0
+    quality_grade: Optional[str] = None
+    price_per_kg: Optional[float] = None
+    harvest_date: Optional[datetime] = None
+    pickup_location: Optional[str] = None
     is_active: bool
+    description: Optional[str] = None
+    images: Optional[List[str]] = None
     created_at: datetime
 
     class Config:
@@ -94,6 +120,16 @@ class OrderCreate(BaseModel):
     notes: Optional[str] = None
 
 
+class OrderItemResponse(BaseModel):
+    id: UUID
+    listing_id: UUID
+    quantity_kg: float
+    price_per_kg: float
+
+    class Config:
+        from_attributes = True
+
+
 class OrderResponse(BaseModel):
     id: UUID
     buyer_id: UUID
@@ -101,10 +137,16 @@ class OrderResponse(BaseModel):
     total_amount: Optional[float]
     delivery_address: Optional[str]
     delivery_deadline: Optional[datetime]
+    notes: Optional[str] = None
+    items: Optional[List[OrderItemResponse]] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str
 
 
 # --- AI / Matching ---

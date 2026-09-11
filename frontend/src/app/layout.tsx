@@ -3,9 +3,9 @@ import Header from "@/components/Header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ByteFrost - Farm to Market",
+  title: "Kisan Setu - Farm to Market",
   description:
-    "AI-powered direct farm-to-market supply-chain platform",
+    "AI-powered direct farm-to-market supply-chain platform connecting farmers directly with buyers",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
       <body>
         <div className="min-h-screen">
           <Header />
-          <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+          <main>{children}</main>
         </div>
       </body>
     </html>

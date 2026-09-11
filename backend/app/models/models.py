@@ -76,7 +76,10 @@ class ProduceListing(Base):
 
     crop_name = Column(String(255), nullable=False)
     variety = Column(String(255), nullable=True)
+    category = Column(String(100), nullable=True)  # grains, vegetables, fruits, spices, etc.
+    unit = Column(String(50), default="kg")  # kg, quintal, dozen, piece
     quantity_kg = Column(Float, nullable=False)
+    min_order_quantity = Column(Float, default=1.0)
     quality_grade = Column(String(50), nullable=True)  # A, B, C
     price_per_kg = Column(Float, nullable=True)
     harvest_date = Column(DateTime, nullable=True)

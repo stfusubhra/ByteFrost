@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { demoUsers } from "@/lib/demoData";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const setToken = useAuthStore((s) => s.setToken);
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const [fullName, setFullName] = useState("");
@@ -26,7 +25,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // Require at least one of email / mobile number
     if (!email && !phone) {
       setError("Please provide an email or a mobile number.");
       return;
@@ -34,23 +32,20 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await auth.register({
-        email: email || undefined,
-        password,
+      // Create a local demo user so registration works offline
+      const id = `demo-${role}-${Date.now()}`;
+      const user = {
+        id,
+        email: email || `phone_${phone?.replace(/[^0-9]/g, "")}@bytefrost.local`,
         full_name: fullName,
-        phone: phone || undefined,
         role,
-      });
-      const { access_token } = res.data;
-      // Persist token first so the axios interceptor attaches it to /auth/me
-      setToken(access_token);
-      const me = await auth.me();
-      setAuth(me.data, access_token);
-      router.push(role === "farmer" ? "/farmer/dashboard" : "/marketplace");
+        phone: phone || undefined,
+      };
+      const token = `demo-token-${id}`;
+      setAuth(user, token);
+      router.push(role === "farmer" ? "/farmer/dashboard" : "/buyer/dashboard");
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail || "Registration failed. Please try again."
-      );
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -63,7 +58,7 @@ export default function RegisterPage() {
           Create your account
         </h2>
         <p className="mb-6 text-sm text-gray-500">
-          Join ByteFrost — direct farm to market
+          Join Kisan Setu — direct farm to market
         </p>
 
         {error && (
@@ -119,9 +114,6 @@ export default function RegisterPage() {
                 📱 Mobile
               </button>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              You can also fill in both fields if you have both.
-            </p>
           </div>
 
           {contactMethod === "email" && (

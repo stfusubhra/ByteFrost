@@ -1,15 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.models import Order, OrderItem, OrderStatus, ProduceListing
-from app.schemas.schemas import OrderCreate, OrderResponse
+from app.models.models import Order, OrderItem, OrderStatus, ProduceListing, User
+from app.schemas.schemas import OrderCreate, OrderResponse, OrderStatusUpdate
 
 router = APIRouter()
+
+# Farmer-facing status flow (simplified for demo)
+FARMER_FLOW = {
+    "pending": "confirmed",
+    "confirmed": "processing",
+    "processing": "shipped",
+    "shipped": "delivered",
+}
 
 
 @router.post("/", response_model=OrderResponse, status_code=201)
@@ -41,6 +50,7 @@ async def create_order(
         total += item.quantity_kg * item.price_per_kg
 
     order.total_amount = total
+    await db.flush()
     return order
 
 
@@ -48,18 +58,29 @@ async def create_order(
 async def list_orders(
     current_user: dict = Depends(get_current_user),
     status: str = None,
+    role: str = None,
     skip: int = 0,
-    limit: int = 20,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Order).where(Order.buyer_id == UUID(current_user["id"]))
+    # role=farmer -> orders where the current user is the seller of an item
+    if role == "farmer":
+        query = (
+            select(Order)
+            .join(OrderItem, OrderItem.order_id == Order.id)
+            .join(ProduceListing, ProduceListing.id == OrderItem.listing_id)
+            .where(ProduceListing.seller_id == UUID(current_user["id"]))
+            .distinct()
+        )
+    else:
+        query = select(Order).where(Order.buyer_id == UUID(current_user["id"]))
 
     if status:
         query = query.where(Order.status == OrderStatus(status))
 
-    query = query.offset(skip).limit(limit)
-    result = await db.execute(query)
-    return result.scalars().all()
+    query = query.order_by(Order.created_at.desc()).offset(skip).limit(limit)
+    result = await db.execute(query.options(joinedload(Order.items)))
+    return result.unique().scalars().all()
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
@@ -69,14 +90,60 @@ async def get_order(
     db: AsyncSession = Depends(get_db),
 ) -> OrderResponse:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        )
+        select(Order).where(Order.id == order_id).options(joinedload(Order.items))
     )
     order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    # Allow access if buyer OR seller of any item
+    is_buyer = order.buyer_id == UUID(current_user["id"])
+    if not is_buyer:
+        seller_check = await db.execute(
+            select(ProduceListing.seller_id)
+            .join(OrderItem, OrderItem.listing_id == ProduceListing.id)
+            .where(OrderItem.order_id == order.id)
+            .distinct()
+        )
+        seller_ids = [r[0] for r in seller_check.all()]
+        if UUID(current_user["id"]) not in seller_ids:
+            raise HTTPException(status_code=404, detail="Order not found")
+
+    return order
+
+
+@router.patch("/{order_id}/status", response_model=OrderResponse)
+async def update_order_status(
+    order_id: UUID,
+    payload: OrderStatusUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Order).where(Order.id == order_id).options(joinedload(Order.items))
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Only seller can update status (farmer flow)
+    seller_check = await db.execute(
+        select(ProduceListing.seller_id)
+        .join(OrderItem, OrderItem.listing_id == ProduceListing.id)
+        .where(OrderItem.order_id == order.id)
+        .distinct()
+    )
+    seller_ids = [r[0] for r in seller_check.all()]
+    if UUID(current_user["id"]) not in seller_ids:
+        raise HTTPException(status_code=403, detail="Only the seller can update order status")
+
+    try:
+        new_status = OrderStatus(payload.status)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
+
+    order.status = new_status
+    await db.flush()
     return order
 
 
@@ -87,10 +154,7 @@ async def confirm_order(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        )
+        select(Order).where(Order.id == order_id)
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -112,10 +176,7 @@ async def allocate_order(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        ).options(joinedload(Order.items))
+        select(Order).where(Order.id == order_id).options(joinedload(Order.items))
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -153,10 +214,7 @@ async def dispatch_order(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        )
+        select(Order).where(Order.id == order_id)
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -178,10 +236,7 @@ async def ship_order(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        )
+        select(Order).where(Order.id == order_id)
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -203,10 +258,7 @@ async def deliver_order(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        )
+        select(Order).where(Order.id == order_id)
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -229,10 +281,7 @@ async def allocate_from_listings(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        ).options(joinedload(Order.items))
+        select(Order).where(Order.id == order_id).options(joinedload(Order.items))
     )
     order = result.scalar_one_or_none()
     if not order:
@@ -278,10 +327,7 @@ async def get_order_status(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     result = await db.execute(
-        select(Order).where(
-            Order.id == order_id,
-            Order.buyer_id == UUID(current_user["id"]),
-        )
+        select(Order).where(Order.id == order_id)
     )
     order = result.scalar_one_or_none()
     if not order:

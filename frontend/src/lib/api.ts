@@ -29,7 +29,9 @@ export const auth = {
 export const listings = {
   list: (params?: any) => api.get("/listings", { params }),
   get: (id: string) => api.get(`/listings/${id}`),
+  mine: () => api.get("/listings/mine"),
   create: (data: any) => api.post("/listings", data),
+  update: (id: string, data: any) => api.patch(`/listings/${id}`, data),
   deactivate: (id: string) => api.delete(`/listings/${id}`),
 };
 
@@ -38,6 +40,8 @@ export const orders = {
   list: (params?: any) => api.get("/orders", { params }),
   get: (id: string) => api.get(`/orders/${id}`),
   create: (data: any) => api.post("/orders", data),
+  updateStatus: (id: string, status: string) =>
+    api.patch(`/orders/${id}/status`, { status }),
 };
 
 // Matching (AI)

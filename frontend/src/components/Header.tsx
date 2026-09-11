@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
+import NotificationsBell from "@/components/NotificationsBell";
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, token, logout } = useAuthStore();
+
+  // Hide the global header on dashboard pages (they have their own sidebar)
+  if (pathname.startsWith("/farmer") || pathname.startsWith("/buyer")) {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();
@@ -17,7 +24,7 @@ export default function Header() {
     <header className="border-b border-green-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <Link href="/" className="text-xl font-bold text-green-700">
-          ByteFrost
+          Kisan Setu
         </Link>
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/" className="hover:text-green-600">
@@ -28,9 +35,10 @@ export default function Header() {
           </Link>
           {token && user ? (
             <>
+              <NotificationsBell />
               <Link
                 href={
-                  user.role === "farmer" ? "/farmer/dashboard" : "/buyer/orders"
+                  user.role === "farmer" ? "/farmer/dashboard" : "/buyer/dashboard"
                 }
                 className="hover:text-green-600"
               >
