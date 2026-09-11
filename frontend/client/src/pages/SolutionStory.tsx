@@ -137,6 +137,8 @@ export default function SolutionStory() {
               src="https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&q=80"
               alt={t("solutions.heroImgAlt")}
               className="relative aspect-[4/3] w-full rounded-2xl object-cover shadow-xl"
+              loading="eager"
+              fetchPriority="high"
             />
           </div>
         </div>

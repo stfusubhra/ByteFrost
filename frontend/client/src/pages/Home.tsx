@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const img = {
   hero: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1600&q=80",
@@ -74,10 +75,12 @@ const TRUST_ITEMS = ["home.trust.1", "home.trust.2", "home.trust.3"] as const;
 export default function Home() {
   const { t } = useLanguage();
   const [rows, setRows] = useState<PreviewRow[]>(FALLBACK_ROWS);
+  const [listingsLoading, setListingsLoading] = useState(true);
   useReveal({ threshold: 0.16, rootMargin: "0px 0px -12% 0px" });
 
   useEffect(() => {
     let alive = true;
+    setListingsLoading(true);
     fetchListings({ limit: 6 })
       .then((listings) => {
         if (!alive || !listings?.length) return;
@@ -92,7 +95,10 @@ export default function Home() {
           }))
         );
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setListingsLoading(false);
+      });
     return () => { alive = false; };
   }, []);
 
@@ -146,6 +152,7 @@ export default function Home() {
                 alt="A farmer standing in a green field at harvest time"
                 fetchPriority="high"
                 className="relative rounded-2xl object-cover shadow-xl w-full aspect-[4/3]"
+                loading="eager"
               />
             </div>
           </div>
@@ -212,37 +219,51 @@ export default function Home() {
             </div>
 
             <Card className="overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead>{t("home.preview.colCrop")}</TableHead>
-                    <TableHead className="hidden sm:table-cell">{t("home.preview.colLocation")}</TableHead>
-                    <TableHead>{t("home.preview.colQty")}</TableHead>
-                    <TableHead>{t("home.preview.colPrice")}</TableHead>
-                    <TableHead className="text-right">{t("home.preview.colStatus")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.crop}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <MapPin size={13} />
-                          {r.location}
-                        </span>
-                      </TableCell>
-                      <TableCell>{r.quantity}</TableCell>
-                      <TableCell className="font-semibold text-primary">{r.price}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary" className="text-xs">
-                          {r.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+              {listingsLoading ? (
+                <div className="p-4 space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex gap-4">
+                      <Skeleton className="h-4 flex-1" />
+                      <Skeleton className="h-4 w-24 hidden sm:block" />
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-12 ml-auto" />
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead>{t("home.preview.colCrop")}</TableHead>
+                      <TableHead className="hidden sm:table-cell">{t("home.preview.colLocation")}</TableHead>
+                      <TableHead>{t("home.preview.colQty")}</TableHead>
+                      <TableHead>{t("home.preview.colPrice")}</TableHead>
+                      <TableHead className="text-right">{t("home.preview.colStatus")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{r.crop}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <MapPin size={13} />
+                            {r.location}
+                          </span>
+                        </TableCell>
+                        <TableCell>{r.quantity}</TableCell>
+                        <TableCell className="font-semibold text-primary">{r.price}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="secondary" className="text-xs">
+                            {r.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </Card>
           </div>
         </section>
@@ -263,12 +284,13 @@ export default function Home() {
 
             <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
               <div className="relative overflow-hidden rounded-2xl">
-                <img
-                  src={img.field}
-                  alt="Green farmland stretching to the horizon"
-                  loading="lazy"
-                  className="w-full aspect-[4/3] object-cover"
-                />
+              <img
+                src={img.field}
+                alt="Green farmland stretching to the horizon"
+                loading="lazy"
+                decoding="async"
+                className="w-full aspect-[4/3] object-cover"
+              />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </div>
 

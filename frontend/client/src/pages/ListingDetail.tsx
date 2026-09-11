@@ -149,6 +149,7 @@ export default function ListingDetail() {
             <img
               src={getImage(listing.crop_name)}
               alt={`${listing.crop_name} listing`}
+              loading="lazy"
             />
             <span className="badge badge-neutral">
               {listing.is_active ? t("listing.readyToMove") : t("listing.inactive")}
