@@ -101,7 +101,21 @@ export default function Signup() {
 
           <div className="auth-field">
             <label htmlFor="phone">{t("signup.phone.label")}</label>
-            <input type="tel" id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="auth-input" placeholder={t("signup.phone.placeholder")} autoComplete="tel" />
+            <div className="auth-phone-wrap">
+              <span className="auth-phone-prefix">+91</span>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 10))}
+                className="auth-input auth-input-phone"
+                placeholder={t("signup.phone.placeholder")}
+                autoComplete="tel"
+                inputMode="numeric"
+              />
+            </div>
+            <p className="auth-field-hint">{t("signup.phone.hint")}</p>
           </div>
 
           <div className="auth-field">
