@@ -34,9 +34,11 @@ class ErrorBoundary extends Component<Props, State> {
             <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
 
             <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
+              <p className="text-sm text-muted-foreground">
+                {import.meta.env.PROD
+                  ? "An unexpected error occurred. Please refresh the page."
+                  : this.state.error?.message || "Unknown error"}
+              </p>
             </div>
 
             <button
