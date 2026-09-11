@@ -140,59 +140,38 @@ export default function Dashboard() {
       return;
     }
     try {
-      const listings = await fetchListings({ limit: 10 });
-      const active = listings.find((l) => l.is_active);
+      // 1️⃣ Fetch all listings once (limit 30 is enough for overview + marketplace)
+      const all = await fetchListings({ limit: 30 });
+      setAllListings(all);
+      const active = all.find((l) => l.is_active);
       if (active) {
         setListing(active);
-        try {
-          const price = await fetchPriceRecommendation(active.id);
-          setPriceRec(price);
-        } catch {
-          // Price recommendation optional
-        }
-        try {
-          const forecast = await fetchDemandForecast(
-            active.crop_name,
-            active.pickup_location || "India"
-          );
-          setDemandForecast(forecast);
-        } catch {
-          // Demand forecast optional
-        }
-        try {
-          const matchResults = await fetchMatches(active.id, 5);
-          setMatches(matchResults);
-        } catch {
-          // Match results optional
-        }
+
+        // 2️⃣ Fire price, forecast, matches in parallel
+        const [priceRes, forecastRes, matchesRes] = await Promise.allSettled([
+          fetchPriceRecommendation(active.id),
+          fetchDemandForecast(active.crop_name, active.pickup_location || "India"),
+          fetchMatches(active.id, 5),
+        ]);
+        if (priceRes.status === "fulfilled") setPriceRec(priceRes.value);
+        if (forecastRes.status === "fulfilled") setDemandForecast(forecastRes.value);
+        if (matchesRes.status === "fulfilled") setMatches(matchesRes.value);
       }
 
-      // Fetch real logistics shipments
-      try {
-        const shipList = await fetchShipments({ limit: 10 });
+      // 3️⃣ Shipments, incoming orders – parallel, non‑blocking
+      const [shipRes, ordersRes] = await Promise.allSettled([
+        fetchShipments({ limit: 10 }),
+        fetchIncomingOrders({ limit: 20 }),
+      ]);
+      if (shipRes.status === "fulfilled") {
+        const shipList = shipRes.value;
         setShipments(shipList);
         if (shipList.length > 0) {
-          await loadShipmentDetail(shipList[0].id);
+          // load first shipment detail in background
+          loadShipmentDetail(shipList[0].id);
         }
-      } catch {
-        // Shipments optional
       }
-
-      // All active listings (Marketplace section)
-      try {
-        const all = await fetchListings({ limit: 50 });
-        setAllListings(all);
-      } catch {
-        // Listings optional
-      }
-
-      // Incoming orders — orders containing this farmer's listings
-      try {
-        const orders = await fetchIncomingOrders({ limit: 20 });
-        setIncomingOrders(orders);
-      } catch {
-        // Orders optional
-      }
+      if (ordersRes.status === "fulfilled") setIncomingOrders(ordersRes.value);
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
       else setError(t("dash.failed"));
