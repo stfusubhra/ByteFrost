@@ -1,17 +1,39 @@
-/* KisanSetu landing: five focused sections.
-   1. Hero — editorial, short, photography-led
-   2. How it works — four numbered steps, thin dividers
-   3. Marketplace preview — real listings as a clean table
-   4. Why KisanSetu — split editorial layout with photography
-   5. Final CTA — one line, one action, minimal footer
-*/
 import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Leaf,
+  ShoppingCart,
+  Users,
+  TrendingUp,
+  Shield,
+  Zap,
+  MapPin,
+  BarChart3,
+  CheckCircle2,
+} from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useReveal } from "../hooks/useReveal";
 import { fetchListings } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 const img = {
   hero: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1600&q=80",
@@ -34,6 +56,21 @@ const FALLBACK_ROWS: PreviewRow[] = [
   { id: "f3", crop: "Potato · Grade B", location: "Satara, MH", quantity: "400 kg", price: "₹18/kg", status: "Ready to move" },
 ];
 
+const STEPS = [
+  { icon: Users, key: "home.how.step1" },
+  { icon: ShoppingCart, key: "home.how.step2" },
+  { icon: TrendingUp, key: "home.how.step3" },
+  { icon: CheckCircle2, key: "home.how.step4" },
+] as const;
+
+const WHY_ITEMS = [
+  { icon: TrendingUp, key: "home.why.b1" },
+  { icon: Shield, key: "home.why.b2" },
+  { icon: Zap, key: "home.why.b3" },
+] as const;
+
+const TRUST_ITEMS = ["home.trust.1", "home.trust.2", "home.trust.3"] as const;
+
 export default function Home() {
   const { t } = useLanguage();
   const [rows, setRows] = useState<PreviewRow[]>(FALLBACK_ROWS);
@@ -55,164 +92,246 @@ export default function Home() {
           }))
         );
       })
-      .catch(() => {
-        /* keep fallback rows */
-      });
-    return () => {
-      alive = false;
-    };
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   return (
     <PublicLayout>
       <main>
         {/* 1 · HERO */}
-        <section className="land-hero">
-          <div className="container land-hero-grid">
-            <div className="land-hero-copy">
-              <span className="eyebrow">{t("home.hero.eyebrow")}</span>
-              <h1>
+        <section className="relative overflow-hidden bg-[var(--bg)]">
+          <div className="container grid min-h-[85vh] items-center gap-12 py-16 lg:grid-cols-2 lg:gap-8">
+            <div className="flex flex-col gap-6 z-10">
+              <Badge variant="secondary" className="w-fit gap-1.5 text-xs font-medium">
+                <Leaf size={13} />
+                {t("home.hero.eyebrow")}
+              </Badge>
+
+              <h1 className="font-[var(--font-display)] text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-[1.1]">
                 {t("home.hero.h1a")}
                 <br />
-                <em>{t("home.hero.h1b")}</em>
+                <span className="text-primary">{t("home.hero.h1b")}</span>
               </h1>
-              <p>{t("home.hero.p")}</p>
-              <div className="land-hero-cta">
-                <Link className="btn btn-primary btn-lg" href="/marketplace">
-                  {t("home.hero.cta1")} <ArrowRight size={16} />
-                </Link>
-                <Link className="btn btn-secondary btn-lg" href="/signup">
-                  {t("home.hero.cta2")}
-                </Link>
+
+              <p className="max-w-lg text-base text-muted-foreground leading-relaxed sm:text-lg">
+                {t("home.hero.p")}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button size="lg" asChild>
+                  <Link href="/marketplace">
+                    {t("home.hero.cta1")} <ArrowRight size={16} />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/signup">{t("home.hero.cta2")}</Link>
+                </Button>
+              </div>
+
+              <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                {TRUST_ITEMS.map((key) => (
+                  <span key={key} className="flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-primary" />
+                    {t(key)}
+                  </span>
+                ))}
               </div>
             </div>
-            <div className="land-hero-media">
+
+            <div className="relative hidden lg:block">
+              <div className="absolute -inset-4 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5" />
               <img
                 src={img.hero}
                 alt="A farmer standing in a green field at harvest time"
                 fetchPriority="high"
+                className="relative rounded-2xl object-cover shadow-xl w-full aspect-[4/3]"
               />
             </div>
           </div>
         </section>
 
+        <Separator />
+
         {/* 2 · HOW IT WORKS */}
-        <section className="land-how">
+        <section className="py-20 bg-[var(--surface)]">
           <div className="container">
-            <div className="land-section-head">
-              <span className="eyebrow">{t("home.how.label")}</span>
-              <h2>{t("home.how.h2")}</h2>
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <Badge variant="outline" className="mb-4">
+                {t("home.how.label")}
+              </Badge>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("home.how.h2")}
+              </h2>
             </div>
-            <ol className="land-steps">
-              <li className="land-step">
-                <span className="land-step-num">01</span>
-                <div>
-                  <h3>{t("home.how.step1.title")}</h3>
-                  <p>{t("home.how.step1.p")}</p>
-                </div>
-              </li>
-              <li className="land-step">
-                <span className="land-step-num">02</span>
-                <div>
-                  <h3>{t("home.how.step2.title")}</h3>
-                  <p>{t("home.how.step2.p")}</p>
-                </div>
-              </li>
-              <li className="land-step">
-                <span className="land-step-num">03</span>
-                <div>
-                  <h3>{t("home.how.step3.title")}</h3>
-                  <p>{t("home.how.step3.p")}</p>
-                </div>
-              </li>
-              <li className="land-step">
-                <span className="land-step-num">04</span>
-                <div>
-                  <h3>{t("home.how.step4.title")}</h3>
-                  <p>{t("home.how.step4.p")}</p>
-                </div>
-              </li>
-            </ol>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {STEPS.map(({ icon: Icon, key }, i) => (
+                <Card key={key} className="relative overflow-hidden border-border/50 transition-shadow hover:shadow-md">
+                  <CardHeader className="pb-3">
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon size={20} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <CardTitle className="text-base">{t(`${key}.title`)}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t(`${key}.p`)}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </section>
+
+        <Separator />
 
         {/* 3 · MARKETPLACE PREVIEW */}
-        <section className="land-market">
+        <section className="py-20">
           <div className="container">
-            <div className="land-section-head land-section-head-row">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <span className="eyebrow">{t("home.preview.label")}</span>
-                <h2>{t("home.preview.h2")}</h2>
+                <Badge variant="outline" className="mb-3">
+                  {t("home.preview.label")}
+                </Badge>
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                  {t("home.preview.h2")}
+                </h2>
               </div>
-              <Link className="text-link" href="/marketplace">
-                {t("home.preview.viewAll")} <ArrowRight size={14} />
-              </Link>
+              <Button variant="ghost" size="sm" asChild className="w-fit">
+                <Link href="/marketplace">
+                  {t("home.preview.viewAll")} <ArrowRight size={14} />
+                </Link>
+              </Button>
             </div>
-            <div className="land-table-wrap">
-              <table className="land-table">
-                <thead>
-                  <tr>
-                    <th>{t("home.preview.colCrop")}</th>
-                    <th>{t("home.preview.colLocation")}</th>
-                    <th>{t("home.preview.colQty")}</th>
-                    <th>{t("home.preview.colPrice")}</th>
-                    <th>{t("home.preview.colStatus")}</th>
-                  </tr>
-                </thead>
-                <tbody>
+
+            <Card className="overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>{t("home.preview.colCrop")}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t("home.preview.colLocation")}</TableHead>
+                    <TableHead>{t("home.preview.colQty")}</TableHead>
+                    <TableHead>{t("home.preview.colPrice")}</TableHead>
+                    <TableHead className="text-right">{t("home.preview.colStatus")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {rows.map((r) => (
-                    <tr key={r.id}>
-                      <td className="land-table-crop">{r.crop}</td>
-                      <td>{r.location}</td>
-                      <td>{r.quantity}</td>
-                      <td className="land-table-price">{r.price}</td>
-                      <td>
-                        <span className="land-table-status">{r.status}</span>
-                      </td>
-                    </tr>
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{r.crop}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin size={13} />
+                          {r.location}
+                        </span>
+                      </TableCell>
+                      <TableCell>{r.quantity}</TableCell>
+                      <TableCell className="font-semibold text-primary">{r.price}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="secondary" className="text-xs">
+                          {r.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           </div>
         </section>
+
+        <Separator />
 
         {/* 4 · WHY KISANSETU */}
-        <section className="land-why">
+        <section className="py-20 bg-[var(--surface)]">
           <div className="container">
-            <div className="land-section-head">
-              <span className="eyebrow">{t("home.why.label")}</span>
-              <h2>{t("home.why.h2")}</h2>
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <Badge variant="outline" className="mb-4">
+                {t("home.why.label")}
+              </Badge>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("home.why.h2")}
+              </h2>
             </div>
-            <div className="land-why-grid">
-              <div className="land-why-media">
-                <img src={img.field} alt="Green farmland stretching to the horizon" loading="lazy" />
+
+            <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+              <div className="relative overflow-hidden rounded-2xl">
+                <img
+                  src={img.field}
+                  alt="Green farmland stretching to the horizon"
+                  loading="lazy"
+                  className="w-full aspect-[4/3] object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </div>
-              <div className="land-why-list">
-                <div className="land-why-item">
-                  <h3>{t("home.why.b1.title")}</h3>
-                  <p>{t("home.why.b1.p")}</p>
-                </div>
-                <div className="land-why-item">
-                  <h3>{t("home.why.b2.title")}</h3>
-                  <p>{t("home.why.b2.p")}</p>
-                </div>
-                <div className="land-why-item">
-                  <h3>{t("home.why.b3.title")}</h3>
-                  <p>{t("home.why.b3.p")}</p>
-                </div>
+
+              <div className="grid gap-6">
+                {WHY_ITEMS.map(({ icon: Icon, key }) => (
+                  <Card key={key} className="border-border/50 transition-shadow hover:shadow-md">
+                    <CardHeader className="flex-row items-start gap-4 pb-2">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Icon size={20} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{t(`${key}.title`)}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pl-[72px]">
+                      <CardDescription className="text-sm leading-relaxed">
+                        {t(`${key}.p`)}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* 5 · FINAL CTA */}
-        <section className="land-cta">
-          <div className="container land-cta-inner">
-            <h2>{t("home.closing.h2")}</h2>
-            <Link className="btn btn-primary btn-lg" href="/signup">
-              {t("home.closing.cta")} <ArrowRight size={16} />
-            </Link>
+        <Separator />
+
+        {/* 5 · STATS BAND */}
+        <section className="py-16">
+          <div className="container">
+            <div className="grid gap-6 sm:grid-cols-3">
+              {([
+                { icon: BarChart3, label: "home.trust.1", value: "10,000+" },
+                { icon: Users, label: "home.trust.2", value: "5,000+" },
+                { icon: MapPin, label: "home.trust.3", value: "200+" },
+              ] as const).map(({ icon: Icon, label, value }) => (
+                <Card key={label} className="border-border/50 text-center">
+                  <CardContent className="pt-6">
+                    <Icon size={24} className="mx-auto mb-3 text-primary" />
+                    <p className="text-3xl font-bold">{value}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t(label)}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 6 · FINAL CTA */}
+        <section className="py-24 bg-primary text-primary-foreground">
+          <div className="container mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              {t("home.closing.h2")}
+            </h2>
+            <p className="mt-4 text-primary-foreground/80 text-lg">
+              {t("home.hero.p")}
+            </p>
+            <Button size="lg" variant="secondary" className="mt-8" asChild>
+              <Link href="/signup">
+                {t("home.closing.cta")} <ArrowRight size={16} />
+              </Link>
+            </Button>
           </div>
         </section>
       </main>
