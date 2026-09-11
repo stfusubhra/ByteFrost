@@ -47,7 +47,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested today",
     route: "28 km · 1h 12m",
     match: "92%",
-    image: "/images/produce/tomatoes.svg",
+    image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
     status: "Ready to move",
     harvest: "Today",
     seller: "GreenValley Farms",
@@ -62,7 +62,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested yesterday",
     route: "42 km · 1h 48m",
     match: "87%",
-    image: "/images/produce/produce.svg",
+    image: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
     status: "Ready to move",
     harvest: "Yesterday",
     seller: "Sahaja Agro Co-op",
@@ -77,7 +77,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested 2 days ago",
     route: "61 km · 2h 18m",
     match: "81%",
-    image: "/images/produce/crates.svg",
+    image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
     status: "Ready to move",
     harvest: "2 days ago",
     seller: "Satara Fresh Collective",
@@ -92,7 +92,7 @@ const DEMO_LISTINGS: MarketListing[] = [
     freshness: "Harvested today",
     route: "74 km · 2h 40m",
     match: "78%",
-    image: "/images/produce/farmer.svg",
+    image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80",
     status: "Ready to move",
     harvest: "Today",
     seller: "Ahmednagar Growers",
@@ -101,13 +101,13 @@ const DEMO_LISTINGS: MarketListing[] = [
 
 function mapBackendListing(listing: any): MarketListing {
   const imageMap: Record<string, string> = {
-    Tomato: "/images/produce/tomatoes.svg",
-    Tomatoes: "/images/produce/tomatoes.svg",
-    Onion: "/images/produce/produce.svg",
-    Onions: "/images/produce/produce.svg",
-    Potato: "/images/produce/crates.svg",
-    Potatoes: "/images/produce/crates.svg",
-    Rice: "/images/produce/farmer.svg",
+    Tomato: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
+    Tomatoes: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
+    Onion: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
+    Onions: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
+    Potato: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
+    Potatoes: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
+    Rice: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80",
     Wheat: "/images/produce/farmer.svg",
     "Harvest crates": "/images/produce/crates.svg",
     "Fresh produce": "/images/produce/produce.svg",
@@ -413,11 +413,21 @@ export default function Marketplace() {
                 {filtered.map((item) => (
                   <tr key={item.id} className="market-row" onClick={() => (window.location.href = `/listing/${item.id}`)}>
                     <td>
-                      <div className="market-row-crop">{item.crop}</div>
-                      <div className="market-row-sub">
-                        {item.seller === "Verified producer" ? t("marketplace.verifiedProducer") : item.seller}
-                        <span className="dot" aria-hidden="true" />
-                        {item.grade}
+                      <div className="market-row-product">
+                        <img
+                          className="market-row-img"
+                          src={item.image}
+                          alt={item.crop}
+                          loading="lazy"
+                        />
+                        <div>
+                          <div className="market-row-crop">{item.crop}</div>
+                          <div className="market-row-sub">
+                            {item.seller === "Verified producer" ? t("marketplace.verifiedProducer") : item.seller}
+                            <span className="dot" aria-hidden="true" />
+                            {item.grade}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td><span className="market-row-loc"><MapPin size={13} /> {item.place}</span></td>
