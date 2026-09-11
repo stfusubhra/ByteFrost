@@ -259,7 +259,7 @@ export default function Marketplace() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button size="lg" onClick={() => toast(t("marketplace.toastList"))}>
+              <Button size="lg" onClick={() => { window.location.href = "/create-listing"; }}>
                 {t("marketplace.listProduce")} <ArrowRight className="size-4" />
               </Button>
               <Button

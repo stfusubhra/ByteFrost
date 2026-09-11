@@ -26,6 +26,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const BuyerDashboard = lazy(() => import("./pages/BuyerDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
+const CreateListing = lazy(() => import("./pages/CreateListing"));
 
 function LazyRoute({ path, component: Component, fallback }: { path: string; component: React.LazyExoticComponent<() => JSX.Element>; fallback?: React.ReactNode }) {
   return (
@@ -48,6 +49,7 @@ function FullRouter() {
       <LazyRoute path="/signup" component={Signup} />
       <LazyRoute path="/marketplace" component={Marketplace} />
       <LazyRoute path="/listing/:id" component={ListingDetail} />
+      <LazyRoute path="/create-listing" component={CreateListing} />
       <LazyRoute path="/solution-story" component={SolutionStory} />
       <LazyRoute path="/solutions" component={SolutionStory} />
       <LazyRoute path="/story" component={SolutionStory} />

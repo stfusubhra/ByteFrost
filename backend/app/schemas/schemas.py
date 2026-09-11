@@ -1,7 +1,27 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional, List, Any
+from datetime import datetime, date
 from uuid import UUID
+
+
+def _parse_date(val: Any) -> Optional[datetime]:
+    """Parse a date/datetime value from a string, date object, or datetime object.
+    Returns None for empty/falsy values."""
+    if val is None or val == "":
+        return None
+    if isinstance(val, datetime):
+        return val.replace(tzinfo=None)
+    if isinstance(val, date):
+        return datetime(val.year, val.month, val.day)
+    if isinstance(val, str):
+        val = val.strip()
+        if not val:
+            return None
+        try:
+            return datetime.fromisoformat(val)
+        except ValueError:
+            return None
+    return None
 
 
 # --- Auth ---
@@ -62,12 +82,10 @@ class ListingCreate(BaseModel):
 
     @model_validator(mode='before')
     @classmethod
-    def strip_tz(cls, data):
+    def parse_dates(cls, data):
         if isinstance(data, dict):
             for field in ["harvest_date", "availability_start", "availability_end"]:
-                val = data.get(field)
-                if val and hasattr(val, "tzinfo") and val.tzinfo is not None:
-                    data[field] = val.replace(tzinfo=None)
+                data[field] = _parse_date(data.get(field))
         return data
 
 
@@ -88,12 +106,10 @@ class ListingUpdate(BaseModel):
 
     @model_validator(mode='before')
     @classmethod
-    def strip_tz(cls, data):
+    def parse_dates(cls, data):
         if isinstance(data, dict):
             for field in ["harvest_date", "availability_start", "availability_end"]:
-                val = data.get(field)
-                if val and hasattr(val, "tzinfo") and val.tzinfo is not None:
-                    data[field] = val.replace(tzinfo=None)
+                data[field] = _parse_date(data.get(field))
         return data
 
 
