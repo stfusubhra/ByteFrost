@@ -5,8 +5,12 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/api/v1/(.*)",
+      "source": "/api/v1/(health|auth|listings|orders|users|matching)",
       "destination": "https://bytefrost-backend.onrender.com/api/v1/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://bytefrost-backend.onrender.com/health"
     }
   ],
   "env": {
