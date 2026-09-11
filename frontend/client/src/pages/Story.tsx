@@ -42,28 +42,30 @@ export default function Story() {
       <section className="story-chapter reveal" style={{ padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid var(--line)" }}>
         <div className="container">
           <div className="story-gap-visual">
-            <div className="story-gap-node story-gap-node-farmer">
-              <div className="story-gap-node-dot" />
+            <div className="story-gap-end story-gap-farmer">
+              <div className="story-gap-dot" />
               <span>FARMER</span>
             </div>
-            <div className="story-gap-node story-gap-node-buyer">
-              <span>BUYER</span>
-              <div className="story-gap-node-dot" />
-            </div>
-            <div className="story-gap-lines">
-              <svg width="100%" height="200" viewBox="0 0 400 200" preserveAspectRatio="none">
-                <path d="M 20 100 Q 100 60 200 100 T 380 100" stroke="var(--line-strong)" fill="none" strokeWidth="1" strokeDasharray="4 4" />
-                <path d="M 20 100 Q 100 140 200 100 T 380 100" stroke="var(--line-strong)" fill="none" strokeWidth="1" strokeDasharray="4 4" />
-                <circle cx="200" cy="100" r="4" fill="var(--ink-muted)" />
+            <div className="story-gap-svg">
+              <svg width="100%" height="160" viewBox="0 0 400 160" preserveAspectRatio="none">
+                {/* Fragmented paths between farmer and buyer */}
+                <path d="M 40 80 Q 120 30 200 80 T 360 80" stroke="var(--line-strong)" fill="none" strokeWidth="1" strokeDasharray="3 4" opacity="0.6" />
+                <path d="M 40 80 Q 120 130 200 80 T 360 80" stroke="var(--line-strong)" fill="none" strokeWidth="1" strokeDasharray="3 4" opacity="0.6" />
+                {/* Gap in the middle */}
+                <circle cx="200" cy="80" r="3" fill="var(--ink-muted)" opacity="0.5" />
               </svg>
             </div>
-            <div className="story-gap-signals">
-              <span className="story-gap-signal">SUPPLY</span>
-              <span className="story-gap-signal">PRICE</span>
-              <span className="story-gap-signal">DEMAND</span>
-              <span className="story-gap-signal">LOCATION</span>
-              <span className="story-gap-signal">TIMING</span>
+            <div className="story-gap-end story-gap-buyer">
+              <span>BUYER</span>
+              <div className="story-gap-dot" />
             </div>
+          </div>
+          <div className="story-gap-signals">
+            <span>SUPPLY</span>
+            <span>PRICE</span>
+            <span>DEMAND</span>
+            <span>LOCATION</span>
+            <span>TIMING</span>
           </div>
           <div className="story-gap-text" style={{ textAlign: "center", marginTop: "32px" }}>
             <span className="eyebrow">{t("story.problem.label")}</span>
@@ -76,34 +78,41 @@ export default function Story() {
         </div>
       </section>
 
-      {/* Chapter 3 — KisanSetu */}
+      {/* Chapter 3 — KisanSetu Network */}
       <section className="story-chapter reveal" style={{ padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid var(--line)" }}>
         <div className="container">
-          <div className="story-network-visual">
-            <div className="story-network-farmer">
-              <div className="story-network-dot" />
-              <span>FARMER</span>
-            </div>
-            <div className="story-network-center">
-              <div className="story-network-logo">
-                <Sprout size={24} color="var(--primary)" />
-                <span>KisanSetu</span>
-              </div>
-              <div className="story-network-nodes">
-                <div className="story-network-node story-network-node-1">
-                  <div className="story-network-dot" />
-                  <span>BUYER</span>
-                </div>
-                <div className="story-network-node story-network-node-2">
-                  <div className="story-network-dot" />
-                  <span>BUYER</span>
-                </div>
-                <div className="story-network-node story-network-node-3">
-                  <div className="story-network-dot" />
-                  <span>BUYER</span>
-                </div>
-              </div>
-            </div>
+          <div className="story-network-svg-wrap">
+            <svg className="story-network-svg" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid meet">
+              {/* Connection lines from KisanSetu to farmers and buyers */}
+              <line x1="300" y1="150" x2="80" y2="60" stroke="var(--primary)" strokeWidth="1" opacity="0.4" />
+              <line x1="300" y1="150" x2="80" y2="240" stroke="var(--primary)" strokeWidth="1" opacity="0.4" />
+              <line x1="300" y1="150" x2="520" y2="80" stroke="var(--primary)" strokeWidth="1" opacity="0.4" />
+              <line x1="300" y1="150" x2="520" y2="150" stroke="var(--primary)" strokeWidth="1" opacity="0.4" />
+              <line x1="300" y1="150" x2="520" y2="220" stroke="var(--primary)" strokeWidth="1" opacity="0.4" />
+
+              {/* Farmer node */}
+              <circle cx="80" cy="60" r="6" fill="var(--primary)" opacity="0.8" />
+              <text x="80" y="40" textAnchor="middle" fill="var(--ink)" fontSize="12" fontFamily="var(--font-sans)" fontWeight="500" letterSpacing="0.05em">FARMER</text>
+
+              {/* Buyer nodes */}
+              <circle cx="520" cy="80" r="5" fill="var(--ink-soft)" />
+              <text x="520" y="65" textAnchor="middle" fill="var(--ink-soft)" fontSize="11" fontFamily="var(--font-sans)" fontWeight="500" letterSpacing="0.05em">BUYER</text>
+
+              <circle cx="520" cy="150" r="5" fill="var(--ink-soft)" />
+              <text x="520" y="135" textAnchor="middle" fill="var(--ink-soft)" fontSize="11" fontFamily="var(--font-sans)" fontWeight="500" letterSpacing="0.05em">BUYER</text>
+
+              <circle cx="520" cy="220" r="5" fill="var(--ink-soft)" />
+              <text x="520" y="205" textAnchor="middle" fill="var(--ink-soft)" fontSize="11" fontFamily="var(--font-sans)" fontWeight="500" letterSpacing="0.05em">BUYER</text>
+
+              {/* Second farmer */}
+              <circle cx="80" cy="240" r="6" fill="var(--primary)" opacity="0.8" />
+              <text x="80" y="270" textAnchor="middle" fill="var(--ink)" fontSize="12" fontFamily="var(--font-sans)" fontWeight="500" letterSpacing="0.05em">FARMER</text>
+
+              {/* KisanSetu center */}
+              <circle cx="300" cy="150" r="12" fill="var(--surface)" stroke="var(--primary)" strokeWidth="1.5" />
+              <text x="300" y="154" textAnchor="middle" fill="var(--primary)" fontSize="10" fontFamily="var(--font-display)" fontWeight="400">KS</text>
+              <text x="300" y="190" textAnchor="middle" fill="var(--ink)" fontSize="11" fontFamily="var(--font-sans)" fontWeight="500" letterSpacing="0.08em" textTransform="uppercase">KISANSETU</text>
+            </svg>
           </div>
           <div className="story-network-text" style={{ textAlign: "center", marginTop: "32px" }}>
             <span className="eyebrow">{t("story.sec2.eyebrow")}</span>
@@ -118,38 +127,36 @@ export default function Story() {
       {/* Chapter 4 — Intelligence */}
       <section className="story-chapter reveal" style={{ padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid var(--line)" }}>
         <div className="container">
-          <div className="story-intelligence-layout">
-            <div className="story-intelligence-card">
-              <div className="story-intelligence-header">
-                <div className="story-intelligence-crop">
-                  <span className="story-intelligence-crop-name">Tomatoes</span>
-                  <span className="story-intelligence-crop-qty">500 kg</span>
-                </div>
-                <div className="story-intelligence-badge">{t("home.preview.badge")}</div>
+          <div className="story-intelligence-card">
+            <div className="story-intelligence-header">
+              <div className="story-intelligence-crop">
+                <span className="story-intelligence-crop-name">Tomatoes</span>
+                <span className="story-intelligence-crop-qty">500 kg</span>
               </div>
-              <div className="story-intelligence-body">
-                <div className="story-intelligence-row">
-                  <span className="story-intelligence-label">DEMAND</span>
-                  <span className="story-intelligence-value">{t("home.preview.demand")}</span>
-                </div>
-                <div className="story-intelligence-row">
-                  <span className="story-intelligence-label">PRICE</span>
-                  <span className="story-intelligence-value">
-                    {t("home.preview.priceLabel")}: <strong>₹32/kg</strong>
-                  </span>
-                </div>
-                <div className="story-intelligence-row">
-                  <span className="story-intelligence-label">MATCH</span>
-                  <span className="story-intelligence-value">
-                    <strong>{t("home.preview.match")}</strong> · {t("home.preview.matchSub")}
-                  </span>
-                </div>
+              <div className="story-intelligence-badge">{t("home.preview.badge")}</div>
+            </div>
+            <div className="story-intelligence-body">
+              <div className="story-intelligence-row">
+                <span className="story-intelligence-label">DEMAND</span>
+                <span className="story-intelligence-value">{t("home.preview.demand")}</span>
               </div>
-              <div className="story-intelligence-footer">
-                <span className="story-intelligence-note">
-                  {t("story.problem.p2")}
+              <div className="story-intelligence-row">
+                <span className="story-intelligence-label">PRICE</span>
+                <span className="story-intelligence-value">
+                  {t("home.preview.priceLabel")}: <strong>₹32/kg</strong>
                 </span>
               </div>
+              <div className="story-intelligence-row">
+                <span className="story-intelligence-label">MATCH</span>
+                <span className="story-intelligence-value">
+                  <strong>{t("home.preview.match")}</strong> · {t("home.preview.matchSub")}
+                </span>
+              </div>
+            </div>
+            <div className="story-intelligence-footer">
+              <span className="story-intelligence-note">
+                {t("story.problem.p2")}
+              </span>
             </div>
           </div>
         </div>
@@ -174,11 +181,11 @@ export default function Story() {
               </div>
             </div>
             <div className="story-route-path">
-              <svg width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none">
-                <path d="M 30 30 L 270 30" stroke="var(--primary)" fill="none" strokeWidth="2" strokeDasharray="4 4" />
-                <circle cx="30" cy="30" r="3" fill="var(--primary)" />
-                <circle cx="270" cy="30" r="3" fill="var(--primary)" />
-                <polygon points="260,25 270,30 260,35" fill="var(--primary)" />
+              <svg width="100%" height="40" viewBox="0 0 200 40" preserveAspectRatio="none">
+                <path d="M 10 20 L 190 20" stroke="var(--primary)" fill="none" strokeWidth="1.5" strokeDasharray="4 4" />
+                <circle cx="10" cy="20" r="3" fill="var(--primary)" />
+                <circle cx="190" cy="20" r="3" fill="var(--primary)" />
+                <polygon points="183,16 190,20 183,24" fill="var(--primary)" />
               </svg>
             </div>
             <div className="story-route-buyer">
