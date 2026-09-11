@@ -25,7 +25,7 @@ const en = {
   "nav.buyerDashboard": "Buyer",
   "nav.productDashboard": "Product Dashboard",
   "nav.solutions": "Solutions",
-  "nav.solutionStory": "Solution & Story",
+  "nav.solutionStory": "Our story",
   "nav.account": "Account",
   "nav.findmatch": "Find your market",
   "nav.findmatchFull": "Find your market — fresh, direct, fair",
