@@ -4098,7 +4098,7 @@ html[data-lang="bn"] .eyebrow {
   position: relative;
 }
 
-.story-gap-node {
+.story-gap-end {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4111,40 +4111,33 @@ html[data-lang="bn"] .eyebrow {
   z-index: 2;
 }
 
-.story-gap-node-dot {
-  width: 12px;
-  height: 12px;
+.story-gap-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--primary);
   border: 2px solid var(--surface);
-  box-shadow: 0 0 0 2px var(--primary);
 }
 
-.story-gap-lines {
-  position: absolute;
-  top: 50%;
-  left: 10%;
-  right: 10%;
-  transform: translateY(-50%);
-  opacity: 0.6;
+.story-gap-svg {
+  flex: 1;
+  max-width: 300px;
+  opacity: 0.7;
 }
 
 .story-gap-signals {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
   margin-top: 24px;
 }
 
-.story-gap-signal {
+.story-gap-signals span {
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink-soft);
-  padding: 4px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface);
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
 }
 
 .story-gap-h2 {
@@ -4162,78 +4155,20 @@ html[data-lang="bn"] .eyebrow {
 }
 
 /* Chapter 3 - KisanSetu Network */
-.story-network-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-  position: relative;
+.story-network-svg-wrap {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-.story-network-farmer {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink);
+.story-network-svg {
+  width: 100%;
+  height: auto;
 }
 
-.story-network-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--primary);
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 2px var(--primary);
-}
-
-.story-network-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-
-.story-network-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.story-network-logo span {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
-.story-network-nodes {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.story-network-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink);
+.story-network-text {
+  /* text container below network */
 }
 
 .story-network-h2 {
@@ -4464,22 +4399,6 @@ html[data-lang="bn"] .eyebrow {
     margin: 20px 0;
   }
 
-  .story-network-visual {
-    padding: 20px;
-  }
-
-  .story-network-farmer {
-    position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
-    margin-bottom: 24px;
-  }
-
-  .story-network-nodes {
-    gap: 20px;
-  }
-
   .story-route-visual {
     flex-direction: column;
     gap: 16px;
@@ -4513,10 +4432,6 @@ html[data-lang="bn"] .eyebrow {
   .story-gap-signal {
     font-size: 11px;
     padding: 3px 8px;
-  }
-
-  .story-network-nodes {
-    gap: 16px;
   }
 
   .story-intelligence-header,
