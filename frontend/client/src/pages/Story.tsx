@@ -80,13 +80,13 @@ export default function Story() {
             and the distance between them is mostly paperwork, middlemen, and guesswork.
             KisanSetu removes the guesswork.
           </p>
-          <h3 className="story-section-title">How we deliver it</h3>
-          <ul className="story-list">
-            <li>Direct marketplace — real-time listings, quality grades, verified locations</li>
-            <li>Explainable AI matching — every match shows why, with a transparent score</li>
-            <li>Price recommendation — data-backed bands from live market comparables</li>
-            <li>Logistics &amp; route optimization — VRP planning, hub consolidation, landed-cost breakdowns</li>
-          </ul>
+          <h3 className="story-mission-h3">How we deliver it</h3>
+          <p className="story-connection-copy">
+            Through a direct marketplace with real-time listings, quality grades, and verified
+            locations; explainable AI matching that shows why every match scores the way it does;
+            data-backed price recommendations drawn from live market comparables; and logistics
+            and route optimization with VRP planning, hub consolidation, and landed-cost breakdowns.
+          </p>
           <p className="story-connection-copy" style={{ marginTop: "1rem" }}>
             Our vision: a clearer market for everyone who grows.
           </p>
