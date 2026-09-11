@@ -5,8 +5,11 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://bytefrost-backend.onrender.com/api/$1"
+      "source": "/api/v1/(.*)",
+      "destination": "https://bytefrost-backend.onrender.com/api/v1/$1"
     }
-  ]
+  ],
+  "env": {
+    "VITE_API_URL": "https://bytefrost-backend.onrender.com/api/v1"
+  }
 }
