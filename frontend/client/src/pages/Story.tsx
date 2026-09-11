@@ -3,15 +3,6 @@ import { ArrowRight, Sprout } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "../contexts/LanguageContext";
 
-const team = [
-  { name: "Subhra Dey", role: "Backend / Product / DevOps" },
-  { name: "Aradhya Bandyopadhyay", role: "Research / Data" },
-  { name: "Ankit Chakraborty", role: "Logistics / Routing" },
-  { name: "Moupriya Ghosh", role: "Frontend / UI Design" },
-  { name: "Agni Pratap Pramanik", role: "AI/ML / Data Pipelines" },
-  { name: "Rajika Pramanick", role: "Presentation / Testing" },
-];
-
 export default function Story() {
   const { t } = useLanguage();
 
@@ -83,6 +74,21 @@ export default function Story() {
           <p className="story-connection-copy">
             Give every farmer a direct line to the market — better prices, verified buyers,
             and logistics that actually arrive.
+          </p>
+          <p className="story-connection-copy">
+            We started with a simple observation: the produce is there, the demand is there,
+            and the distance between them is mostly paperwork, middlemen, and guesswork.
+            KisanSetu removes the guesswork.
+          </p>
+          <h3 className="story-section-title">How we deliver it</h3>
+          <ul className="story-list">
+            <li>Direct marketplace — real-time listings, quality grades, verified locations</li>
+            <li>Explainable AI matching — every match shows why, with a transparent score</li>
+            <li>Price recommendation — data-backed bands from live market comparables</li>
+            <li>Logistics &amp; route optimization — VRP planning, hub consolidation, landed-cost breakdowns</li>
+          </ul>
+          <p className="story-connection-copy" style={{ marginTop: "1rem" }}>
+            Our vision: a clearer market for everyone who grows.
           </p>
         </div>
       </section>
@@ -184,26 +190,6 @@ export default function Story() {
             <li>3 farms → 1 shipment</li>
             <li>92% match score</li>
           </ul>
-        </div>
-      </section>
-
-      {/* TEAM */}
-      <section className="story-team" style={{ padding: "clamp(40px,5vw,64px) 0", borderBottom: "1px solid var(--line)" }}>
-        <div className="container">
-          <span className="eyebrow">THE TEAM</span>
-          <h2 className="story-connection-h2">Built by Team ByteFrost.</h2>
-          <p className="story-connection-copy">
-            Six builders, one mission — a clearer market for everyone who grows.
-            SIH 2026 · Problem Statement 26033.
-          </p>
-          <div className="story-team-grid">
-            {team.map((member) => (
-              <div className="story-team-card" key={member.name}>
-                <span className="story-team-name">{member.name}</span>
-                <span className="story-team-role">{member.role}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
