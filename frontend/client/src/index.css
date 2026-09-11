@@ -4030,3 +4030,501 @@ html[data-lang="bn"] .eyebrow {
   margin-bottom: 14px !important;
 }
 
+/* ================================================================
+   Story Page Redesign
+   ================================================================ */
+
+.story-chapter {
+  padding: clamp(48px, 6vw, 80px) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Chapter 1 - The Farmer */
+.story-farmer-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.story-farmer-image img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  display: block;
+}
+
+.story-farmer-copy {
+  max-width: 480px;
+}
+
+.story-farmer-h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 16px 0 20px;
+  color: var(--ink);
+}
+
+.story-farmer-h1-em {
+  color: var(--primary);
+}
+
+/* Chapter 2 - The Gap */
+.story-gap-visual {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 20px;
+  position: relative;
+}
+
+.story-gap-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  z-index: 2;
+}
+
+.story-gap-node-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.story-gap-lines {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+
+.story-gap-signals {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.story-gap-signal {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.story-gap-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 20px 0;
+  color: var(--ink);
+}
+
+.story-gap-h2-em {
+  color: var(--primary);
+}
+
+/* Chapter 3 - KisanSetu Network */
+.story-network-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  position: relative;
+}
+
+.story-network-farmer {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.story-network-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.story-network-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.story-network-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.story-network-logo span {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.story-network-nodes {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.story-network-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.story-network-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 20px 0;
+  color: var(--ink);
+}
+
+/* Chapter 4 - Intelligence */
+.story-intelligence-card {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.story-intelligence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-subtle);
+}
+
+.story-intelligence-crop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.story-intelligence-crop-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.story-intelligence-crop-qty {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.story-intelligence-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
+  padding: 4px 8px;
+  border: 1px solid var(--primary);
+  border-radius: var(--r-sm);
+  background: var(--primary-soft);
+}
+
+.story-intelligence-body {
+  padding: 24px;
+}
+
+.story-intelligence-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.story-intelligence-row:last-child {
+  border-bottom: none;
+}
+
+.story-intelligence-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.story-intelligence-value {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.story-intelligence-value strong {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.story-intelligence-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-subtle);
+}
+
+.story-intelligence-note {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+/* Chapter 5 - Movement */
+.story-route-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.story-route-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.story-route-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.story-route-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  border: 1px solid var(--line);
+}
+
+.story-route-path {
+  flex: 1;
+  max-width: 200px;
+  opacity: 0.7;
+}
+
+.story-route-buyer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.story-route-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 20px 0;
+  color: var(--ink);
+}
+
+/* Ending */
+.story-ending {
+  padding: clamp(64px, 8vw, 96px) 0;
+}
+
+.story-ending-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.story-ending-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+}
+
+.story-ending-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 860px) {
+  .story-farmer-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .story-farmer-copy {
+    max-width: 100%;
+  }
+
+  .story-farmer-image {
+    order: -1;
+  }
+
+  .story-gap-visual {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .story-gap-lines {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    transform: none;
+    width: 100%;
+    margin: 20px 0;
+  }
+
+  .story-network-visual {
+    padding: 20px;
+  }
+
+  .story-network-farmer {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin-bottom: 24px;
+  }
+
+  .story-network-nodes {
+    gap: 20px;
+  }
+
+  .story-route-visual {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .story-route-nodes {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .story-route-path {
+    max-width: 100%;
+    transform: rotate(90deg);
+    margin: 8px 0;
+  }
+
+  .story-route-buyer {
+    order: 3;
+  }
+}
+
+@media (max-width: 640px) {
+  .story-chapter {
+    padding: clamp(32px, 5vw, 48px) 0;
+  }
+
+  .story-gap-signals {
+    gap: 8px;
+  }
+
+  .story-gap-signal {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .story-network-nodes {
+    gap: 16px;
+  }
+
+  .story-intelligence-header,
+  .story-intelligence-body,
+  .story-intelligence-footer {
+    padding: 16px;
+  }
+
+  .story-intelligence-crop-name {
+    font-size: 16px;
+  }
+
+  .story-intelligence-value {
+    font-size: 14px;
+  }
+
+  .story-ending-cta {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .story-ending-cta .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
