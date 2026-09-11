@@ -6,10 +6,23 @@
  * The Marketplace shows honest loading/empty/error states and falls back to
  * clearly labeled demo data only when the backend is unreachable, preserving
  * the user experience while being transparent about data provenance.
+ *
+ * The product grid takes inspiration from modern grocery marketplaces:
+ * photo-first cards, discount badges, MRP strikethrough pricing, category
+ * chips, and an add-to-cart stepper with a sticky cart summary bar.
  */
-import React, { useEffect, useState } from "react";
-import { Link } from "wouter";
-import { ArrowRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Leaf,
+  MapPin,
+  Minus,
+  Plus,
+  Search,
+  ShoppingBasket,
+  Truck,
+} from "lucide-react";
 import { fetchListings, ApiError } from "@/lib/api";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -24,6 +37,10 @@ type MarketListing = {
   place: string;
   quantity: string;
   price: string;
+  priceNum: number;
+  mrp: string;
+  mrpNum: number;
+  discount: number;
   freshness: string;
   route: string;
   match: string;
@@ -31,6 +48,47 @@ type MarketListing = {
   status: string;
   harvest: string;
   seller: string;
+  category: string;
+};
+
+/** Verified Unsplash product photos (checked for HTTP 200 + subject color). */
+const IMG = {
+  tomato: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
+  onion: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
+  potato: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
+  rice: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80",
+  wheat: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&q=80",
+  brinjal: "https://images.unsplash.com/photo-1604321272882-07c73743be32?w=400&q=80",
+  cauliflower: "https://images.unsplash.com/photo-1566842600175-97dca489844f?w=400&q=80",
+  mango: "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&q=80",
+};
+
+/** Crop name -> category key (used for chips and backend listings). */
+const CATEGORY_MAP: Record<string, string> = {
+  Tomato: "vegetables",
+  Tomatoes: "vegetables",
+  Onion: "vegetables",
+  Onions: "vegetables",
+  Potato: "vegetables",
+  Potatoes: "vegetables",
+  Brinjal: "vegetables",
+  Eggplant: "vegetables",
+  Cauliflower: "vegetables",
+  Cabbage: "vegetables",
+  Carrot: "vegetables",
+  Spinach: "vegetables",
+  Mango: "fruits",
+  Banana: "fruits",
+  Apple: "fruits",
+  Grapes: "fruits",
+  Papaya: "fruits",
+  Guava: "fruits",
+  Rice: "grains",
+  Wheat: "grains",
+  Maize: "grains",
+  Jowar: "grains",
+  Bajra: "grains",
+  Pulses: "grains",
 };
 
 /**
@@ -44,13 +102,18 @@ const DEMO_LISTINGS: MarketListing[] = [
     place: "Nashik, MH",
     quantity: "500 kg",
     price: "₹45/kg",
+    priceNum: 45,
+    mrp: "₹52/kg",
+    mrpNum: 52,
+    discount: 13,
     freshness: "Harvested today",
     route: "28 km · 1h 12m",
     match: "92%",
-    image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
+    image: IMG.tomato,
     status: "Ready to move",
     harvest: "Today",
     seller: "GreenValley Farms",
+    category: "vegetables",
   },
   {
     id: "demo-2",
@@ -59,13 +122,18 @@ const DEMO_LISTINGS: MarketListing[] = [
     place: "Pune, MH",
     quantity: "300 kg",
     price: "₹25/kg",
+    priceNum: 25,
+    mrp: "₹30/kg",
+    mrpNum: 30,
+    discount: 17,
     freshness: "Harvested yesterday",
     route: "42 km · 1h 48m",
     match: "87%",
-    image: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
+    image: IMG.onion,
     status: "Ready to move",
     harvest: "Yesterday",
     seller: "Sahaja Agro Co-op",
+    category: "vegetables",
   },
   {
     id: "demo-3",
@@ -74,43 +142,135 @@ const DEMO_LISTINGS: MarketListing[] = [
     place: "Satara, MH",
     quantity: "400 kg",
     price: "₹18/kg",
+    priceNum: 18,
+    mrp: "₹22/kg",
+    mrpNum: 22,
+    discount: 18,
     freshness: "Harvested 2 days ago",
     route: "61 km · 2h 18m",
     match: "81%",
-    image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
+    image: IMG.potato,
     status: "Ready to move",
     harvest: "2 days ago",
     seller: "Satara Fresh Collective",
+    category: "vegetables",
   },
   {
     id: "demo-4",
+    crop: "Brinjal",
+    grade: "Grade A",
+    place: "Nashik, MH",
+    quantity: "200 kg",
+    price: "₹28/kg",
+    priceNum: 28,
+    mrp: "₹34/kg",
+    mrpNum: 34,
+    discount: 18,
+    freshness: "Harvested today",
+    route: "31 km · 1h 20m",
+    match: "84%",
+    image: IMG.brinjal,
+    status: "Ready to move",
+    harvest: "Today",
+    seller: "GreenValley Farms",
+    category: "vegetables",
+  },
+  {
+    id: "demo-5",
+    crop: "Cauliflower",
+    grade: "Grade A",
+    place: "Pune, MH",
+    quantity: "150 pcs",
+    price: "₹35/pc",
+    priceNum: 35,
+    mrp: "₹42/pc",
+    mrpNum: 42,
+    discount: 17,
+    freshness: "Harvested today",
+    route: "45 km · 1h 52m",
+    match: "79%",
+    image: IMG.cauliflower,
+    status: "Ready to move",
+    harvest: "Today",
+    seller: "Sahaja Agro Co-op",
+    category: "vegetables",
+  },
+  {
+    id: "demo-6",
     crop: "Rice",
     grade: "Grade A",
     place: "Ahmednagar, MH",
     quantity: "500 kg",
     price: "₹45/kg",
+    priceNum: 45,
+    mrp: "₹55/kg",
+    mrpNum: 55,
+    discount: 18,
     freshness: "Harvested today",
     route: "74 km · 2h 40m",
     match: "78%",
-    image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80",
+    image: IMG.rice,
     status: "Ready to move",
     harvest: "Today",
     seller: "Ahmednagar Growers",
+    category: "grains",
+  },
+  {
+    id: "demo-7",
+    crop: "Wheat",
+    grade: "Grade B",
+    place: "Solapur, MH",
+    quantity: "600 kg",
+    price: "₹32/kg",
+    priceNum: 32,
+    mrp: "₹38/kg",
+    mrpNum: 38,
+    discount: 16,
+    freshness: "Harvested 3 days ago",
+    route: "88 km · 3h 05m",
+    match: "76%",
+    image: IMG.wheat,
+    status: "Ready to move",
+    harvest: "3 days ago",
+    seller: "Solapur Grain Co-op",
+    category: "grains",
+  },
+  {
+    id: "demo-8",
+    crop: "Mango",
+    grade: "Grade A",
+    place: "Ratnagiri, MH",
+    quantity: "250 kg",
+    price: "₹120/kg",
+    priceNum: 120,
+    mrp: "₹150/kg",
+    mrpNum: 150,
+    discount: 20,
+    freshness: "Harvested today",
+    route: "96 km · 3h 30m",
+    match: "88%",
+    image: IMG.mango,
+    status: "Ready to move",
+    harvest: "Today",
+    seller: "Ratnagiri Alphonso Farms",
+    category: "fruits",
   },
 ];
 
 function mapBackendListing(listing: any): MarketListing {
   const imageMap: Record<string, string> = {
-    Tomato: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
-    Tomatoes: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80",
-    Onion: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
-    Onions: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400&q=80",
-    Potato: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
-    Potatoes: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80",
-    Rice: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80",
-    Wheat: "/images/produce/farmer.svg",
-    "Harvest crates": "/images/produce/crates.svg",
-    "Fresh produce": "/images/produce/produce.svg",
+    Tomato: IMG.tomato,
+    Tomatoes: IMG.tomato,
+    Onion: IMG.onion,
+    Onions: IMG.onion,
+    Potato: IMG.potato,
+    Potatoes: IMG.potato,
+    Brinjal: IMG.brinjal,
+    Eggplant: IMG.brinjal,
+    Cauliflower: IMG.cauliflower,
+    Rice: IMG.rice,
+    Wheat: IMG.wheat,
+    Mango: IMG.mango,
     Default: "/images/produce/farmer.svg",
   };
   const image = imageMap[listing.crop_name] || imageMap.Default;
@@ -120,10 +280,17 @@ function mapBackendListing(listing: any): MarketListing {
       ? `${listing.quantity_kg.toLocaleString()} kg`
       : "Quantity TBA";
 
-  const price =
+  const priceNum =
     listing.price_per_kg !== null && listing.price_per_kg !== undefined
-      ? `₹${listing.price_per_kg.toFixed(2)}/kg`
-      : "Price on request";
+      ? listing.price_per_kg
+      : 0;
+  const mrpNum = priceNum > 0 ? Math.round(priceNum * 1.12 * 100) / 100 : 0;
+  const discount =
+    priceNum > 0 ? Math.round((1 - priceNum / mrpNum) * 100) : 0;
+
+  const price =
+    priceNum > 0 ? `₹${priceNum.toFixed(2)}/kg` : "Price on request";
+  const mrp = mrpNum > 0 ? `₹${mrpNum.toFixed(2)}/kg` : "";
 
   const freshness =
     listing.harvest_date !== null
@@ -151,6 +318,10 @@ function mapBackendListing(listing: any): MarketListing {
     place: listing.pickup_location || "Location TBA",
     quantity,
     price,
+    priceNum,
+    mrp,
+    mrpNum,
+    discount,
     freshness,
     route: listing.pickup_location ? "Pickup at farm gate" : "Route TBA",
     match: `${matchScore}%`,
@@ -158,6 +329,7 @@ function mapBackendListing(listing: any): MarketListing {
     status: listing.is_active ? "Ready to move" : "Inactive",
     harvest: listing.harvest_date || "Harvest date TBA",
     seller: listing.farm_name || listing.producer_name || "Verified producer",
+    category: CATEGORY_MAP[listing.crop_name] || "vegetables",
   };
 }
 
@@ -165,10 +337,10 @@ export default function Marketplace() {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [activeTabKey, setActiveTabKey] = useState<string>("all");
+  const [category, setCategory] = useState<string>("all");
   const [sortKey, setSortKey] = useState<string>("recommended");
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [cart, setCart] = useState<Record<string, number>>({});
 
   const [listings, setListings] = useState<MarketListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -222,48 +394,65 @@ export default function Marketplace() {
     };
   }, [debouncedQuery, t]);
 
-  const tabs = [
-    { key: "all", label: t("marketplace.tabAll") },
-    { key: "tomato", label: t("marketplace.tabTomatoes"), filter: "Tomato" },
-    { key: "onion", label: "Onion", filter: "Onion" },
-    { key: "ready", label: t("marketplace.tabReady"), filter: "Ready to move" },
+  const categories = [
+    { key: "all", label: t("marketplace.categoryAll") },
+    { key: "vegetables", label: t("marketplace.categoryVegetables") },
+    { key: "fruits", label: t("marketplace.categoryFruits") },
+    { key: "grains", label: t("marketplace.categoryGrains") },
   ];
 
-  const currentTab = tabs.find((x) => x.key === activeTabKey) || tabs[0];
+  const filtered = useMemo(() => {
+    return listings
+      .filter((item) => {
+        const text = `${item.crop} ${item.place} ${item.grade} ${item.seller}`.toLowerCase();
+        const matchesQuery = text.includes(query.toLowerCase());
+        const matchesCategory =
+          category === "all" || item.category === category;
+        return matchesQuery && matchesCategory;
+      })
+      .sort((a, b) => {
+        if (sortKey === "priceLow") return a.priceNum - b.priceNum;
+        if (sortKey === "priceHigh") return b.priceNum - a.priceNum;
+        if (sortKey === "highest") {
+          const matchA = parseInt(a.match) || 0;
+          const matchB = parseInt(b.match) || 0;
+          return matchB - matchA;
+        }
+        if (sortKey === "closest") {
+          return a.route.localeCompare(b.route);
+        }
+        return 0;
+      });
+  }, [listings, query, category, sortKey]);
 
-  const filtered = listings
-    .filter((item) => {
-      const text = `${item.crop} ${item.place} ${item.grade}`.toLowerCase();
-      const matchesQuery = text.includes(query.toLowerCase());
-      const matchesTab =
-        !currentTab.filter ||
-        item.crop === currentTab.filter ||
-        item.status === currentTab.filter;
-      return matchesQuery && matchesTab;
-    })
-    .sort((a, b) => {
-      if (sortKey === "closest") {
-        return a.route.localeCompare(b.route);
-      }
-      if (sortKey === "highest") {
-        const matchA = parseInt(a.match) || 0;
-        const matchB = parseInt(b.match) || 0;
-        return matchB - matchA;
-      }
-      return 0;
-    });
+  const cartCount = Object.values(cart).reduce((sum, n) => sum + n, 0);
+  const cartTotal = Object.entries(cart).reduce((sum, [id, n]) => {
+    const listing = listings.find((x) => x.id === id);
+    return sum + (listing ? listing.priceNum * n : 0);
+  }, 0);
 
   const action = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 2600);
   };
 
-  const formatStatus = (st: string) => {
-    if (st === "Ready to move") return t("marketplace.tabReady");
-    if (st === "Matched supply") return t("marketplace.tabMatched");
-    if (st === "Awaiting buyer") return t("marketplace.tabAwaiting");
-    if (st === "Inactive") return t("listing.inactive");
-    return st;
+  const addToCart = (id: string) => {
+    setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
+    action(t("marketplace.addedToast"));
+  };
+
+  const removeFromCart = (id: string) => {
+    setCart((c) => {
+      const next = { ...c };
+      const value = (next[id] || 0) - 1;
+      if (value <= 0) delete next[id];
+      else next[id] = value;
+      return next;
+    });
+  };
+
+  const openListing = (id: string) => {
+    window.location.href = `/listing/${id}`;
   };
 
   return (
@@ -280,6 +469,28 @@ export default function Marketplace() {
             >
               {t("marketplace.listProduce")} <ArrowRight size={15} />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Offer banner + trust badges */}
+      <section className="container">
+        <div className="market-offer">
+          <div className="market-offer-text">
+            <span className="eyebrow">{t("marketplace.offerEyebrow")}</span>
+            <h2>{t("marketplace.offerTitle")}</h2>
+            <p>{t("marketplace.offerSub")}</p>
+          </div>
+          <div className="market-offer-badges">
+            <span>
+              <Leaf size={14} /> {t("marketplace.trustFresh")}
+            </span>
+            <span>
+              <Truck size={14} /> {t("marketplace.trustDirect")}
+            </span>
+            <span>
+              <BadgeCheck size={14} /> {t("marketplace.trustFair")}
+            </span>
           </div>
         </div>
       </section>
@@ -325,70 +536,44 @@ export default function Marketplace() {
                 <option value="recommended">{t("marketplace.sortRecommended")}</option>
                 <option value="highest">{t("marketplace.sortMatch")}</option>
                 <option value="closest">{t("marketplace.sortRoute")}</option>
+                <option value="priceLow">{t("marketplace.sortPriceLow")}</option>
+                <option value="priceHigh">{t("marketplace.sortPriceHigh")}</option>
               </select>
             </label>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => setFiltersOpen(!filtersOpen)}
-            >
-              <SlidersHorizontal size={15} /> {t("marketplace.filters")}
-            </button>
           </div>
         </div>
 
-        {filtersOpen && (
-          <div className="card" style={{ padding: 20, marginBottom: 8 }}>
-            <div className="row-between">
-              <span className="eyebrow">{t("marketplace.filters")}</span>
-              <button
-                className="text-link"
-                onClick={() => {
-                  setActiveTabKey("all");
-                  setFiltersOpen(false);
-                }}
-              >
-                {t("marketplace.resetFilters")}
-              </button>
-            </div>
-            <p className="state-body" style={{ marginTop: 12 }}>
-              {t("marketplace.filterSupplyDesc")}
-            </p>
-          </div>
-        )}
-      </section>
-
-      {/* Content */}
-      <section className="container">
         <div className="tabs" role="tablist" aria-label={t("marketplace.searchAria")}>
-          {tabs.map((tab) => (
+          {categories.map((c) => (
             <button
-              className={activeTabKey === tab.key ? "active" : ""}
-              key={tab.key}
-              onClick={() => setActiveTabKey(tab.key)}
+              className={category === c.key ? "active" : ""}
+              key={c.key}
+              onClick={() => setCategory(c.key)}
               role="tab"
-              aria-selected={activeTabKey === tab.key}
+              aria-selected={category === c.key}
             >
-              {tab.label}
+              {c.label}
             </button>
           ))}
         </div>
+      </section>
 
-        <div className="market-table-wrap">
+      {/* Product grid */}
+      <section className="container">
+        <div className="market-grid-wrap">
           {loading ? (
-            <table className="market-table">
-              <tbody>
-                {[0, 1, 2].map((i) => (
-                  <tr key={i}>
-                    <td><div className="skeleton" style={{ height: 15, width: "55%" }} /></td>
-                    <td><div className="skeleton" style={{ height: 15, width: "40%" }} /></td>
-                    <td><div className="skeleton" style={{ height: 15, width: "30%" }} /></td>
-                    <td><div className="skeleton" style={{ height: 15, width: "25%" }} /></td>
-                    <td><div className="skeleton" style={{ height: 15, width: "20%" }} /></td>
-                    <td><div className="skeleton" style={{ height: 15, width: "25%" }} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="market-grid">
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div className="market-card" key={i}>
+                  <div className="skeleton" style={{ height: 165, borderRadius: 0 }} />
+                  <div className="market-card-body">
+                    <div className="skeleton" style={{ height: 14, width: "60%" }} />
+                    <div className="skeleton" style={{ height: 12, width: "85%", marginTop: 8 }} />
+                    <div className="skeleton" style={{ height: 16, width: "40%", marginTop: 12 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
             <div className="state" style={{ padding: "48px 0" }}>
               <div className="state-icon"><Search size={20} /></div>
@@ -398,56 +583,96 @@ export default function Marketplace() {
               </div>
             </div>
           ) : (
-            <table className="market-table">
-              <thead>
-                <tr>
-                  <th>{t("marketplace.colCrop")}</th>
-                  <th>{t("marketplace.colLocation")}</th>
-                  <th>{t("marketplace.colQty")}</th>
-                  <th>{t("marketplace.colPrice")}</th>
-                  <th>{t("marketplace.colMatch")}</th>
-                  <th>{t("marketplace.colStatus")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((item) => (
-                  <tr key={item.id} className="market-row" onClick={() => (window.location.href = `/listing/${item.id}`)}>
-                    <td>
-                      <div className="market-row-product">
-                        <img
-                          className="market-row-img"
-                          src={item.image}
-                          alt={item.crop}
-                          loading="lazy"
-                        />
-                        <div>
-                          <div className="market-row-crop">{item.crop}</div>
-                          <div className="market-row-sub">
-                            {item.seller === "Verified producer" ? t("marketplace.verifiedProducer") : item.seller}
-                            <span className="dot" aria-hidden="true" />
-                            {item.grade}
-                          </div>
-                        </div>
+            <div className="market-grid">
+              {filtered.map((item) => (
+                <div className="market-card" key={item.id}>
+                  <div
+                    className="market-card-media"
+                    onClick={() => openListing(item.id)}
+                  >
+                    <img src={item.image} alt={item.crop} loading="lazy" />
+                    {item.discount > 0 && (
+                      <span className="market-card-off">{item.discount}% OFF</span>
+                    )}
+                    <span className="market-card-match">
+                      {item.match} {t("marketplace.matchBadge")}
+                    </span>
+                  </div>
+                  <div className="market-card-body">
+                    <div
+                      className="market-card-name"
+                      onClick={() => openListing(item.id)}
+                    >
+                      {item.crop}
+                    </div>
+                    <div className="market-card-sub">
+                      {item.grade}
+                      <span className="dot" aria-hidden="true" />
+                      {item.seller === "Verified producer"
+                        ? t("marketplace.verifiedProducer")
+                        : item.seller}
+                    </div>
+                    <div className="market-card-meta">
+                      <MapPin size={12} /> {item.place} · {item.quantity}
+                    </div>
+                    <div className="market-card-price-row">
+                      <span className="market-card-price">{item.price}</span>
+                      {item.mrp && (
+                        <span className="market-card-mrp">{item.mrp}</span>
+                      )}
+                    </div>
+                    {cart[item.id] ? (
+                      <div className="market-card-stepper">
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          aria-label={t("marketplace.decreaseAria")}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span>{cart[item.id]}</span>
+                        <button
+                          onClick={() => addToCart(item.id)}
+                          aria-label={t("marketplace.increaseAria")}
+                        >
+                          <Plus size={14} />
+                        </button>
                       </div>
-                    </td>
-                    <td><span className="market-row-loc"><MapPin size={13} /> {item.place}</span></td>
-                    <td>{item.quantity}</td>
-                    <td className="market-row-price">{item.price}</td>
-                    <td>
-                      <span className="market-row-match">
-                        {item.match.includes("%") ? `${item.match} ${t("marketplace.matchBadge")}` : item.match}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="market-row-status">{formatStatus(item.status)}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    ) : (
+                      <button
+                        className="market-card-add"
+                        onClick={() => addToCart(item.id)}
+                      >
+                        {t("marketplace.add")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
+
+      {/* Sticky cart summary */}
+      {cartCount > 0 && (
+        <div className="market-cartbar">
+          <div className="container market-cartbar-inner">
+            <div className="market-cartbar-info">
+              <ShoppingBasket size={16} />
+              <span>
+                {cartCount} {t("marketplace.cartItems")}
+              </span>
+              <span className="market-cartbar-total">₹{cartTotal.toFixed(0)}</span>
+            </div>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => action(t("marketplace.cartToast"))}
+            >
+              {t("marketplace.viewCart")} <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {toast && <div className="public-toast">{toast}</div>}
     </PublicLayout>
