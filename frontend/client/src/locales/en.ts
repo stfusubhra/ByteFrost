@@ -548,8 +548,12 @@ const en = {
   "login.err.emailOrPhoneRequired": "Please enter your email or phone number.",
   "login.emailOrPhone.label": "Email or phone",
   "login.emailOrPhone.placeholder": "you@example.com or +91xxxxxxxxxx",
-  "login.phone.label": "Phone number",
-  "login.phone.placeholder": "+91xxxxxxxxxx",
+  "login.phone.label": "Mobile number",
+  "login.phone.placeholder": "98765 43210",
+  "login.phone.hint": "Enter your 10-digit mobile number. We'll add +91 automatically.",
+  "login.tab.email": "Email",
+  "login.tab.phone": "Mobile",
+  "login.err.phoneRequired": "Mobile number is required.",
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "Join the people who grow and the people who need.",

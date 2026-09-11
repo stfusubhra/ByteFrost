@@ -547,8 +547,12 @@ const hi: Record<LocaleKeys, string> = {
   "login.err.emailOrPhoneRequired": "कृपया अपना ईमेल या फ़ोन नंबर दर्ज करें।",
   "login.emailOrPhone.label": "ईमेल या फ़ोन",
   "login.emailOrPhone.placeholder": "you@example.com या +91xxxxxxxxxx",
-  "login.phone.label": "फ़ोन नंबर",
-  "login.phone.placeholder": "+91xxxxxxxxxx",
+  "login.phone.label": "मोबाइल नंबर",
+  "login.phone.placeholder": "98765 43210",
+  "login.phone.hint": "अपना 10 अंकों का मोबाइल नंबर दर्ज करें। हम +91 अपने आप जोड़ देंगे।",
+  "login.tab.email": "ईमेल",
+  "login.tab.phone": "मोबाइल",
+  "login.err.phoneRequired": "मोबाइल नंबर आवश्यक है।",
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "उगाने वालों और ज़रूरत वालों से जुड़ें।",

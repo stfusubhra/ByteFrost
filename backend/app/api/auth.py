@@ -16,6 +16,25 @@ from app.schemas.schemas import UserCreate, UserLogin, TokenResponse, UserRespon
 router = APIRouter()
 
 
+def normalize_phone(phone: str | None) -> str | None:
+    """Normalize an Indian mobile number to E.164 (+91XXXXXXXXXX) form.
+
+    Accepts: 9876543210, 919876543210, +919876543210, +91 98765 43210, etc.
+    Returns None for empty input.
+    """
+    if not phone:
+        return None
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if len(digits) == 10:
+        return f"+91{digits}"
+    if len(digits) == 12 and digits.startswith("91"):
+        return f"+{digits}"
+    if len(digits) == 13 and digits.startswith("91"):
+        return f"+{digits}"
+    # Already E.164 or unknown format — return cleaned original
+    return phone.strip()
+
+
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("20/minute")
 async def register(request: Request, payload: UserCreate, db: AsyncSession = Depends(get_db)):
@@ -27,7 +46,7 @@ async def register(request: Request, payload: UserCreate, db: AsyncSession = Dep
     user = User(
         email=payload.email,
         full_name=payload.full_name,
-        phone=payload.phone,
+        phone=normalize_phone(payload.phone),
         hashed_password=hash_password(payload.password),
         role=UserRole(payload.role),
     )
@@ -55,7 +74,7 @@ async def login(request: Request, payload: UserLogin, db: AsyncSession = Depends
     if payload.email:
         query = query.where(User.email == payload.email)
     else:  # payload.phone is guaranteed to be present if we reach here
-        query = query.where(User.phone == payload.phone)
+        query = query.where(User.phone == normalize_phone(payload.phone))
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     if not user or not verify_password(payload.password, user.hashed_password):

@@ -546,8 +546,12 @@ const bn: Record<LocaleKeys, string> = {
   "login.err.emailOrPhoneRequired": "দয়া করে আপনার ইমেল বা ফোন নম্বর দিন।",
   "login.emailOrPhone.label": "ইমেল বা ফোন",
   "login.emailOrPhone.placeholder": "you@example.com বা +91xxxxxxxxxx",
-  "login.phone.label": "ফোন নম্বর",
-  "login.phone.placeholder": "+91xxxxxxxxxx",
+  "login.phone.label": "মোবাইল নম্বর",
+  "login.phone.placeholder": "98765 43210",
+  "login.phone.hint": "আপনার 10 অঙ্কের মোবাইল নম্বর দিন। আমরা +91 স্বয়ংক্রিয়ভাবে যোগ করব।",
+  "login.tab.email": "ইমেল",
+  "login.tab.phone": "মোবাইল",
+  "login.err.phoneRequired": "মোবাইল নম্বর আবশ্যক।",
 
   // ── Signup page ──────────────────────────────────────────
   "signup.tagline": "উৎপাদক ও ক্রেতাদের সাথে যুক্ত হন।",
