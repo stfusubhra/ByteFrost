@@ -143,21 +143,21 @@ export default function Contact() {
       <div className="container">
         {/* Status bar showing submission state */}
         {error && (
-          <div className="card" style={{ padding: 16, marginBottom: 8, borderColor: "var(--error)" }}>
+          <div className="card mb-2 p-4 border-destructive">
             <div className="badge badge-error">Error</div>
-            <p className="state-body" style={{ marginTop: 6 }}>{error}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">{error}</p>
           </div>
         )}
         {sent && !submitting && (
-          <div className="card" style={{ padding: 16, marginBottom: 8, borderColor: "var(--success)" }}>
+          <div className="card mb-2 p-4 border-success">
             <div className="badge badge-success">{t("contact.success.h")}</div>
-            <p className="state-body" style={{ marginTop: 6 }}>
+            <p className="mt-1.5 text-sm text-muted-foreground">
               {t("contact.status.success")}
             </p>
           </div>
         )}
         {submitting && (
-          <div className="card" style={{ padding: 16, marginBottom: 8 }}>
+          <div className="card mb-2 p-4">
             <div className="badge badge-neutral">{t("contact.status.submitting")}</div>
           </div>
         )}
@@ -168,10 +168,10 @@ export default function Contact() {
             <a href="mailto:hello@kisansetu.in">
               <Mail size={16} /> hello@kisansetu.in
             </a>
-            <p className="row" style={{ color: "var(--ink-soft)" }}>
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin size={14} /> {t("contact.direct.location")}
             </p>
-            <div className="stack" style={{ gap: 8, marginTop: 12 }}>
+            <div className="flex flex-col gap-2 mt-3">
               <span className="badge badge-neutral">{t("contact.direct.forFarmers")}</span>
               <span className="badge badge-neutral">{t("contact.direct.forBuyers")}</span>
               <span className="badge badge-neutral">{t("contact.direct.forPartners")}</span>
@@ -260,7 +260,7 @@ export default function Contact() {
 
         {/* Demo data transparency section */}
         {sent && (
-          <p className="state-body" style={{ marginBottom: 48 }}>
+          <p className="text-sm text-muted-foreground mt-12">
             Demo submission stored in localStorage as "kisansetu_demo_contacts".
             Clear localStorage to reset.
           </p>

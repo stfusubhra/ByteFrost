@@ -63,7 +63,7 @@ export default function Login() {
           id: response.data.user_id,
           email: response.data?.email ?? "",
           full_name: "",
-          phone: method === "phone" ? payload.phone : null,
+          phone: method === "phone" ? (payload.phone ?? null) : null,
           role: response.data.role,
           is_verified: true,
           is_active: true,

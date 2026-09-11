@@ -54,7 +54,7 @@
   --color-accent: #8A8F55; /* Earth accent */
   --color-success: #0F9D58;
   --color-warning: #F9A825;
-  --color-error: --color-error: #D93025;
+  --color-error: #D93025;
   --color-info: #2F6F8F;
   --color-border: #E8E4DA;
   --color-border-strong: #D5D1C8;
@@ -64,6 +64,23 @@
   --color-warning-light: #FFFBEB;
   --color-error-light: #FDE8E7;
   --color-info-light: #E1F5FE;
+}
+
+/* shadcn semantic tokens — wired to the KisanSetu design system.
+   Added so every shadcn/ui component (button, card, menus, dialogs…)
+   resolves muted / popover / secondary / destructive / input colours. */
+@theme inline {
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--ink-soft);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-secondary: var(--primary-soft);
+  --color-secondary-foreground: var(--primary-strong);
+  --color-destructive: var(--error);
+  --color-destructive-foreground: #ffffff;
+  --color-input: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--ink);
 }
 
 /* ================================================================

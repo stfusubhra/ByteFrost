@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  Loader2,
   Truck,
   Package,
   ShoppingBag,
@@ -179,7 +180,7 @@ export default function BuyerDashboard() {
         max_price_per_kg: sourcingMaxPrice ? Number(sourcingMaxPrice) : undefined,
       });
 
-      if (plan.status === "CONFIRMED" || plan.status === "PLANNED") {
+      if (plan.status === "FEASIBLE" || plan.status === "PARTIAL") {
         toast.success(`Order fulfilled! Shipment created: ${plan.shipment_ids?.[0] || "Active"}`);
         setMatchPlan(null);
         await loadData();
@@ -476,7 +477,10 @@ export default function BuyerDashboard() {
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">{tr("common.loading", "Loading farm listings...")}</div>
+            <div className="p-8 flex flex-col items-center gap-3 text-muted-foreground">
+              <Loader2 className="size-6 animate-spin text-primary" />
+              <span className="text-sm">{tr("common.loading", "Loading farm listings...")}</span>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {listings.map((l) => (

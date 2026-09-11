@@ -19,17 +19,7 @@ export const ProtectedRoute: React.FC<Props> = ({ path, component: Component, al
         // logged-in users back to /login.
         if (isLoading) {
           return (
-            <div
-              style={{
-                minHeight: "60vh",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--ink-soft)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 14,
-              }}
-            >
+            <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
               Loading…
             </div>
           );

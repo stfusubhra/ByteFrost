@@ -17,7 +17,7 @@ export default function DashboardEntry() {
           <p>
             {t("entry.p")}
           </p>
-          <div style={{ marginTop: 28 }}>
+          <div className="mt-7">
             <Link className="btn btn-primary" href="/">
               {t("entry.openExp")} <ArrowRight size={15} />
             </Link>
@@ -54,7 +54,7 @@ export default function DashboardEntry() {
         </section>
 
         <section className="entry-note">
-          <span className="eyebrow" style={{ justifyContent: "center" }}>
+          <span className="eyebrow text-center">
             {t("entry.ready")}
           </span>
           <h2>{t("entry.fromFarm")}</h2>

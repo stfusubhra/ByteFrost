@@ -16,7 +16,7 @@ export default function NotFound() {
           <p>
             {t("notfound.p")}
           </p>
-          <div style={{ marginTop: 28 }}>
+          <div className="mt-7">
             <Link className="btn btn-primary" href="/">
               {t("notfound.home")} <ArrowRight size={14} />
             </Link>

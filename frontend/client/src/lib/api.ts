@@ -22,6 +22,7 @@ export class ApiError extends Error {
 const client = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
+  timeout: 15_000,
 });
 
 // Attach the bearer token from localStorage if present.
@@ -485,7 +486,7 @@ export interface PlanExplanationData {
 }
 
 export interface FulfillmentPlanData {
-  status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE" | string;
+  status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE";
   infeasibility_reason?: string | null;
   routing_mode?: string | null;
   vehicle_routes?: Array<{

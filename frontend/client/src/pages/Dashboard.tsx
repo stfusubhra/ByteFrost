@@ -20,6 +20,7 @@ import {
   CloudSun,
   FilePlus2,
   LayoutDashboard,
+  Loader2,
   MapPinned,
   Menu,
   PackageCheck,
@@ -182,9 +183,12 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="dash-shell">
-        <div className="dash-body">
-          <p className="state">{t("dash.loading")}</p>
+      <div className="dash-shell flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+            <Loader2 className="size-5 animate-spin text-primary" />
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">{t("dash.loading")}</p>
         </div>
       </div>
     );
@@ -192,11 +196,18 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="dash-shell">
-        <div className="dash-body">
-          <div className="card" style={{ padding: 20, borderColor: "var(--error)" }}>
-            <p className="state-body" style={{ color: "var(--error)" }}>{error}</p>
+      <div className="dash-shell flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-3 p-6">
+          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
+            <svg className="size-5 text-destructive" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-foreground">Something went wrong</p>
+            <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+          </div>
+          <Link href="/" className="mt-2 btn btn-sm btn-outline">
+            <ArrowLeft className="size-3.5" /> Back to home
+          </Link>
         </div>
       </div>
     );
@@ -232,7 +243,7 @@ export default function Dashboard() {
             <strong>{activeNavLabel}</strong>
           </div>
         </div>
-        <div className="dash-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="dash-topbar-right flex items-center gap-2.5">
           <LanguageSelector variant="dark" />
           <button
             className="btn btn-ghost btn-sm"
@@ -302,7 +313,7 @@ export default function Dashboard() {
                 <div>
                   <p className="eyebrow">{t("dash.inMotion")} · Google OR-Tools VRP Optimization</p>
                   <h1>{t("dash.routesTitle")}</h1>
-                  <p className="state-body" style={{ marginTop: 6 }}>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.routesSub")}
                   </p>
                 </div>
@@ -341,7 +352,10 @@ export default function Dashboard() {
                   </div>
 
                   {shipmentLoading ? (
-                    <div className="p-8 text-center text-muted-foreground">{t("dash.loadingRoute")}</div>
+                    <div className="p-8 flex flex-col items-center gap-2 text-muted-foreground">
+                      <Loader2 className="size-5 animate-spin" />
+                      <span className="text-sm">{t("dash.loadingRoute")}</span>
+                    </div>
                   ) : selectedShipment ? (
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                       <div className="xl:col-span-2 space-y-6">
@@ -388,7 +402,7 @@ export default function Dashboard() {
                 <div>
                   <p className="eyebrow">{t("dash.liveMarket")}</p>
                   <h1>{t("dash.marketplace")}</h1>
-                  <p className="state-body" style={{ marginTop: 6 }}>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.marketplaceSub")}
                   </p>
                 </div>
@@ -449,7 +463,7 @@ export default function Dashboard() {
                 <div>
                   <p className="eyebrow">{t("dash.liveMarket")}</p>
                   <h1>{t("dash.myListings")}</h1>
-                  <p className="state-body" style={{ marginTop: 6 }}>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.myListingsSub")}
                   </p>
                 </div>
@@ -512,7 +526,7 @@ export default function Dashboard() {
                 <div>
                   <p className="eyebrow">{t("dash.liveMarket")}</p>
                   <h1>{t("dash.orders")}</h1>
-                  <p className="state-body" style={{ marginTop: 6 }}>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.ordersSub")}
                   </p>
                 </div>
@@ -567,11 +581,11 @@ export default function Dashboard() {
                 <div>
                   <p className="eyebrow">{new Date().toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · {t("dash.liveMarket")}</p>
                   <h1>{t("dash.goodMorning")}{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}.</h1>
-                  <p className="state-body" style={{ marginTop: 6 }}>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.supplyNext")}
                   </p>
                   {!isAuthenticated && (
-                    <span className="badge badge-warning" style={{ marginTop: 8, display: "inline-block" }}>Demo Data — Sign in for real data</span>
+                    <span className="badge badge-warning mt-2 inline-block">Demo Data — Sign in for real data</span>
                   )}
                 </div>
                 <button className="btn btn-primary" onClick={() => action("Listing flow opened — intelligence will appear as you add produce.")}>
@@ -629,7 +643,7 @@ export default function Dashboard() {
                       <span className="badge badge-primary">
                         {t("dash.confidence")} {demandForecast.forecast?.[0]?.confidence ?? "?"}
                       </span>
-                      <span className="badge badge-neutral" style={{ marginLeft: 8 }}>
+                      <span className="badge badge-neutral ml-2">
                         {t("dash.historicalData")}
                       </span>
                     </div>
@@ -709,7 +723,7 @@ export default function Dashboard() {
                       </button>
                     </div>
                   ))}
-                  <div style={{ padding: 16, borderTop: "1px solid var(--line)" }}>
+                  <div className="p-4 border-t border-border">
                     <button className="btn btn-secondary btn-block" onClick={() => action("Marketplace opened with matches.")}>
                       {t("dash.exploreMarketplace")} <ArrowUpRight size={15} />
                     </button>

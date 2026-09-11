@@ -40,7 +40,7 @@ export default function AuthLayout({
 
       {/* Right — the form */}
       <main className="auth-panel">
-        <div style={{ display: "flex", justifyContent: "flex-end", padding: "16px 24px 0" }}>
+        <div className="flex justify-end px-6 pt-4">
           <LanguageSelector variant="dark" />
         </div>
         <div className="auth-panel-inner">

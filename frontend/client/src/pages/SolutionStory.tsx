@@ -11,7 +11,7 @@
  *   8. About / Mission — who we are
  *   9. CTA — get started
  */
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -31,6 +31,7 @@ import {
   Users,
   ShieldCheck,
   MapPin,
+  Loader2,
 } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -48,6 +49,28 @@ import { Progress } from "@/components/ui/progress";
 
 export default function SolutionStory() {
   const { t } = useLanguage();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial load for smooth transition
+    const timer = setTimeout(() => setLoading(false), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Loader2 className="size-5 animate-spin text-primary" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">Loading…</p>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
 
   const pillars = [
     {

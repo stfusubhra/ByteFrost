@@ -103,9 +103,13 @@ export default function ListingDetail() {
   if (loading) {
     return (
       <PublicLayout>
-        <div className="container stack" style={{ alignItems: "center", paddingTop: 40, paddingBottom: 40 }}>
-          <Loader2 size={32} />
-          <p className="state-body">{t("listing.loading")}</p>
+        <div className="container flex min-h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Loader2 className="size-5 animate-spin text-primary" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">{t("listing.loading")}</p>
+          </div>
         </div>
       </PublicLayout>
     );
@@ -159,13 +163,13 @@ export default function ListingDetail() {
           {/* Details */}
           <div className="detail-content">
             <h1>{listing.crop_name}</h1>
-            <div className="row" style={{ gap: 8, marginTop: 8 }}>
+            <div className="flex gap-2 mt-2">
               <span className="badge badge-primary">{listing.quality_grade || "Grade A"}</span>
-              <span className="row" style={{ gap: 4 }}>
+              <span className="flex items-center gap-1">
                 <MapPin size={14} /> {listing.pickup_location || t("marketplace.locationTBA")}
               </span>
             </div>
-            <p className="state-body" style={{ marginTop: 12, color: "var(--ink-soft)" }}>
+            <p className="text-sm text-muted-foreground mt-3">
               <strong>{t("listing.seller")}</strong> {getSellerName(listing)}
             </p>
 
@@ -184,18 +188,18 @@ export default function ListingDetail() {
             {/* Order Form */}
             <div className="detail-order">
               <h2>{t("listing.placeOrder")}</h2>
-              <p className="state-body" style={{ color: "var(--ink-soft)", marginBottom: 12 }}>
+              <p className="text-sm text-muted-foreground mb-3">
                 {t("listing.orderDesc")} (max {listing.quantity_kg.toLocaleString()} kg).
               </p>
 
               {orderError && (
-                <div className="badge badge-error" style={{ marginBottom: 12 }}>
+                <div className="badge badge-error mb-3">
                   {orderError}
                 </div>
               )}
 
-              <div className="row" style={{ gap: 12, marginBottom: 16 }}>
-                <label className="row" style={{ gap: 4, alignItems: "center" }}>
+              <div className="flex gap-3 mb-4">
+                <label className="flex items-center gap-1">
                   <span>{t("listing.quantityKg")}</span>
                   <input
                     type="number"
@@ -211,8 +215,8 @@ export default function ListingDetail() {
                 </label>
               </div>
 
-              <div className="row" style={{ gap: 12, marginBottom: 16 }}>
-                <label className="stack" style={{ gap: 4, alignItems: "start" }}>
+              <div className="flex flex-col gap-3 mb-4">
+                <label className="flex flex-col gap-1">
                   <span>{t("listing.notes")}</span>
                   <textarea
                     value={notes}
@@ -242,7 +246,7 @@ export default function ListingDetail() {
               </button>
 
               {orderSuccess && (
-                <div className="badge badge-success" style={{ marginTop: 12 }}>
+                <div className="badge badge-success mt-3">
                   {t("listing.orderSuccess")}
                 </div>
               )}
@@ -252,7 +256,7 @@ export default function ListingDetail() {
       </section>
 
       {/* Action buttons */}
-      <div className="container detail-actions" style={{ justifyContent: "center" }}>
+      <div className="container flex justify-center detail-actions">
         <Link href="/marketplace" className="btn btn-ghost">
           {t("listing.backMarketplace")}
         </Link>
