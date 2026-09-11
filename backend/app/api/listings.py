@@ -7,7 +7,7 @@ from uuid import UUID
 from app.core.database import get_db
 from app.core.security import get_current_user, require_roles
 from app.models.models import ProduceListing, User, UserRole
-from app.schemas.schemas import ListingCreate, ListingResponse
+from app.schemas.schemas import ListingCreate, ListingResponse, ListingUpdate
 
 router = APIRouter()
 
@@ -89,3 +89,29 @@ async def deactivate_listing(
 
     listing.is_active = False
     return None
+
+
+@router.patch("/{listing_id}", response_model=ListingResponse)
+async def update_listing(
+    listing_id: UUID,
+    payload: ListingUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(ProduceListing).where(
+            ProduceListing.id == listing_id,
+            ProduceListing.seller_id == UUID(current_user["id"]),
+        )
+    )
+    listing = result.scalar_one_or_none()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found or not owned")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(listing, field, value)
+
+    await db.flush()
+    await db.refresh(listing)
+    return listing

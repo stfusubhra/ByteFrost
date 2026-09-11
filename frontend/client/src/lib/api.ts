@@ -67,7 +67,12 @@ export interface Listing {
   quality_grade: string | null;
   price_per_kg: number | null;
   harvest_date: string | null;
+  availability_start?: string | null;
+  availability_end?: string | null;
   pickup_location: string | null;
+  pickup_latitude?: number | null;
+  pickup_longitude?: number | null;
+  description?: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -184,18 +189,18 @@ export interface FulfillmentPlanData {
 
 // --- Public endpoints (no auth) ---
 export async function fetchListings(params?: {
-   crop_name?: string;
-   max_price?: number;
-   limit?: number;
- }): Promise<Listing[]> {
-   const { data } = await client.get<Listing[]>("/listings/", { params });
-   return data;
- }
+    crop_name?: string;
+    max_price?: number;
+    limit?: number;
+  }): Promise<Listing[]> {
+    const { data } = await client.get<Listing[]>("/listings/", { params });
+    return data;
+  }
 
 export async function fetchListing(id: string): Promise<Listing> {
-   const { data } = await client.get<Listing>(`/listings/${id}`);
-   return data;
- }
+    const { data } = await client.get<Listing>(`/listings/${id}`);
+    return data;
+  }
 
 export interface ListingCreatePayload {
   crop_name: string;
@@ -217,54 +222,75 @@ export async function createListing(payload: ListingCreatePayload): Promise<List
   return data;
 }
 
+export interface ListingUpdatePayload {
+  crop_name?: string;
+  variety?: string;
+  quantity_kg?: number;
+  quality_grade?: string;
+  price_per_kg?: number;
+  harvest_date?: string;
+  availability_start?: string;
+  availability_end?: string;
+  pickup_location?: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
+  description?: string;
+  is_active?: boolean;
+}
+
+export async function updateListing(id: string, payload: ListingUpdatePayload): Promise<Listing> {
+  const { data } = await client.patch<Listing>(`/listings/${id}`, payload);
+  return data;
+}
+
 // --- Order types ---
 export interface OrderItemCreate {
-   listing_id: string;
-   quantity_kg: number;
-}
+    listing_id: string;
+    quantity_kg: number;
+  }
 
 export interface OrderCreate {
-   items: OrderItemCreate[];
-   delivery_address?: string;
-   delivery_latitude?: number;
-   delivery_longitude?: number;
-   delivery_deadline?: string; // ISO string
-   notes?: string;
-}
+    items: OrderItemCreate[];
+    delivery_address?: string;
+    delivery_latitude?: number;
+    delivery_longitude?: number;
+    delivery_deadline?: string; // ISO string
+    notes?: string;
+  }
 
 export interface OrderItemResponse {
-   id: string;
-   listing_id: string;
-   quantity_kg: number;
-   price_per_kg: number;
-}
+    id: string;
+    listing_id: string;
+    quantity_kg: number;
+    price_per_kg: number;
+  }
 
 export interface OrderResponse {
-   id: string;
-   buyer_id: string;
-   status: string;
-   total_amount?: number;
-   delivery_address?: string;
-   delivery_deadline?: string;
-   created_at: string;
-   items: OrderItemResponse[];
-}
+    id: string;
+    buyer_id: string;
+    status: string;
+    total_amount?: number;
+    delivery_address?: string;
+    delivery_deadline?: string;
+    created_at: string;
+    items: OrderItemResponse[];
+  }
 
 export async function fetchOrders(params?: {
-   status?: string;
-   limit?: number;
-}): Promise<OrderResponse[]> {
-   const { data } = await client.get<OrderResponse[]>("/orders/", { params });
-   return data;
-}
+    status?: string;
+    limit?: number;
+  }): Promise<OrderResponse[]> {
+    const { data } = await client.get<OrderResponse[]>("/orders/", { params });
+    return data;
+  }
 
 export async function fetchIncomingOrders(params?: {
-   status?: string;
-   limit?: number;
-}): Promise<OrderResponse[]> {
-   const { data } = await client.get<OrderResponse[]>("/orders/incoming", { params });
-   return data;
-}
+    status?: string;
+    limit?: number;
+  }): Promise<OrderResponse[]> {
+    const { data } = await client.get<OrderResponse[]>("/orders/incoming", { params });
+    return data;
+  }
 
 // --- Logistics Types ---
 export interface RouteStopItem {
@@ -534,8 +560,8 @@ export interface IncidentReportData {
 
 // --- Authenticated endpoint for creating an order ---
 export async function createOrder(orderData: OrderCreate): Promise<OrderResponse> {
-   const { data } = await client.post<OrderResponse>("/orders/", orderData);
-   return data;
+    const { data } = await client.post<OrderResponse>("/orders/", orderData);
+    return data;
 }
 
 // --- Logistics Endpoints ---
@@ -719,4 +745,3 @@ export async function planShipment(
 }
 
 export { API_BASE, client as api };
-

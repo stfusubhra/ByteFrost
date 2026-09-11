@@ -18,6 +18,7 @@ import {
   ChevronRight,
   CircleHelp,
   CloudSun,
+  Edit,
   FilePlus2,
   LayoutDashboard,
   Loader2,
@@ -27,8 +28,9 @@ import {
   Settings2,
   ShieldCheck,
   Sprout,
-  UsersRound,
   Truck,
+  UsersRound,
+  X,
   Navigation,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +47,11 @@ import {
   fetchShipment,
   fetchTracking,
   fetchIncomingOrders,
+  createListing,
+  updateListing,
   Listing,
+  ListingCreatePayload,
+  ListingUpdatePayload,
   OrderResponse,
   ShipmentItem,
   ShipmentDetailItem,
@@ -53,6 +59,7 @@ import {
   ApiError,
   DemandForecastData,
 } from "@/lib/api";
+import type { LocaleKeys } from "@/locales";
 
 function SignalBars({ value, tone = "green" }: { value: number; tone?: string }) {
   return (
@@ -65,13 +72,420 @@ function SignalBars({ value, tone = "green" }: { value: number; tone?: string })
   );
 }
 
+function CreateListingModal({
+  isOpen,
+  onClose,
+  onCreated,
+  t,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreated: (listing: Listing) => void;
+  t: (key: LocaleKeys) => string;
+}) {
+  const [form, setForm] = useState({
+    crop_name: "",
+    variety: "",
+    quantity_kg: "",
+    quality_grade: "A",
+    price_per_kg: "",
+    harvest_date: "",
+    availability_start: "",
+    availability_end: "",
+    pickup_location: "",
+    pickup_latitude: "",
+    pickup_longitude: "",
+    description: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
+    }));
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!form.crop_name.trim()) {
+      setError(t("createListing.err.cropName"));
+      return;
+    }
+    if (!form.quantity_kg || Number(form.quantity_kg) <= 0) {
+      setError(t("createListing.err.quantity"));
+      return;
+    }
+    if (!form.price_per_kg || Number(form.price_per_kg) <= 0) {
+      setError(t("createListing.err.price"));
+      return;
+    }
+    if (!form.pickup_location.trim()) {
+      setError(t("createListing.err.location"));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload: ListingCreatePayload = {
+        crop_name: form.crop_name.trim(),
+        variety: form.variety.trim() || undefined,
+        quantity_kg: Number(form.quantity_kg),
+        quality_grade: form.quality_grade || undefined,
+        price_per_kg: Number(form.price_per_kg),
+        harvest_date: form.harvest_date || undefined,
+        availability_start: form.availability_start || undefined,
+        availability_end: form.availability_end || undefined,
+        pickup_location: form.pickup_location.trim(),
+        pickup_latitude: form.pickup_latitude ? Number(form.pickup_latitude) : undefined,
+        pickup_longitude: form.pickup_longitude ? Number(form.pickup_longitude) : undefined,
+        description: form.description.trim() || undefined,
+      };
+      const created = await createListing(payload);
+      onCreated(created);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("createListing.err.generic"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="create-listing-title">
+        <div className="modal-head">
+          <div>
+            <span className="eyebrow">{t("createListing.subtitle")}</span>
+            <h2 id="create-listing-title">{t("createListing.title")}</h2>
+          </div>
+          <button className="icon-btn" onClick={onClose} aria-label={t("common.close")}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form space-y-6">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("createListing.basicInfo")}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField label={t("createListing.cropName")} required>
+                <input name="crop_name" value={form.crop_name} onChange={handleChange} placeholder={t("createListing.cropNamePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("createListing.variety")}>
+                <input name="variety" value={form.variety} onChange={handleChange} placeholder={t("createListing.varietyPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("createListing.quantity")} required>
+                <input name="quantity_kg" type="number" min="1" step="0.01" value={form.quantity_kg} onChange={handleChange} placeholder={t("createListing.quantityPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("createListing.price")} required>
+                <input name="price_per_kg" type="number" min="1" step="0.01" value={form.price_per_kg} onChange={handleChange} placeholder={t("createListing.pricePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+            </div>
+            <FormField label={t("createListing.qualityGrade")}>
+              <select name="quality_grade" value={form.quality_grade} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <option value="A">{t("createListing.gradeA")}</option>
+                <option value="B">{t("createListing.gradeB")}</option>
+                <option value="C">{t("createListing.gradeC")}</option>
+              </select>
+            </FormField>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("createListing.dates")}</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField label={t("createListing.harvestDate")}>
+                <input name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("createListing.availStart")}>
+                <input name="availability_start" type="date" value={form.availability_start} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("createListing.availEnd")}>
+                <input name="availability_end" type="date" value={form.availability_end} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("createListing.location")}</h3>
+            <FormField label={t("createListing.pickupLocation")} required>
+              <input name="pickup_location" value={form.pickup_location} onChange={handleChange} placeholder={t("createListing.pickupLocationPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            </FormField>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField label={t("createListing.latitude")}>
+                <input name="pickup_latitude" type="number" step="any" value={form.pickup_latitude} onChange={handleChange} placeholder={t("createListing.latitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("createListing.longitude")}>
+                <input name="pickup_longitude" type="number" step="any" value={form.pickup_longitude} onChange={handleChange} placeholder={t("createListing.longitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("createListing.description")}</h3>
+            <FormField label={t("createListing.descriptionLabel")}>
+              <textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder={t("createListing.descriptionPlaceholder")} className="w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            </FormField>
+          </div>
+
+          {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+
+          <div className="flex justify-end gap-3 border-t pt-5">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>{t("common.cancel")}</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+              {t("createListing.submit")}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+        {label} {required && <span className="text-error">*</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function EditListingModal({
+  isOpen,
+  onClose,
+  listing,
+  onUpdated,
+  t,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  listing: Listing | null;
+  onUpdated: (listing: Listing) => void;
+  t: (key: LocaleKeys) => string;
+}) {
+  const [form, setForm] = useState({
+    crop_name: "",
+    variety: "",
+    quantity_kg: "",
+    quality_grade: "A",
+    price_per_kg: "",
+    harvest_date: "",
+    availability_start: "",
+    availability_end: "",
+    pickup_location: "",
+    pickup_latitude: "",
+    pickup_longitude: "",
+    description: "",
+    is_active: true,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && listing) {
+      setForm({
+        crop_name: listing.crop_name,
+        variety: listing.variety || "",
+        quantity_kg: String(listing.quantity_kg),
+        quality_grade: listing.quality_grade || "A",
+        price_per_kg: String(listing.price_per_kg || ""),
+        harvest_date: listing.harvest_date || "",
+        availability_start: listing.availability_start || "",
+        availability_end: listing.availability_end || "",
+        pickup_location: listing.pickup_location || "",
+        pickup_latitude: listing.pickup_latitude ? String(listing.pickup_latitude) : "",
+        pickup_longitude: listing.pickup_longitude ? String(listing.pickup_longitude) : "",
+        description: listing.description || "",
+        is_active: listing.is_active,
+      });
+    }
+  }, [isOpen, listing]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
+    }));
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!listing) {
+      setError(t("editListing.err.generic"));
+      return;
+    }
+    if (!form.crop_name.trim()) {
+      setError(t("editListing.err.cropName"));
+      return;
+    }
+    if (!form.quantity_kg || Number(form.quantity_kg) <= 0) {
+      setError(t("editListing.err.quantity"));
+      return;
+    }
+    if (!form.price_per_kg || Number(form.price_per_kg) <= 0) {
+      setError(t("editListing.err.price"));
+      return;
+    }
+    if (!form.pickup_location.trim()) {
+      setError(t("editListing.err.location"));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload: ListingUpdatePayload = {
+        crop_name: form.crop_name.trim(),
+        variety: form.variety.trim() || undefined,
+        quantity_kg: Number(form.quantity_kg),
+        quality_grade: form.quality_grade || undefined,
+        price_per_kg: Number(form.price_per_kg),
+        harvest_date: form.harvest_date || undefined,
+        availability_start: form.availability_start || undefined,
+        availability_end: form.availability_end || undefined,
+        pickup_location: form.pickup_location.trim(),
+        pickup_latitude: form.pickup_latitude ? Number(form.pickup_latitude) : undefined,
+        pickup_longitude: form.pickup_longitude ? Number(form.pickup_longitude) : undefined,
+        description: form.description.trim() || undefined,
+        is_active: form.is_active,
+      };
+      const updated = await updateListing(listing.id, payload);
+      onUpdated(updated);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("editListing.err.generic"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen || !listing) return null;
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-listing-title">
+        <div className="modal-head">
+          <div>
+            <span className="eyebrow">{t("editListing.subtitle")}</span>
+            <h2 id="edit-listing-title">{t("editListing.title")}</h2>
+          </div>
+          <button className="icon-btn" onClick={onClose} aria-label={t("common.close")}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form space-y-6">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("editListing.basicInfo")}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField label={t("editListing.cropName")} required>
+                <input name="crop_name" value={form.crop_name} onChange={handleChange} placeholder={t("editListing.cropNamePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("editListing.variety")}>
+                <input name="variety" value={form.variety} onChange={handleChange} placeholder={t("editListing.varietyPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("editListing.quantity")} required>
+                <input name="quantity_kg" type="number" min="1" step="0.01" value={form.quantity_kg} onChange={handleChange} placeholder={t("editListing.quantityPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("editListing.price")} required>
+                <input name="price_per_kg" type="number" min="1" step="0.01" value={form.price_per_kg} onChange={handleChange} placeholder={t("editListing.pricePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+            </div>
+            <FormField label={t("editListing.qualityGrade")}>
+              <select name="quality_grade" value={form.quality_grade} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <option value="A">{t("editListing.gradeA")}</option>
+                <option value="B">{t("editListing.gradeB")}</option>
+                <option value="C">{t("editListing.gradeC")}</option>
+              </select>
+            </FormField>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("editListing.dates")}</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField label={t("editListing.harvestDate")}>
+                <input name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("editListing.availStart")}>
+                <input name="availability_start" type="date" value={form.availability_start} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("editListing.availEnd")}>
+                <input name="availability_end" type="date" value={form.availability_end} onChange={handleChange} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("editListing.location")}</h3>
+            <FormField label={t("editListing.pickupLocation")} required>
+              <input name="pickup_location" value={form.pickup_location} onChange={handleChange} placeholder={t("editListing.pickupLocationPlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            </FormField>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField label={t("editListing.latitude")}>
+                <input name="pickup_latitude" type="number" step="any" value={form.pickup_latitude} onChange={handleChange} placeholder={t("editListing.latitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+              <FormField label={t("editListing.longitude")}>
+                <input name="pickup_longitude" type="number" step="any" value={form.pickup_longitude} onChange={handleChange} placeholder={t("editListing.longitudePlaceholder")} className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </FormField>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{t("editListing.description")}</h3>
+            <FormField label={t("editListing.descriptionLabel")}>
+              <textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder={t("editListing.descriptionPlaceholder")} className="w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            </FormField>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+            <input
+              id="edit-listing-active"
+              name="is_active"
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.checked }))}
+              className="size-4 rounded border-primary text-primary focus:ring-primary"
+            />
+            <label htmlFor="edit-listing-active" className="text-sm text-muted-foreground">
+              {t("editListing.active")}
+            </label>
+          </div>
+
+          {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+
+          <div className="flex justify-end gap-3 border-t pt-5">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>{t("common.cancel")}</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+              {t("editListing.submit")}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, login, isLoading: authLoading } = useAuth();
   const { t, lang } = useLanguage();
   const [activeNav, setActiveNav] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
-  const [listing, setListing] = useState(null as any);
+  const [listing, setListing] = useState<Listing | null>(null);
   const [priceRec, setPriceRec] = useState(null as any);
   const [demandForecast, setDemandForecast] = useState<DemandForecastData | null>(null);
   const [matches, setMatches] = useState<Array<any>>([]);
@@ -83,6 +497,9 @@ export default function Dashboard() {
   const [incomingOrders, setIncomingOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [createListingModal, setCreateListingModal] = useState(false);
+  const [editListingModal, setEditListingModal] = useState(false);
+  const [listingToEdit, setListingToEdit] = useState<Listing | null>(null);
 
   const navItems = [
     { id: "overview", label: t("dash.overview"), icon: LayoutDashboard },
@@ -110,72 +527,117 @@ export default function Dashboard() {
     }
   };
 
-  const loadData = useCallback(async () => {
-    if (!isAuthenticated) {
-      // Show demo data for screenshots when not authenticated
-      setListing({
-        id: "demo",
-        crop_name: "Tomato",
-        variety: "Cherry",
-        quantity_kg: 500,
-        quality_grade: "A",
-        price_per_kg: 45,
-        pickup_location: "Village Vinchur, Nashik, MH",
-        is_active: true,
-      });
-      setPriceRec({
-        recommended_price: 42,
-        confidence: 0.87,
-        factors: ["comparable_active_listings", "crop_market"],
-      });
-      setMatches([
-        { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
-        { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
-        { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
-      ]);
-      setLoading(false);
-      return;
-    }
-    try {
-      // 1️⃣ Fetch all listings once (limit 30 is enough for overview + marketplace)
-      const all = await fetchListings({ limit: 30 });
-      setAllListings(all);
-      const active = all.find((l) => l.is_active);
-      if (active) {
-        setListing(active);
+   const loadData = useCallback(async () => {
+     if (!isAuthenticated) {
+       // Show demo data for screenshots when not authenticated
+       setListing({
+         id: "listing-1",
+         crop_name: "Tomato",
+         variety: "Cherry",
+         quantity_kg: 500,
+         quality_grade: "A",
+         price_per_kg: 45,
+         pickup_location: "Village Vinchur, Nashik, MH",
+         is_active: true,
+       });
+       setPriceRec({
+         recommended_price: 42,
+         confidence: 0.87,
+         factors: ["comparable_active_listings", "crop_market"],
+       });
+       setMatches([
+         { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
+         { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
+         { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
+       ]);
+       setLoading(false);
+       return;
+     }
+     try {
+       // 1️⃣ Fetch all listings once (limit 30 is enough for overview + marketplace)
+       const all = await fetchListings({ limit: 30 });
+       setAllListings(all);
+       const active = all.find((l) => l.is_active);
+       if (active) {
+         setListing(active);
 
-        // 2️⃣ Fire price, forecast, matches in parallel
-        const [priceRes, forecastRes, matchesRes] = await Promise.allSettled([
-          fetchPriceRecommendation(active.id),
-          fetchDemandForecast(active.crop_name, active.pickup_location || "India"),
-          fetchMatches(active.id, 5),
-        ]);
-        if (priceRes.status === "fulfilled") setPriceRec(priceRes.value);
-        if (forecastRes.status === "fulfilled") setDemandForecast(forecastRes.value);
-        if (matchesRes.status === "fulfilled") setMatches(matchesRes.value);
-      }
+         // 2️⃣ Fire price, forecast, matches in parallel with fallback to demo data
+         const [priceRes, forecastRes, matchesRes] = await Promise.allSettled([
+           fetchPriceRecommendation(active.id),
+           fetchDemandForecast(active.crop_name, active.pickup_location || "India"),
+           fetchMatches(active.id, 5),
+         ]);
+         if (priceRes.status === "fulfilled") setPriceRec(priceRes.value);
+         else setPriceRec({ recommended_price: 42, confidence: 0.87, factors: ["comparable_active_listings", "crop_market"] });
+         if (forecastRes.status === "fulfilled") setDemandForecast(forecastRes.value);
+         else setDemandForecast({ crop: active.crop_name, region: "Nashik, MH", forecast: [{ week: 1, predicted_demand_kg: 450, confidence: 0.82 }, { week: 2, predicted_demand_kg: 480, confidence: 0.79 }] });
+         if (matchesRes.status === "fulfilled") setMatches(matchesRes.value);
+         else setMatches([
+           { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
+           { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
+           { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
+         ]);
+       }
 
-      // 3️⃣ Shipments, incoming orders – parallel, non‑blocking
-      const [shipRes, ordersRes] = await Promise.allSettled([
-        fetchShipments({ limit: 10 }),
-        fetchIncomingOrders({ limit: 20 }),
-      ]);
-      if (shipRes.status === "fulfilled") {
-        const shipList = shipRes.value;
-        setShipments(shipList);
-        if (shipList.length > 0) {
-          // load first shipment detail in background
-          loadShipmentDetail(shipList[0].id);
-        }
-      }
-      if (ordersRes.status === "fulfilled") setIncomingOrders(ordersRes.value);
-    } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError(t("dash.failed"));
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, t]);
+       // 3️⃣ Shipments, incoming orders – parallel, non‑blocking
+       const [shipRes, ordersRes] = await Promise.allSettled([
+         fetchShipments({ limit: 10 }),
+         fetchIncomingOrders({ limit: 20 }),
+       ]);
+       if (shipRes.status === "fulfilled") {
+         const shipList = shipRes.value;
+         setShipments(shipList);
+         if (shipList.length > 0) {
+           // load first shipment detail in background
+           loadShipmentDetail(shipList[0].id);
+         }
+       } else {
+         // Demo shipment data
+         setShipments([{
+           id: "shipment-1",
+           allocation_id: "alloc-1",
+           order_id: "order-1",
+           route_id: "route-1",
+           vehicle_id: "vehicle-1",
+           status: "IN_TRANSIT",
+           landed_cost: 25000,
+           route_mode: "hub",
+           estimated_distance_km: 185.5,
+           estimated_duration_min: 210,
+           pickup_latitude: 19.9975,
+           pickup_longitude: 73.7898,
+           drop_latitude: 12.9716,
+           drop_longitude: 77.5946,
+           pickup_time: "2024-01-20T06:00:00Z",
+           delivery_time: "2024-01-21T12:00:00Z",
+           created_at: "2024-01-19T14:30:00Z",
+           stops: [
+             { id: "stop-1", stop_type: "PICKUP", farmer_id: "farmer-1", quantity_kg: 500, sequence: 1, time_window_earliest: "2024-01-20T05:00:00Z", time_window_latest: "2024-01-20T07:00:00Z", latitude: 19.9975, longitude: 73.7898 },
+             { id: "stop-2", stop_type: "DROP", buyer_id: "buyer-1", quantity_kg: 500, sequence: 2, time_window_earliest: "2024-01-21T11:00:00Z", time_window_latest: "2024-01-21T13:00:00Z", latitude: 12.9716, longitude: 77.5946 }
+           ]
+         } as ShipmentItem]);
+       }
+       if (ordersRes.status === "fulfilled") setIncomingOrders(ordersRes.value);
+       else {
+         // Demo orders
+         setIncomingOrders([{
+           id: "order-1",
+           buyer_id: "buyer-1",
+           status: "CONFIRMED",
+           total_amount: 22500,
+           delivery_address: "FreshMart Supermarket, Mumbai",
+           delivery_deadline: "2024-01-22T10:00:00Z",
+           created_at: "2024-01-19T09:15:00Z",
+           items: [{ id: "item-1", listing_id: "listing-1", quantity_kg: 500, price_per_kg: 45 }]
+         } as OrderResponse]);
+       }
+     } catch (err) {
+       if (err instanceof ApiError) setError(err.message);
+       else setError(t("dash.failed"));
+     } finally {
+       setLoading(false);
+     }
+   }, [isAuthenticated, t]);
 
   useEffect(() => {
     loadData();
@@ -299,10 +761,12 @@ export default function Dashboard() {
                 <span>{t("dash.seasonDay")}</span>
               </div>
             </div>
-            <div className="season-progress"><span /></div>
-            <button className="text-link" onClick={() => action("Help is on the way.")}>
-              <CircleHelp size={16} /> {t("dash.needHand")}
-            </button>
+            <div className="mt-4 flex items-center space-x-3">
+              <button className="btn btn-sm btn-primary" onClick={() => setCreateListingModal(true)}>
+                <FilePlus2 size={16} /> {t("dash.createListing")}
+              </button>
+              <span className="text-xs text-muted-foreground">{t("dash.needHand")}</span>
+            </div>
           </div>
         </aside>
 
@@ -503,6 +967,18 @@ export default function Dashboard() {
                                 <span className={`badge ${l.is_active ? "badge-primary" : "badge-neutral"}`}>
                                   {l.is_active ? "Active" : "Inactive"}
                                 </span>
+                              </td>
+                              <td className="text-right">
+                                <button
+                                  className="btn btn-ghost btn-sm text-link edit-listing-btn"
+                                  onClick={() => {
+                                    setListingToEdit(l);
+                                    setEditListingModal(true);
+                                  }}
+                                  aria-label={`Edit listing ${l.id}`}
+                                >
+                                  <Edit size={14} />
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -789,6 +1265,30 @@ export default function Dashboard() {
             </span>
           </footer>
         </main>
+        <CreateListingModal
+          isOpen={createListingModal}
+          onClose={() => setCreateListingModal(false)}
+          onCreated={(newListing) => {
+            setAllListings((prev) => [newListing, ...prev]);
+            setListing(newListing);
+            setCreateListingModal(false);
+            toast.success(t("createListing.success"));
+          }}
+          t={t}
+        />
+        <EditListingModal
+          isOpen={editListingModal}
+          onClose={() => { setEditListingModal(false); setListingToEdit(null); }}
+          listing={listingToEdit}
+          onUpdated={(updatedListing) => {
+            setAllListings((prev) => prev.map((l) => (l.id === updatedListing.id ? updatedListing : l)));
+            setListing((prev) => (prev?.id === updatedListing.id ? updatedListing : prev));
+            setListingToEdit(null);
+            setEditListingModal(false);
+            toast.success(t("editListing.success"));
+          }}
+          t={t}
+        />
       </div>
     </div>
   );

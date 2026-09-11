@@ -50,7 +50,16 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    payload = decode_token(credentials.credentials)
+    try:
+        payload = jwt.decode(
+            credentials.credentials, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+        )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
     user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(

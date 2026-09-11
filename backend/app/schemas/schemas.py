@@ -60,6 +60,42 @@ class ListingCreate(BaseModel):
     pickup_longitude: Optional[float] = None
     description: Optional[str] = None
 
+    @model_validator(mode='before')
+    @classmethod
+    def strip_tz(cls, data):
+        if isinstance(data, dict):
+            for field in ["harvest_date", "availability_start", "availability_end"]:
+                val = data.get(field)
+                if val and hasattr(val, "tzinfo") and val.tzinfo is not None:
+                    data[field] = val.replace(tzinfo=None)
+        return data
+
+
+class ListingUpdate(BaseModel):
+    crop_name: Optional[str] = None
+    variety: Optional[str] = None
+    quantity_kg: Optional[float] = None
+    quality_grade: Optional[str] = None
+    price_per_kg: Optional[float] = None
+    harvest_date: Optional[datetime] = None
+    availability_start: Optional[datetime] = None
+    availability_end: Optional[datetime] = None
+    pickup_location: Optional[str] = None
+    pickup_latitude: Optional[float] = None
+    pickup_longitude: Optional[float] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def strip_tz(cls, data):
+        if isinstance(data, dict):
+            for field in ["harvest_date", "availability_start", "availability_end"]:
+                val = data.get(field)
+                if val and hasattr(val, "tzinfo") and val.tzinfo is not None:
+                    data[field] = val.replace(tzinfo=None)
+        return data
+
 
 class ListingResponse(BaseModel):
     id: UUID

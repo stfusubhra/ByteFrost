@@ -98,7 +98,7 @@ export default function Login() {
       setMethod("phone");
       setPhone(demoIdentifier);
     }
-    setPassword("demo123456");
+    setPassword("demo123");
   };
 
   const switchMethod = (m: LoginMethod) => {

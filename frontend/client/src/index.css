@@ -4761,3 +4761,171 @@ html[data-lang="bn"] .eyebrow {
   }
 }
 
+/* ================================================================
+    Modal / Dialog
+    ================================================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(12, 20, 16, 0.48);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: ks-fade var(--dur-fast) ease both;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  animation: ks-pop var(--dur-std) var(--ease-out) both;
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-head .eyebrow {
+  margin-bottom: 6px;
+}
+
+.modal-head h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--dur-micro) ease, color var(--dur-micro) ease;
+}
+
+.icon-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--ink);
+}
+
+.modal-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-form .space-y-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-form .space-y-4 > h3,
+.modal-form .space-y-6 > h3 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin: 4px 0 8px;
+}
+
+.modal-form .grid {
+  display: grid;
+  gap: 14px;
+}
+
+.modal-form .grid.md\:grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.modal-form .grid.md\:grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.modal-form .block {
+  display: block;
+}
+
+.modal-form input,
+.modal-form select,
+.modal-form textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font-size: 14px;
+  transition: border-color var(--dur-micro) ease, box-shadow var(--dur-micro) ease;
+}
+
+.modal-form input,
+.modal-form select {
+  height: 42px;
+  padding: 0 13px;
+}
+
+.modal-form textarea {
+  padding: 11px 13px;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.modal-form input::placeholder,
+.modal-form textarea::placeholder {
+  color: var(--ink-muted);
+}
+
+.modal-form input:hover,
+.modal-form select:hover,
+.modal-form textarea:hover {
+  border-color: var(--ink-muted);
+}
+
+.modal-form input:focus,
+.modal-form select:focus,
+.modal-form textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(35, 92, 69, 0.12);
+}
+
+.modal-form label.block > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 7px;
+}
+
+.modal-form label.block > span .text-error {
+  color: var(--error);
+}
+
+@media (max-width: 640px) {
+  .modal-form .grid.md\:grid-cols-2,
+  .modal-form .grid.md\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
