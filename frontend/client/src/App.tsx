@@ -11,8 +11,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Marketplace from "./pages/Marketplace";
-import Story from "./pages/Story";
-import About from "./pages/About";
+import SolutionStory from "./pages/SolutionStory";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
 import BuyerDashboard from "./pages/BuyerDashboard";
@@ -27,8 +26,10 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/listing/:id" component={ListingDetail} />
-      <Route path="/story" component={Story} />
-      <Route path="/about" component={About} />
+      <Route path="/solution-story" component={SolutionStory} />
+      <Route path="/solutions" component={SolutionStory} />
+      <Route path="/story" component={SolutionStory} />
+      <Route path="/about" component={SolutionStory} />
       <Route path="/faq" component={Faq} />
       <Route path="/contact" component={Contact} />
       <ProtectedRoute path="/dashboard" component={Dashboard} allowedRoles={["farmer","fpo_manager"]} />

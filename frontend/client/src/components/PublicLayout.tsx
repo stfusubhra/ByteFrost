@@ -1,32 +1,72 @@
-/* KisanSetu public shell: minimal header + footer for public pages.
-   Header: wordmark left, four links, auth actions right. Sticky with a
-   hairline border; solid background once scrolled. */
+/* KisanSetu public shell.
+   Header + footer rebuilt with shadcn/ui components:
+   - Desktop nav: NavigationMenu; Mobile nav: Sheet drawer.
+   - User menu: DropdownMenu + Avatar.
+   - Theme + language controls.
+   Aligned to the DPI-era problem statement: marketplace, solutions with
+   logistics and AI forecast surface as first-class destinations. */
 import React, { useEffect, useState } from "react";
-import { Link } from "wouter";
-import { Menu, Moon, Sprout, Sun, X } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import {
+  ArrowRight,
+  Handshake,
+  LineChart,
+  LogOut,
+  MapPin,
+  Menu,
+  Moon,
+  Sprout,
+  Sun,
+  Truck,
+  User,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useReveal } from "../hooks/useReveal";
 import LanguageSelector from "./LanguageSelector";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
+  const [pathname] = useLocation();
   useReveal();
-
-  useEffect(() => {
-    setHasToken(!!localStorage.getItem("kisansetu_token"));
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -35,197 +75,306 @@ export default function PublicLayout({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const hasToken = isAuthenticated || !!(
+    typeof window !== "undefined" && localStorage.getItem("kisansetu_token")
+  );
+
+  const dashboardHref =
+    isAuthenticated && user?.role === "buyer" ? "/buyer-dashboard" : "/dashboard";
+
   const handleLogout = () => {
     localStorage.removeItem("kisansetu_token");
-    setHasToken(false);
     window.location.href = "/";
   };
 
-  const farmerLinks = [
+  const navLinks = [
     { href: "/marketplace", label: t("nav.marketplace") },
-    { href: "/story", label: t("nav.story") },
-    { href: "/about", label: t("nav.about") },
+    { href: "/solution-story", label: t("nav.solutionStory") },
+    { href: "/faq", label: t("nav.faq") },
   ];
 
-  const buyerLinks = [
-    { href: "/buyer-dashboard", label: t("nav.dashboard") },
-    { href: "/story", label: t("nav.story") },
-    { href: "/about", label: t("nav.about") },
-  ];
-
-  const navLinks = isAuthenticated && user?.role === "buyer"
-    ? buyerLinks
-    : farmerLinks;
-
+  const initials = (user?.full_name || "KS")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
-    <div className="site">
-      <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
-        <div className="container site-header-inner">
-          <Link href="/" className="wordmark" aria-label="KisanSetu home">
-            <span className="wordmark-mark">
-              <Sprout size={15} />
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      {/* ───────────────── Header ───────────────── */}
+      <header
+        className={cn(
+          "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85",
+          scrolled && "shadow-sm"
+        )}
+      >
+        <div className="container flex h-16 items-center justify-between gap-4">
+          <Link
+            href="/"
+            aria-label="KisanSetu home"
+            className="flex shrink-0 items-center gap-2"
+          >
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Sprout className="size-4" />
             </span>
-            KisanSetu
+            <span className="font-[var(--font-display)] text-lg font-bold tracking-tight">
+              KisanSetu
+            </span>
           </Link>
 
-          <nav className="site-nav" aria-label="Primary">
-            {navLinks.map((l) => (
-              <Link key={l.href} href={l.href}>
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="site-header-actions">
-            <LanguageSelector variant="dark" />
-            {toggleTheme && null}
-            <div className="header-auth-desktop">
-              {hasToken ? (
-                <>
-                  <Link href="/dashboard" className="btn btn-secondary btn-sm">
-                    {t("nav.dashboard")}
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="btn btn-ghost btn-sm"
-                    style={{ cursor: "pointer" }}
+          {/* Desktop nav */}
+          <NavigationMenu viewport={false} className="hidden lg:flex">
+            <NavigationMenuList>
+              {navLinks.map((l) => (
+                <NavigationMenuItem key={l.href}>
+                  <NavigationMenuLink
+                    asChild
+                    active={pathname === l.href}
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      "bg-transparent",
+                      pathname === l.href &&
+                        "data-[active]:bg-accent/60 data-[active]:text-accent-foreground"
+                    )}
                   >
+                    <Link href={l.href}>{l.label}</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <div className="hidden items-center gap-1.5 lg:flex">
+            <LanguageSelector variant="dark" />
+            {toggleTheme && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              </Button>
+            )}
+
+            {hasToken ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-9 gap-2 px-2" aria-label="Account menu">
+                    <Avatar className="size-7">
+                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden max-w-24 truncate text-sm font-medium xl:inline">
+                      {user?.full_name || t("nav.welcome")}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel>{t("nav.account")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={dashboardHref} className="cursor-pointer">
+                      <User className="size-4" />
+                      {t("nav.dashboard")}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="size-4" />
                     {t("nav.logout")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" className="btn btn-ghost btn-sm">
-                    {t("nav.signin")}
-                  </Link>
-                  <Link href="/signup" className="btn btn-primary btn-sm">
-                    {t("nav.signup")}
-                  </Link>
-                </>
-              )}
-            </div>
-            <button
-              className="menu-btn"
-              onClick={() => setOpen(true)}
-              aria-label={t("common.openMenu")}
-            >
-              <Menu size={18} />
-            </button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/login">{t("nav.signin")}</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/signup">{t("nav.signup")}</Link>
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile controls */}
+          <div className="flex items-center gap-1.5 lg:hidden">
+            <LanguageSelector variant="dark" />
+            {toggleTheme && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              </Button>
+            )}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label={t("common.openMenu")}>
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[86%] max-w-sm p-0">
+                <SheetHeader className="border-b px-4 py-3 text-left">
+                  <SheetTitle className="flex items-center gap-2 text-base">
+                    <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                      <Sprout className="size-3.5" />
+                    </span>
+                    KisanSetu
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    {t("common.openMenu")}
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="flex flex-col gap-1 px-3 py-4">
+                  {navLinks.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className={cn(
+                        "rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                        pathname === l.href && "bg-accent/60 text-accent-foreground"
+                      )}
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+
+                  <Separator className="my-3" />
+
+                  <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("footer.account")}
+                  </p>
+                  {hasToken ? (
+                    <>
+                      <Link
+                        href={dashboardHref}
+                        className="rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+                      >
+                        {t("nav.dashboard")}
+                      </Link>
+                      <Button variant="ghost" className="justify-start px-3 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleLogout}>
+                        <LogOut className="size-4" />
+                        {t("nav.logout")}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+                      >
+                        {t("nav.signin")}
+                      </Link>
+                      <Button size="sm" className="mt-1 w-full justify-start" asChild>
+                        <Link href="/signup">
+                          {t("nav.signup")} <ArrowRight className="size-4" />
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-auto border-t px-5 py-4">
+                  <p className="text-sm text-muted-foreground">{t("footer.tagline")}</p>
+                  <a href="mailto:hello@kisansetu.in" className="mt-1 inline-block text-sm font-medium text-primary">
+                    hello@kisansetu.in
+                  </a>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
 
-      {open && (
-        <>
-          <div
-            className="drawer-backdrop"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-          <div className="drawer" role="dialog" aria-modal="true" aria-label={t("common.openMenu")}>
-            <div className="drawer-top">
-              <Link href="/" className="wordmark" onClick={() => setOpen(false)}>
-                <span className="wordmark-mark">
-                  <Sprout size={15} />
-                </span>
+      <main className="flex-1">{children}</main>
+
+      {/* ───────────────── Footer ───────────────── */}
+      <footer className="border-t border-border/70 bg-card">
+        <div className="container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          {/* Brand */}
+          <div className="flex flex-col items-start gap-3">
+            <Link href="/" aria-label="KisanSetu home" className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <Sprout className="size-4" />
+              </span>
+              <span className="font-[var(--font-display)] text-lg font-bold tracking-tight">
                 KisanSetu
-              </Link>
-              <button
-                className="drawer-close"
-                onClick={() => setOpen(false)}
-                aria-label={t("common.closeMenu")}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="drawer-links">
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>
-                  {link.label}
-                </Link>
-              ))}
-              {hasToken ? (
-                <>
-                  <Link href="/dashboard" onClick={() => setOpen(false)}>
-                    {t("nav.dashboard")}
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      handleLogout();
-                    }}
-                  >
-                    {t("nav.signout")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" onClick={() => setOpen(false)}>
-                    {t("nav.signin")}
-                  </Link>
-                  <Link href="/signup" onClick={() => setOpen(false)}>
-                    {t("nav.signup")}
-                  </Link>
-                </>
-              )}
-            </div>
-            <div className="drawer-foot">
-              <span>{t("footer.tagline")}</span>
-              <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
-            </div>
-          </div>
-        </>
-      )}
-
-      <main>{children}</main>
-
-      <footer className="site-footer">
-        <div className="container site-footer-inner">
-          <div className="site-footer-grid">
-            <div className="site-footer-brand">
-              <Link href="/" className="wordmark">
-                <span className="wordmark-mark">
-                  <Sprout size={15} />
-                </span>
-                KisanSetu
-              </Link>
-              <p>{t("footer.brand.p")}</p>
-              <a href="mailto:hello@kisansetu.in">hello@kisansetu.in</a>
-            </div>
-
-            <div className="site-footer-col">
-              <span className="site-footer-head">{t("footer.explore")}</span>
-              <Link href="/marketplace">{t("nav.marketplace")}</Link>
-              <Link href="/story">{t("nav.story")}</Link>
-              <Link href="/faq">{t("nav.faq")}</Link>
-            </div>
-
-            <div className="site-footer-col">
-              <span className="site-footer-head">{t("footer.account")}</span>
-              {hasToken ? (
-                <>
-                  <Link href="/dashboard">{t("nav.dashboard")}</Link>
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleLogout();
-                    }}
-                  >
-                    {t("nav.signout")}
-                  </a>
-                </>
-              ) : (
-                <>
-                  <Link href="/login">{t("nav.signin")}</Link>
-                  <Link href="/signup">{t("nav.createAccount")}</Link>
-                </>
-              )}
-            </div>
+              </span>
+            </Link>
+            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+              {t("footer.brand.p")}
+            </p>
+            <a href="mailto:hello@kisansetu.in" className="text-sm font-medium text-primary">
+              hello@kisansetu.in
+            </a>
           </div>
 
-          <div className="site-footer-bottom">
+          {/* Explore */}
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-semibold text-foreground">{t("footer.explore")}</p>
+            <Link href="/marketplace" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              {t("nav.marketplace")}
+            </Link>
+            <Link href="/solution-story" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              {t("nav.solutionStory")}
+            </Link>
+            <Link href="/faq" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              {t("nav.faq")}
+            </Link>
+          </div>
+
+          {/* Company */}
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-semibold text-foreground">{t("footer.about")}</p>
+            <Link href="/solution-story" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              {t("nav.solutionStory")}
+            </Link>
+            <Link href="/contact" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              {t("nav.contact")}
+            </Link>
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="size-3.5" />
+              {t("footer.contact.locations")}
+            </span>
+          </div>
+
+          {/* Impact tagline */}
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-semibold text-foreground">Impact</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary" className="gap-1.5">
+                <Handshake className="size-3.5" /> {t("footer.how.farmers")}
+              </Badge>
+              <Badge variant="secondary" className="gap-1.5">
+                <Truck className="size-3.5" /> {t("footer.how.logistics")}
+              </Badge>
+              <Badge variant="secondary" className="gap-1.5">
+                <LineChart className="size-3.5" /> {t("footer.how.ai")}
+              </Badge>
+            </div>
+            <div className="mt-1 inline-flex items-center gap-1.5">
+              <Input
+                id="newsletter-email"
+                name="newsletter-email"
+                type="email"
+                className="h-9 max-w-44"
+                placeholder={t("footer.newsletter.placeholder")}
+                aria-label={t("footer.newsletter.placeholder")}
+              />
+              <Button size="sm">{t("footer.newsletter.cta")}</Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-border/60">
+          <div className="container flex flex-col items-center justify-between gap-2 py-5 text-xs text-muted-foreground sm:flex-row">
             <span>© {new Date().getFullYear()} {t("footer.copyright")}</span>
             <span>{t("footer.built")}</span>
           </div>
