@@ -27,14 +27,11 @@ import {
   ShieldCheck,
   Sprout,
   UsersRound,
-  Sun,
-  Moon,
   Truck,
   Navigation,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/contexts/ThemeContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import RouteMap from "@/components/RouteMap";
 import TrackingTimeline from "@/components/TrackingTimeline";
@@ -70,7 +67,6 @@ function SignalBars({ value, tone = "green" }: { value: number; tone?: string })
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
   const { t, lang } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
   const [activeNav, setActiveNav] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
@@ -238,10 +234,6 @@ export default function Dashboard() {
         </div>
         <div className="dash-topbar-right" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LanguageSelector variant="dark" />
-          {toggleTheme && (
-            /* theme toggle removed */
-            null
-          )}
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => action(t("dash.dataUpdates"))}

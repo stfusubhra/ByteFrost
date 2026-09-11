@@ -14,16 +14,13 @@ import {
   LogOut,
   MapPin,
   Menu,
-  Moon,
   Sprout,
-  Sun,
   Truck,
   User,
   X,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
-import { useTheme } from "../contexts/ThemeContext";
 import { useReveal } from "../hooks/useReveal";
 import LanguageSelector from "./LanguageSelector";
 import { cn } from "@/lib/utils";
@@ -63,7 +60,6 @@ export default function PublicLayout({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
   const [pathname] = useLocation();
   useReveal();
@@ -148,16 +144,6 @@ export default function PublicLayout({
 
           <div className="hidden items-center gap-1.5 lg:flex">
             <LanguageSelector variant="dark" />
-            {toggleTheme && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-              </Button>
-            )}
 
             {hasToken ? (
               <DropdownMenu>
@@ -203,16 +189,6 @@ export default function PublicLayout({
           {/* Mobile controls */}
           <div className="flex items-center gap-1.5 lg:hidden">
             <LanguageSelector variant="dark" />
-            {toggleTheme && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-              </Button>
-            )}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label={t("common.openMenu")}>
