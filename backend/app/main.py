@@ -34,3 +34,9 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "version": "0.1.0"}
+
+
+@app.get("/api/v1/health")
+async def health_check_api():
+    """Health check endpoint compatible with frontend API proxy."""
+    return {"status": "ok", "version": "0.1.0"}
