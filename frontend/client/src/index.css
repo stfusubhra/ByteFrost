@@ -1665,6 +1665,22 @@ img {
   color: var(--ink);
 }
 
+.market-row-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.market-row-img {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+  background: var(--surface-muted);
+}
+
 .market-row-sub {
   display: flex;
   align-items: center;
