@@ -24,6 +24,11 @@ const SolutionStory = lazy(() => import("./pages/SolutionStory"));
 const Faq = lazy(() => import("./pages/Faq"));
 const Contact = lazy(() => import("./pages/Contact"));
 const BuyerDashboard = lazy(() => import("./pages/BuyerDashboard"));
+const BuyerOnboarding = lazy(() => import("./pages/BuyerOnboarding"));
+const Procurement = lazy(() => import("./pages/Procurement"));
+const BuyerOrders = lazy(() => import("./pages/BuyerOrders"));
+const BuyerOrderDetail = lazy(() => import("./pages/BuyerOrderDetail"));
+const BuyerInsights = lazy(() => import("./pages/BuyerInsights"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 const CreateListing = lazy(() => import("./pages/CreateListing"));
@@ -35,6 +40,14 @@ function LazyRoute({ path, component: Component, fallback }: { path: string; com
         <Component />
       </Suspense>
     </Route>
+  );
+}
+
+function ProtectedLazyRoute({ path, component: Component, allowedRoles, fallback }: { path: string; component: React.LazyExoticComponent<() => React.JSX.Element>; allowedRoles?: string[]; fallback?: React.ReactNode }) {
+  return (
+    <Suspense fallback={fallback ?? <PageLoader label="Loading…" />}>
+      <ProtectedRoute path={path} component={Component} allowedRoles={allowedRoles} />
+    </Suspense>
   );
 }
 
@@ -56,8 +69,13 @@ function FullRouter() {
       <LazyRoute path="/about" component={SolutionStory} />
       <LazyRoute path="/faq" component={Faq} />
       <LazyRoute path="/contact" component={Contact} />
-      <LazyRoute path="/dashboard" component={Dashboard} />
-      <LazyRoute path="/buyer-dashboard" component={BuyerDashboard} />
+      <ProtectedLazyRoute path="/dashboard" component={Dashboard} />
+      <ProtectedLazyRoute path="/buyer-dashboard" component={BuyerDashboard} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
+      <ProtectedLazyRoute path="/buyer/onboarding" component={BuyerOnboarding} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
+      <ProtectedLazyRoute path="/buyer/procurement" component={Procurement} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
+      <ProtectedLazyRoute path="/buyer/orders" component={BuyerOrders} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
+      <ProtectedLazyRoute path="/buyer/orders/:id" component={BuyerOrderDetail} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
+      <ProtectedLazyRoute path="/buyer/insights" component={BuyerInsights} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

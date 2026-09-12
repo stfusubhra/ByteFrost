@@ -1,14 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.orm import joinedload
 from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_roles
-from app.models.models import Order, OrderItem, OrderStatus, ProduceListing, UserRole
-from app.schemas.schemas import AllocationRequest, OrderCreate, OrderResponse
+from app.models.models import (
+    Allocation,
+    Order,
+    OrderItem,
+    OrderStatus,
+    ProduceListing,
+    RouteStop,
+    Shipment,
+    User,
+    UserRole,
+    Vehicle,
+)
+from app.schemas.schemas import (
+    AllocationRequest,
+    OrderAllocationResponse,
+    OrderCreate,
+    OrderDetailResponse,
+    OrderItemDetailResponse,
+    OrderResponse,
+    OrderShipmentSummary,
+)
 
 router = APIRouter()
 
@@ -153,12 +172,15 @@ async def list_incoming_orders(
     return result.unique().scalars().all()
 
 
-@router.get("/{order_id}", response_model=OrderResponse)
+@router.get("/{order_id}", response_model=OrderDetailResponse)
 async def get_order(
     order_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> OrderResponse:
+) -> OrderDetailResponse:
+    """Order detail with items (enriched with crop/seller info), allocations,
+    and shipments — everything the buyer order-detail page needs in one call.
+    """
     result = await db.execute(
         select(Order).where(
             Order.id == order_id,
@@ -168,7 +190,92 @@ async def get_order(
     order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    return order
+
+    # Items enriched with listing + seller info
+    item_rows = await db.execute(
+        select(OrderItem, ProduceListing, User)
+        .join(ProduceListing, ProduceListing.id == OrderItem.listing_id)
+        .join(User, User.id == ProduceListing.seller_id)
+        .where(OrderItem.order_id == order_id)
+    )
+    items = []
+    for item, listing, seller in item_rows.all():
+        items.append(
+            OrderItemDetailResponse(
+                id=item.id,
+                listing_id=item.listing_id,
+                quantity_kg=item.quantity_kg,
+                price_per_kg=float(item.price_per_kg),
+                crop_name=listing.crop_name,
+                variety=listing.variety,
+                seller_name=seller.full_name,
+                pickup_location=listing.pickup_location,
+                quality_grade=listing.quality_grade,
+            )
+        )
+
+    # Allocations enriched with listing + seller info
+    alloc_rows = await db.execute(
+        select(Allocation, ProduceListing, User)
+        .join(ProduceListing, ProduceListing.id == Allocation.listing_id)
+        .join(User, User.id == ProduceListing.seller_id)
+        .where(Allocation.order_id == order_id)
+    )
+    allocations = []
+    for alloc, listing, seller in alloc_rows.all():
+        allocations.append(
+            OrderAllocationResponse(
+                id=alloc.id,
+                listing_id=alloc.listing_id,
+                quantity_kg=alloc.quantity_kg,
+                score=alloc.score,
+                crop_name=listing.crop_name,
+                seller_name=seller.full_name,
+                price_per_kg=float(listing.price_per_kg) if listing.price_per_kg is not None else None,
+            )
+        )
+
+    # Shipments with vehicle info
+    ship_rows = await db.execute(
+        select(Shipment, Vehicle)
+        .outerjoin(Vehicle, Vehicle.id == Shipment.vehicle_id)
+        .where(Shipment.order_id == order_id)
+    )
+    shipments = []
+    for ship, vehicle in ship_rows.all():
+        stop_count = None
+        if ship.route_id:
+            stop_res = await db.execute(
+                select(func.count(RouteStop.id)).where(RouteStop.route_id == ship.route_id)
+            )
+            stop_count = stop_res.scalar()
+        shipments.append(
+            OrderShipmentSummary(
+                id=ship.id,
+                status=ship.status,
+                route_mode=ship.route_mode,
+                estimated_distance_km=ship.estimated_distance_km,
+                estimated_duration_min=ship.estimated_duration_min,
+                landed_cost=ship.landed_cost,
+                estimated_arrival=ship.delivery_time,
+                vehicle_type=vehicle.vehicle_type if vehicle else None,
+                vehicle_capacity_kg=vehicle.capacity_kg if vehicle else None,
+                stop_count=stop_count,
+            )
+        )
+
+    return OrderDetailResponse(
+        id=order.id,
+        buyer_id=order.buyer_id,
+        status=order.status,
+        total_amount=float(order.total_amount) if order.total_amount is not None else None,
+        delivery_address=order.delivery_address,
+        delivery_deadline=order.delivery_deadline,
+        created_at=order.created_at,
+        items=items,
+        allocations=allocations,
+        shipments=shipments,
+    )
 
 
 @router.post("/{order_id}/confirm")

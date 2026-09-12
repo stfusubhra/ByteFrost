@@ -534,6 +534,7 @@ export interface PlanExplanationData {
 export interface FulfillmentPlanData {
   status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE";
   infeasibility_reason?: string | null;
+  order_id?: string | null;
   routing_mode?: string | null;
   vehicle_routes?: Array<{
     vehicle_id: string;
@@ -562,6 +563,21 @@ export interface IncidentReportData {
 export async function createOrder(orderData: OrderCreate): Promise<OrderResponse> {
     const { data } = await client.post<OrderResponse>("/orders/", orderData);
     return data;
+}
+
+export async function confirmOrder(orderId: string): Promise<{ message: string; status: string }> {
+  const { data } = await client.post(`/orders/${orderId}/confirm`);
+  return data;
+}
+
+export async function dispatchOrder(orderId: string): Promise<{ message: string; status: string }> {
+  const { data } = await client.post(`/orders/${orderId}/dispatch`);
+  return data;
+}
+
+export async function shipOrder(orderId: string): Promise<{ message: string; status: string }> {
+  const { data } = await client.post(`/orders/${orderId}/ship`);
+  return data;
 }
 
 // --- Logistics Endpoints ---
@@ -741,6 +757,154 @@ export async function planShipment(
     "/logistics/plan-shipment",
     payload
   );
+  return data;
+}
+
+export async function fetchOrder(id: string): Promise<OrderResponse> {
+  const { data } = await client.get<OrderResponse>(`/orders/${id}`);
+  return data;
+}
+
+// --- Buyer onboarding / profile ---
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+  avatar_url?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  profile?: {
+    business_name?: string;
+    business_type?: string;
+    delivery_city?: string;
+    preferred_crops?: string[];
+    monthly_volume_kg?: number;
+    onboarding_completed?: boolean;
+  } | null;
+}
+
+export interface UserProfileUpdate {
+  full_name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  business_name?: string;
+  business_type?: string;
+  delivery_city?: string;
+  preferred_crops?: string[];
+  monthly_volume_kg?: number;
+  onboarding_completed?: boolean;
+}
+
+export async function fetchMe(): Promise<UserProfile> {
+  const { data } = await client.get<UserProfile>("/users/me");
+  return data;
+}
+
+export async function updateMe(payload: UserProfileUpdate): Promise<UserProfile> {
+  const { data } = await client.patch<UserProfile>("/users/me", payload);
+  return data;
+}
+
+// --- Notifications ---
+export interface NotificationItem {
+  id: string;
+  user_id: string;
+  title: string;
+  body?: string | null;
+  category?: string | null;
+  link?: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+export async function fetchNotifications(params?: {
+  unread_only?: boolean;
+  limit?: number;
+}): Promise<NotificationItem[]> {
+  const { data } = await client.get<NotificationItem[]>("/notifications/", { params });
+  return data;
+}
+
+export async function fetchUnreadCount(): Promise<number> {
+  const { data } = await client.get<{ count: number }>("/notifications/unread-count");
+  return data.count;
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await client.post(`/notifications/${id}/read`);
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await client.post("/notifications/read-all");
+}
+
+// --- Buyer insights ---
+export interface BuyerInsightsData {
+  total_orders: number;
+  total_spend: number;
+  total_kg: number;
+  orders_by_status: Record<string, number>;
+  top_crops: Array<{ crop_name: string; quantity_kg: number }>;
+  suppliers: Array<{ supplier_name: string; avg_score: number; allocation_count: number }>;
+  delivery_performance: {
+    total_shipments: number;
+    delivered_shipments: number;
+    on_time_rate: number;
+    avg_landed_cost_per_kg: number;
+  };
+  spend_trend: Array<{ month: string; amount: number }>;
+}
+
+export async function fetchBuyerInsights(): Promise<BuyerInsightsData> {
+  const { data } = await client.get<BuyerInsightsData>("/insights/buyer-summary");
+  return data;
+}
+
+// --- Order detail (items + allocations + shipments) ---
+export interface OrderItemDetail extends OrderItemResponse {
+  crop_name?: string | null;
+  variety?: string | null;
+  seller_name?: string | null;
+  pickup_location?: string | null;
+  quality_grade?: string | null;
+}
+
+export interface OrderAllocation {
+  id: string;
+  listing_id: string;
+  quantity_kg: number;
+  score?: number | null;
+  crop_name?: string | null;
+  seller_name?: string | null;
+  price_per_kg?: number | null;
+}
+
+export interface OrderShipmentSummary {
+  id: string;
+  status: string;
+  route_mode?: string | null;
+  estimated_distance_km?: number | null;
+  estimated_duration_min?: number | null;
+  landed_cost?: number | null;
+  estimated_arrival?: string | null;
+  vehicle_type?: string | null;
+  vehicle_capacity_kg?: number | null;
+  stop_count?: number | null;
+}
+
+export interface OrderDetail extends OrderResponse {
+  items: OrderItemDetail[];
+  allocations: OrderAllocation[];
+  shipments: OrderShipmentSummary[];
+}
+
+export async function fetchOrderDetail(id: string): Promise<OrderDetail> {
+  const { data } = await client.get<OrderDetail>(`/orders/${id}`);
   return data;
 }
 

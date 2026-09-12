@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import (
     Shipment, Route, RouteStop, LogisticsEvent, 
-    LogisticsEventType, RouteStatus, VehicleStatus, Order, OrderStatus
+    LogisticsEventType, RouteStatus, VehicleStatus
 )
 
 logger = logging.getLogger(__name__)
@@ -88,13 +88,6 @@ async def dispatch_route(
             notes="Shipment planned and route optimized."
         )
         db.add(event)
-
-        # Update order status
-        if order_id:
-            order = await db.get(Order, order_id)
-            if order:
-                order.status = OrderStatus.ALLOCATED
-                db.add(order)
 
         await db.flush()
         await db.refresh(shipment)

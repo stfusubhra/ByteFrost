@@ -1,653 +1,406 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import {
   fetchListings,
-  createOrder,
-  fetchShipments,
-  fetchShipment,
-  fetchTracking,
-  matchSuppliers,
-  fulfillOrder,
-  ShipmentItem,
-  ShipmentDetailItem,
-  TrackingStatusData,
-  SupplierMatchResponseData,
+  fetchOrders,
+  fetchMe,
+  Listing,
+  OrderResponse,
+  UserProfile,
 } from "@/lib/api";
+import { IMG, CATEGORY_MAP } from "@/lib/marketplace-data";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  Loader2,
-  Truck,
-  Package,
-  ShoppingBag,
   ArrowRight,
+  BarChart3,
+  ClipboardList,
   MapPin,
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Scale,
+  Package,
+  Plus,
+  ShoppingCart,
+  Truck,
+  UserRound,
 } from "lucide-react";
-import RouteMap from "@/components/RouteMap";
-import TrackingTimeline from "@/components/TrackingTimeline";
+import NotificationsBell from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  in_transit: "In transit",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+const STATUS_TONE: Record<string, string> = {
+  pending: "bg-amber-100 text-amber-800",
+  confirmed: "bg-sky-100 text-sky-800",
+  in_transit: "bg-indigo-100 text-indigo-800",
+  delivered: "bg-emerald-100 text-emerald-800",
+  cancelled: "bg-muted text-muted-foreground",
+};
+
+function cropImage(crop: string): string {
+  const key = crop.toLowerCase();
+  const map: Record<string, string> = {
+    tomato: IMG.tomato,
+    onion: IMG.onion,
+    potato: IMG.potato,
+    rice: IMG.rice,
+    wheat: IMG.wheat,
+    brinjal: IMG.brinjal,
+    cauliflower: IMG.cauliflower,
+    mango: IMG.mango,
+    cabbage: IMG.cabbage,
+    carrot: IMG.carrot,
+    capsicum: IMG.capsicum,
+    garlic: IMG.garlic,
+    ginger: IMG.ginger,
+  };
+  return map[key] || IMG.tomato;
+}
+
+function formatINR(n: number): string {
+  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
 
 export default function BuyerDashboard() {
-  const { user, isAuthenticated } = useAuth();
-  const { t } = useLanguage();
-  const tr = (key: string, fallback: string) => (t as any)(key) || fallback;
-  const [listings, setListings] = useState([] as any[]);
-  const [cart, setCart] = useState([] as any[]);
+  const { user, logout } = useAuth();
+  const [me, setMe] = useState<UserProfile | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Logistics & Tracking state
-  const [shipments, setShipments] = useState<ShipmentItem[]>([]);
-  const [selectedShipment, setSelectedShipment] = useState<ShipmentDetailItem | null>(null);
-  const [trackingData, setTrackingData] = useState<TrackingStatusData | null>(null);
-  const [trackingLoading, setTrackingLoading] = useState(false);
-
-  // Multi-Farmer Matching & Quantity Allocation state
-  const [sourcingCrop, setSourcingCrop] = useState("Tomato");
-  const [sourcingQty, setSourcingQty] = useState<number>(1000);
-  const [sourcingGrade, setSourcingGrade] = useState("B");
-  const [sourcingMaxPrice, setSourcingMaxPrice] = useState<string>("");
-  const [matchPlan, setMatchPlan] = useState<SupplierMatchResponseData | null>(null);
-  const [isMatching, setIsMatching] = useState(false);
-  const [isFulfilling, setIsFulfilling] = useState(false);
-
-  const loadShipmentDetail = async (id: string) => {
-    setTrackingLoading(true);
+  const load = useCallback(async () => {
     try {
-      const detail = await fetchShipment(id);
-      setSelectedShipment(detail);
-      const tracking = await fetchTracking(id);
-      setTrackingData(tracking);
-    } catch (e) {
-      console.error("Failed to load tracking data", e);
-    } finally {
-      setTrackingLoading(false);
-    }
-  };
-
-  const loadData = async () => {
-    try {
-      const [data, shipList] = await Promise.all([
-        fetchListings(),
-        fetchShipments().catch(() => []),
+      const [profile, listingData, orderData] = await Promise.all([
+        fetchMe().catch(() => null),
+        fetchListings({ limit: 6 }),
+        fetchOrders({ limit: 6 }),
       ]);
-      setListings(data);
-      setShipments(shipList);
-      if (shipList.length > 0) {
-        await loadShipmentDetail(shipList[0].id);
-      }
+      setMe(profile);
+      setListings(listingData);
+      setOrders(orderData);
     } catch (e) {
-      toast.error("Failed to load dashboard data");
+      toast.error("Could not load dashboard data");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    loadData();
-  }, [isAuthenticated]);
+    load();
+  }, [load]);
 
-  const addToCart = (listing: any) => {
-    setCart((c) => {
-      const existing = c.find((i) => i.id === listing.id);
-      if (existing) {
-        return c.map((i) =>
-          i.id === listing.id ? { ...i, quantity: i.quantity + 10 } : i
-        );
-      }
-      return [...c, { ...listing, quantity: 50 }];
-    });
-    toast.success(`Added ${listing.crop_name} to cart`);
-  };
-
-  const checkout = async () => {
-    if (cart.length === 0) return toast.error("Cart is empty");
-    try {
-      const order = await createOrder({
-        items: cart.map((i) => ({ listing_id: i.id, quantity_kg: i.quantity })),
-        delivery_address: (user as any)?.address || "Buyer Default Delivery Hub, India",
-        delivery_latitude: user?.latitude || 19.033,
-        delivery_longitude: user?.longitude || 73.0297,
-      });
-      toast.success(`Order placed successfully! ID: ${order.id}`);
-      setCart([]);
-      loadData();
-    } catch (e: any) {
-      toast.error(e.message || "Order checkout failed");
-    }
-  };
-
-  const handleMatchSuppliers = async () => {
-    if (!sourcingCrop.trim()) {
-      return toast.error("Please enter a produce crop name");
-    }
-    if (!sourcingQty || sourcingQty <= 0) {
-      return toast.error("Please specify a valid requirement quantity (kg)");
-    }
-
-    setIsMatching(true);
-    setMatchPlan(null);
-    try {
-      const result = await matchSuppliers({
-        crop_name: sourcingCrop.trim(),
-        required_quantity_kg: Number(sourcingQty),
-        min_quality_grade: sourcingGrade,
-        max_price_per_kg: sourcingMaxPrice ? Number(sourcingMaxPrice) : undefined,
-        delivery_latitude: user?.latitude || 19.033,
-        delivery_longitude: user?.longitude || 73.0297,
-        delivery_address: (user as any)?.address || "Buyer Distribution Hub",
-      });
-
-      setMatchPlan(result);
-      if (result.status === "FEASIBLE") {
-        toast.success(`100% supply matched across ${result.matched_farmers.length} farmer(s)!`);
-      } else if (result.status === "PARTIAL") {
-        toast.warning(
-          `Partial fulfillment: ${result.total_matched_kg} kg matched, ${result.shortage_kg} kg shortage.`
-        );
-      } else {
-        toast.error(result.infeasibility_reason || "No matching farmers found");
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Supplier matching calculation failed");
-    } finally {
-      setIsMatching(false);
-    }
-  };
-
-  const handleFulfillPlan = async () => {
-    if (!matchPlan || matchPlan.matched_farmers.length === 0) return;
-    setIsFulfilling(true);
-    try {
-      const plan = await fulfillOrder({
-        crop_name: sourcingCrop.trim(),
-        required_quantity_kg: Number(sourcingQty),
-        min_quality_grade: sourcingGrade,
-        delivery_latitude: user?.latitude || 19.033,
-        delivery_longitude: user?.longitude || 73.0297,
-        delivery_address: (user as any)?.address || "Buyer Distribution Hub",
-        max_price_per_kg: sourcingMaxPrice ? Number(sourcingMaxPrice) : undefined,
-      });
-
-      if (plan.status === "FEASIBLE" || plan.status === "PARTIAL") {
-        toast.success(`Order fulfilled! Shipment created: ${plan.shipment_ids?.[0] || "Active"}`);
-        setMatchPlan(null);
-        await loadData();
-      } else {
-        toast.error(plan.infeasibility_reason || "Could not book consolidation route");
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Fulfillment booking failed");
-    } finally {
-      setIsFulfilling(false);
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        {tr("common.loginRequired", "Please log in to access the buyer portal.")}
-      </div>
-    );
-  }
+  const needsOnboarding = me && !me.profile?.onboarding_completed;
+  const activeOrders = orders.filter((o) => ["pending", "confirmed", "in_transit"].includes(o.status));
+  const recentOrders = orders.slice(0, 4);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b pb-5">
         <div>
-          <Button variant="ghost" size="sm" className="mb-2 h-auto p-0 text-muted-foreground" asChild>
-            <Link href="/" className="inline-flex items-center gap-1.5 text-xs">
-              <ArrowLeft className="size-3.5" />
-              {tr("dash.backToSite", "Back to site")}
-            </Link>
-          </Button>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Procurement Portal
+            Buyer procurement portal
           </p>
-          <h1 className="text-2xl font-bold text-foreground">
-            {tr("buyer.dashboard.title", "Buyer Procurement & Fulfillment Dashboard")}
+          <h1 className="mt-0.5 text-2xl font-bold">
+            {me?.profile?.business_name || user?.full_name || "Buyer"}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Multi-farmer supplier matching, transparent quantity allocation, and automated logistics.
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {me?.profile?.delivery_city
+              ? `Delivering to ${me.profile.delivery_city}`
+              : "Source verified farm supply with optimized logistics"}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <Button variant="outline" size="sm" onClick={() => logout()}>
+            <UserRound className="size-4" />
+            Sign out
+          </Button>
+        </div>
+      </header>
+
+      {/* Onboarding banner */}
+      {needsOnboarding && (
+        <Card className="mb-8 border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <UserRound className="size-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Complete your buyer profile</p>
+                <p className="text-xs text-muted-foreground">
+                  Tell us your business, delivery city and preferred crops so matching is tuned to you.
+                </p>
+              </div>
+            </div>
+            <Button asChild>
+              <Link href="/buyer/onboarding">
+                Set up profile
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick actions */}
+      <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Button asChild variant="default" className="h-auto justify-start gap-3 p-4">
+          <Link href="/buyer/procurement">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-white/15">
+              <ShoppingCart className="size-5" />
+            </span>
+            <span className="text-left">
+              <span className="block text-sm font-semibold">New procurement</span>
+              <span className="block text-xs opacity-80">Match supply, plan route, place order</span>
+            </span>
+            <ArrowRight className="ml-auto size-4" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-auto justify-start gap-3 p-4">
+          <Link href="/buyer/orders">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-muted">
+              <ClipboardList className="size-5" />
+            </span>
+            <span className="text-left">
+              <span className="block text-sm font-semibold">Order history</span>
+              <span className="block text-xs text-muted-foreground">Track and review orders</span>
+            </span>
+            <ArrowRight className="ml-auto size-4" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-auto justify-start gap-3 p-4">
+          <Link href="/buyer/insights">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-muted">
+              <BarChart3 className="size-5" />
+            </span>
+            <span className="text-left">
+              <span className="block text-sm font-semibold">Insights</span>
+              <span className="block text-xs text-muted-foreground">Spend, suppliers, delivery performance</span>
+            </span>
+            <ArrowRight className="ml-auto size-4" />
+          </Link>
+        </Button>
       </div>
 
-      {/* SECTION 1: SMART SUPPLIER MATCHING & QUANTITY ALLOCATION CALCULATOR */}
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 border-b">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="size-5 text-primary" />
-              Intelligent Multi-Farmer Matching & Quantity Allocation
-            </CardTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Evaluates quantity, distance, quality, freshness, reliability, and transport economics across multiple farmers.
-            </p>
+      {/* Recommended supply */}
+      <section className="mb-10">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Package className="size-5 text-primary" />
+            Recommended supply
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {listings.length} verified listings available now
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Card key={i}>
+                <CardContent className="space-y-3 p-4">
+                  <Skeleton className="h-28 w-full rounded-md" />
+                  <Skeleton className="h-5 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <Badge variant="secondary">Automated Aggregation</Badge>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Inputs row */}
-          <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Crop Name</Label>
-              <Input
-                type="text"
-                value={sourcingCrop}
-                onChange={(e) => setSourcingCrop(e.target.value)}
-                placeholder="e.g. Tomato, Onion"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Required Volume (kg)</Label>
-              <Input
-                type="number"
-                value={sourcingQty}
-                onChange={(e) => setSourcingQty(Number(e.target.value))}
-                placeholder="e.g. 1000"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Min Quality Grade</Label>
-              <Select value={sourcingGrade} onValueChange={setSourcingGrade}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">Grade A (Premium)</SelectItem>
-                  <SelectItem value="B">Grade B (Commercial)</SelectItem>
-                  <SelectItem value="C">Grade C (Standard)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Max Budget (₹/kg)</Label>
-              <Input
-                type="number"
-                value={sourcingMaxPrice}
-                onChange={(e) => setSourcingMaxPrice(e.target.value)}
-                placeholder="Optional limit"
-              />
-            </div>
-            <Button onClick={handleMatchSuppliers} disabled={isMatching} className="w-full">
-              {isMatching ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  <span>Calculating...</span>
-                </>
-              ) : (
-                <>
-                  <Scale className="size-4" />
-                  <span>Allocate Supply</span>
-                </>
-              )}
+        ) : listings.length === 0 ? (
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Package />
+              </EmptyMedia>
+              <EmptyTitle>No supply listed right now</EmptyTitle>
+              <EmptyDescription>
+                Farmers haven't posted availability yet. Check back soon or start a procurement to see what can be matched.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((l) => (
+              <Card key={l.id} className="overflow-hidden">
+                <div className="relative h-28">
+                  <img
+                    src={cropImage(l.crop_name)}
+                    alt={l.crop_name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                  <Badge className="absolute left-2 top-2 bg-background/90 text-foreground backdrop-blur">
+                    Grade {l.quality_grade || "B"}
+                  </Badge>
+                </div>
+                <CardContent className="space-y-2 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-base font-bold">{l.crop_name}</h3>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="size-3" />
+                        {l.pickup_location || "Farm location"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-bold text-primary">₹{l.price_per_kg}</p>
+                      <p className="text-[11px] text-muted-foreground">per kg</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
+                    <span>{l.quantity_kg} kg available</span>
+                    <span className="capitalize">{CATEGORY_MAP[l.crop_name] || "produce"}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Active orders + recent */}
+      <section className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <Truck className="size-5 text-primary" />
+              Active orders
+            </h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/buyer/orders">
+                View all
+                <ArrowRight className="size-3.5" />
+              </Link>
             </Button>
           </div>
 
-          {/* Matching Result Breakdown */}
-          {matchPlan && (
-            <div className="space-y-4 border-t pt-4">
-              {/* Status Summary Banner */}
-              <Alert
-                variant={
-                  matchPlan.status === "FEASIBLE"
-                    ? "default"
-                    : matchPlan.status === "PARTIAL"
-                    ? "default"
-                    : "destructive"
-                }
-                className={
-                  matchPlan.status === "FEASIBLE"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
-                    : matchPlan.status === "PARTIAL"
-                    ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
-                    : ""
-                }
-              >
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    {matchPlan.status === "FEASIBLE" ? (
-                      <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" />
-                    ) : (
-                      <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
-                    )}
-                    <div>
-                      <AlertTitle className="text-sm font-bold">
-                        Status: {matchPlan.status} FULFILLMENT
-                      </AlertTitle>
-                      <AlertDescription className="text-xs opacity-90">
-                        {matchPlan.status === "FEASIBLE"
-                          ? `Requirement of ${matchPlan.required_kg} kg completely matched across ${matchPlan.matched_farmers.length} farm supplier(s).`
-                          : matchPlan.status === "PARTIAL"
-                          ? `Partial volume: ${matchPlan.total_matched_kg} kg matched. Shortage: ${matchPlan.shortage_kg} kg cannot be economically fulfilled.`
-                          : matchPlan.infeasibility_reason || "No feasible farmers match criteria."}
-                      </AlertDescription>
+          {loading ? (
+            <div className="space-y-3">
+              {[0, 1].map((i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : activeOrders.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Truck className="mx-auto size-7 text-muted-foreground/50" />
+                <p className="mt-2 text-sm font-medium">No active orders</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Start a procurement to source produce with optimized logistics.
+                </p>
+                <Button asChild size="sm" className="mt-4">
+                  <Link href="/buyer/procurement">
+                    <Plus className="size-4" />
+                    New procurement
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {activeOrders.map((o) => (
+                <Card key={o.id} className="transition-colors hover:border-primary/40">
+                  <CardContent className="flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        Order #{o.id.slice(0, 8)}
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                          {o.items.reduce((a, i) => a + i.quantity_kg, 0)} kg
+                        </span>
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {o.items.length > 0
+                          ? `${o.items.length} item${o.items.length > 1 ? "s" : ""} · ${o.items.reduce((a, i) => a + i.quantity_kg, 0)} kg`
+                          : "Produce order"}
+                      </p>
                     </div>
-                  </div>
-
-                  {matchPlan.matched_farmers.length > 0 && (
-                    <Button size="sm" onClick={handleFulfillPlan} disabled={isFulfilling}>
-                      <span>{isFulfilling ? "Booking..." : "Dispatch Consolidated Route"}</span>
-                      <ArrowRight className="size-3.5" />
-                    </Button>
-                  )}
-                </div>
-              </Alert>
-
-              {/* Quantity Allocation Summary Chips */}
-              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-                <div className="rounded-lg border bg-muted/40 p-3">
-                  <span className="block text-muted-foreground">Required</span>
-                  <strong className="text-sm text-foreground">{matchPlan.required_kg} kg</strong>
-                </div>
-                <div className="rounded-lg border bg-muted/40 p-3">
-                  <span className="block text-muted-foreground">Total Allocated</span>
-                  <strong className="text-sm text-emerald-600">{matchPlan.total_matched_kg} kg</strong>
-                </div>
-                <div className="rounded-lg border bg-muted/40 p-3">
-                  <span className="block text-muted-foreground">Shortage</span>
-                  <strong className={`text-sm ${matchPlan.shortage_kg > 0 ? "text-amber-600" : "text-foreground"}`}>
-                    {matchPlan.shortage_kg} kg
-                  </strong>
-                </div>
-                <div className="rounded-lg border bg-muted/40 p-3">
-                  <span className="block text-muted-foreground">Contributing Farmers</span>
-                  <strong className="text-sm text-foreground">{matchPlan.matched_farmers.length}</strong>
-                </div>
-              </div>
-
-              {/* Farmer Allocation Breakdown Cards */}
-              {matchPlan.matched_farmers.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Optimal Farmer Contribution Breakdown
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {matchPlan.matched_farmers.map((farmer, idx) => (
-                      <Card key={farmer.listing_id || idx} className="transition-colors hover:border-primary/50">
-                        <CardContent className="space-y-3 p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="flex size-5 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
-                                  {idx + 1}
-                                </span>
-                                <h4 className="text-sm font-bold text-foreground">
-                                  {farmer.farmer_name}
-                                </h4>
-                              </div>
-                              <span className="mt-0.5 block text-xs text-muted-foreground">
-                                {farmer.distance_km} km away · Grade {farmer.quality_grade}
-                              </span>
-                            </div>
-                            <Badge variant="secondary">₹{farmer.price_per_kg}/kg</Badge>
-                          </div>
-
-                          {/* Quantity Contribution Highlight */}
-                          <div className="flex items-center justify-between rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 text-xs dark:bg-emerald-950/20">
-                            <div>
-                              <span className="block text-[11px] text-muted-foreground">Allocated Contribution</span>
-                              <strong className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                                {farmer.allocated_kg} kg
-                              </strong>
-                            </div>
-                            <div className="text-right">
-                              <span className="block text-[11px] text-muted-foreground">Available Total</span>
-                              <span className="font-semibold text-foreground">{farmer.available_kg} kg</span>
-                            </div>
-                          </div>
-
-                          {/* Transparent factors */}
-                          <div className="grid grid-cols-2 gap-2 border-t pt-1 text-[11px] text-muted-foreground">
-                            <div>
-                              <span>Est. Transport:</span>{" "}
-                              <strong className="text-foreground">₹{farmer.estimated_transport_cost}</strong>
-                            </div>
-                            <div>
-                              <span>Reliability:</span>{" "}
-                              <strong className="text-foreground">{Math.round(farmer.reliability_score * 100)}%</strong>
-                            </div>
-                            <div>
-                              <span>Overall Fit:</span>{" "}
-                              <strong className="text-foreground">{Math.round(farmer.score * 100)}%</strong>
-                            </div>
-                            <div>
-                              <span>Quality Grade:</span>{" "}
-                              <strong className="text-foreground">{farmer.quality_grade}</strong>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    <div className="flex shrink-0 items-center gap-3">
+                      <Badge className={STATUS_TONE[o.status] || "bg-muted text-muted-foreground"}>
+                        {STATUS_LABEL[o.status] || o.status}
+                      </Badge>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/buyer/orders/${o.id}`}>
+                          Details
+                          <ArrowRight className="size-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* SECTION 2: MARKETPLACE BROWSE & CART */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Marketplace listings */}
-        <div className="space-y-4 lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-              <Package className="size-5 text-primary" />
-              <span>Available Farm Produce Listings</span>
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <ClipboardList className="size-5 text-primary" />
+              Recent orders
             </h2>
-            <span className="text-xs text-muted-foreground">
-              {listings.length} crops ready for harvest/pickup
-            </span>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/buyer/orders">
+                View all
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {[0, 1, 2, 3].map((i) => (
-                <Card key={i}>
-                  <CardContent className="space-y-3 p-4">
-                    <Skeleton className="h-5 w-2/3" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-8 w-full" />
-                  </CardContent>
-                </Card>
+            <div className="space-y-3">
+              {[0, 1].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
+          ) : recentOrders.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <ClipboardList className="mx-auto size-7 text-muted-foreground/50" />
+                <p className="mt-2 text-sm font-medium">No orders yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your procurement history will appear here.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {listings.map((l) => (
-                <Card key={l.id} className="flex flex-col justify-between space-y-3 transition-shadow hover:shadow-md">
-                  <CardContent className="space-y-3 p-4">
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-base font-bold text-foreground">{l.crop_name}</h3>
-                      {l.quality_grade && (
-                        <Badge variant="secondary">Grade {l.quality_grade}</Badge>
-                      )}
+            <div className="space-y-3">
+              {recentOrders.map((o) => (
+                <Card key={o.id} className="transition-colors hover:border-primary/40">
+                  <CardContent className="flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        Order #{o.id.slice(0, 8)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {new Date(o.created_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                        {" · "}
+                        {o.total_amount ? formatINR(o.total_amount) : `${o.items.reduce((a, i) => a + i.quantity_kg, 0)} kg`}
+                      </p>
                     </div>
-                    <p className="flex items-center gap-1 pt-1 text-xs text-muted-foreground">
-                      <MapPin className="size-3" />
-                      {l.pickup_location || "Verified Farmer Location"}
-                    </p>
-
-                    <div className="flex items-baseline justify-between border-t pt-2 text-sm">
-                      <div>
-                        <span className="text-lg font-bold text-foreground">₹{l.price_per_kg}</span>
-                        <span className="text-xs text-muted-foreground"> / kg</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {l.quantity_kg} kg available
-                      </span>
-                    </div>
-
-                    <Button className="w-full" onClick={() => addToCart(l)}>
-                      {tr("buyer.addToCart", "Add to Order")} (+50 kg)
-                    </Button>
+                    <Badge className={STATUS_TONE[o.status] || "bg-muted text-muted-foreground"}>
+                      {STATUS_LABEL[o.status] || o.status}
+                    </Badge>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
         </div>
-
-        {/* Order Cart Drawer */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ShoppingBag className="size-5 text-primary" />
-                <span>{tr("buyer.cart.title", "Procurement Cart")} ({cart.length})</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-5">
-              {cart.length === 0 ? (
-                <p className="py-6 text-center text-xs italic text-muted-foreground">
-                  Your cart is currently empty. Add produce items or use the Multi-Farmer Calculator above.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
-                    {cart.map((c, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between rounded-lg bg-muted/40 p-2 text-xs"
-                      >
-                        <div>
-                          <span className="font-semibold text-foreground">{c.crop_name}</span>
-                          <span className="block text-muted-foreground">{c.quantity} kg</span>
-                        </div>
-                        <span className="font-bold text-foreground">
-                          ₹{(c.quantity * (c.price_per_kg || 0)).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2 border-t pt-3">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Total Weight:</span>
-                      <span className="font-semibold text-foreground">
-                        {cart.reduce((acc, i) => acc + i.quantity, 0)} kg
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm font-bold text-foreground">
-                      <span>Est. Produce Total:</span>
-                      <span>
-                        ₹
-                        {cart
-                          .reduce((acc, i) => acc + i.quantity * (i.price_per_kg || 0), 0)
-                          .toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Button className="w-full" onClick={checkout}>
-                    <span>{tr("buyer.checkout", "Confirm & Place Order")}</span>
-                    <ArrowRight className="size-4" />
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* SECTION 3: LIVE DELIVERIES & GPS LOGISTICS */}
-      <div className="space-y-6 border-t pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
-              <Truck className="size-6 text-primary" />
-              <span>Live Order Shipments & Deliveries</span>
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Monitor multi-farmer collection routes, delivery ETAs, and checkpoint milestones.
-            </p>
-          </div>
-        </div>
-
-        {shipments.length > 0 ? (
-          <div className="space-y-6">
-            <Tabs
-              value={selectedShipment?.id ?? shipments[0]?.id}
-              onValueChange={(v) => loadShipmentDetail(v)}
-            >
-              <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-                {shipments.map((s, idx) => (
-                  <TabsTrigger
-                    key={s.id}
-                    value={s.id}
-                    className="gap-1.5 border data-[state=active]:border-primary"
-                  >
-                    <Truck className="size-3.5" />
-                    <span>Shipment #{idx + 1} ({s.status})</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              <TabsContent value={selectedShipment?.id ?? ""} className="mt-6">
-                {trackingLoading ? (
-                  <div className="p-8 text-center text-muted-foreground">Loading tracking data...</div>
-                ) : selectedShipment ? (
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <div className="space-y-6 xl:col-span-2">
-                      <RouteMap
-                        stops={selectedShipment.stops || []}
-                        vehicle={selectedShipment.vehicle}
-                        distanceKm={selectedShipment.estimated_distance_km}
-                        durationMin={selectedShipment.estimated_duration_min}
-                        routeMode={selectedShipment.route_mode || "direct"}
-                        mapsUrl={selectedShipment.maps_url}
-                      />
-                    </div>
-                    <div>
-                      <TrackingTimeline
-                        shipmentId={selectedShipment.id}
-                        currentStatus={selectedShipment.status}
-                        events={trackingData?.events || []}
-                        estimatedArrival={trackingData?.estimated_arrival || selectedShipment.delivery_time}
-                        currentLat={trackingData?.current_latitude}
-                        currentLng={trackingData?.current_longitude}
-                        onRefresh={() => loadShipmentDetail(selectedShipment.id)}
-                      />
-                    </div>
-                  </div>
-                ) : null}
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : (
-          <Card className="p-8 text-center">
-            <div className="space-y-2">
-              <Truck className="mx-auto size-8 text-muted-foreground opacity-50" />
-              <p className="text-sm font-semibold text-foreground">No active shipments in transit</p>
-              <p className="text-xs text-muted-foreground">
-                Allocate supply and dispatch an order above to generate an optimized delivery route.
-              </p>
-            </div>
-          </Card>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

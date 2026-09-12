@@ -309,3 +309,87 @@ def test_farmer_cannot_create_order(client):
         headers={"Authorization": f"Bearer {farmer_token}"},
     )
     assert response.status_code == 403
+
+
+def test_fulfill_order_creates_order_allocations_shipments(client):
+    """
+    The fulfillment pipeline must persist a real order (with items, allocations
+    and linked shipments) and return its id, so the buyer wizard can confirm it.
+    """
+    admin_token = _register(client, "admin_fulfill@bytefrost.com", "admin")
+    farmer_token = _register(client, "farmer_fulfill@bytefrost.com", "farmer")
+    buyer_token = _register(client, "buyer_fulfill@bytefrost.com", "buyer_bulk")
+
+    # A truck must exist for the VRP to assign.
+    vehicle = client.post(
+        "/api/v1/vehicles",
+        json={
+            "capacity_kg": 2000.0,
+            "vehicle_type": "STANDARD",
+            "latitude": 22.5726,
+            "longitude": 88.3639,
+            "operating_cost_per_km": 12.0,
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert vehicle.status_code == 201, vehicle.text
+
+    listing = _create_listing(client, farmer_token, price=25.0, quantity=500)
+    listing_id = listing["id"]
+
+    response = client.post(
+        "/api/v1/logistics/fulfill-order",
+        json={
+            "crop_name": "Rice",
+            "required_quantity_kg": 100,
+            "min_quality_grade": "B",
+            "max_price_per_kg": 30.0,
+            "delivery_latitude": 22.5726,
+            "delivery_longitude": 88.3639,
+            "delivery_address": "Kolkata, India",
+            "delivery_deadline": "2026-09-14T18:00:00",
+        },
+        headers={"Authorization": f"Bearer {buyer_token}"},
+    )
+    assert response.status_code == 200, response.text
+    plan = response.json()
+    assert plan["status"] in ("FEASIBLE", "PARTIAL"), plan
+    assert plan["order_id"], "fulfill-order must return the created order id"
+    assert plan["shipment_ids"], "plan must create at least one shipment"
+
+    order_id = plan["order_id"]
+
+    # The order must be persisted with items, allocations and linked shipments.
+    detail = client.get(
+        f"/api/v1/orders/{order_id}",
+        headers={"Authorization": f"Bearer {buyer_token}"},
+    )
+    assert detail.status_code == 200, detail.text
+    order = detail.json()
+    assert order["status"] == "pending"
+    assert len(order["items"]) == 1
+    assert order["items"][0]["listing_id"] == listing_id
+    assert order["items"][0]["quantity_kg"] == 100
+    assert len(order["allocations"]) == 1
+    assert len(order["shipments"]) == len(plan["shipment_ids"])
+    for shipment in order["shipments"]:
+        assert shipment["id"] in plan["shipment_ids"]
+
+    # Stock must have been reserved (decremented) atomically.
+    listings = client.get("/api/v1/listings", headers={"Authorization": f"Bearer {buyer_token}"})
+    assert listings.status_code == 200
+    remaining = next(l for l in listings.json() if l["id"] == listing_id)
+    assert remaining["quantity_kg"] == 400
+
+    # The wizard lifecycle must advance: confirm -> dispatch -> ship.
+    for action in ("confirm", "dispatch", "ship"):
+        step = client.post(
+            f"/api/v1/orders/{order_id}/{action}",
+            headers={"Authorization": f"Bearer {buyer_token}"},
+        )
+        assert step.status_code == 200, (action, step.text)
+    final = client.get(
+        f"/api/v1/orders/{order_id}",
+        headers={"Authorization": f"Bearer {buyer_token}"},
+    ).json()
+    assert final["status"] == "in_transit"

@@ -84,7 +84,9 @@ async def solve_vrp(
 
     # 3. Time windows
     # Convert absolute datetimes to relative minutes from now.
-    now = datetime.now(timezone.utc)
+    # DB datetimes are stored as naive UTC wall-clock (SQLite drops tz info),
+    # so compare against a naive UTC now.
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     time_windows = []
     for loc in locations:
         tw_start = 0

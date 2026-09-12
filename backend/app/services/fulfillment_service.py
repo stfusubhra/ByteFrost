@@ -23,9 +23,12 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
+from fastapi import HTTPException
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import (
+    Allocation, Order, OrderItem, ProduceListing,
     Route, RouteStop, Shipment, StopType, RouteStatus,
 )
 from app.schemas.schemas import (
@@ -124,6 +127,77 @@ async def create_fulfillment_plan(
             status="INFEASIBLE",
             infeasibility_reason="Matched farmers could not be consolidated into any batch.",
         )
+
+    # ------------------------------------------------------------------
+    # Stage 1b: Create the order + items + allocations (reserve stock)
+    # ------------------------------------------------------------------
+    order = Order(
+        buyer_id=UUID(current_user_id),
+        delivery_address=requirement.delivery_address,
+        delivery_latitude=requirement.delivery_latitude,
+        delivery_longitude=requirement.delivery_longitude,
+        delivery_deadline=requirement.delivery_deadline,
+    )
+    db.add(order)
+    await db.flush()
+
+    total = 0.0
+    created_allocations: List[Allocation] = []
+    for f in match.matched_farmers:
+        if f.allocated_kg <= 0:
+            continue
+        # Atomic decrement: ensure the listing is still active with enough stock.
+        stmt = (
+            update(ProduceListing)
+            .where(
+                ProduceListing.id == f.listing_id,
+                ProduceListing.is_active == True,
+                ProduceListing.quantity_kg >= f.allocated_kg,
+            )
+            .values(quantity_kg=ProduceListing.quantity_kg - f.allocated_kg)
+        )
+        result = await db.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Insufficient quantity for listing {f.listing_id}. "
+                    f"Available stock may have changed."
+                ),
+            )
+        listing_result = await db.execute(
+            select(ProduceListing).where(ProduceListing.id == f.listing_id)
+        )
+        listing = listing_result.scalar_one()
+        price_per_kg = listing.price_per_kg
+        if price_per_kg is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Listing {listing.id} has no price set",
+            )
+        db.add(
+            OrderItem(
+                order_id=order.id,
+                listing_id=listing.id,
+                quantity_kg=f.allocated_kg,
+                price_per_kg=price_per_kg,
+            )
+        )
+        allocation = Allocation(
+            order_id=order.id,
+            listing_id=listing.id,
+            quantity_kg=f.allocated_kg,
+            score=f.score,
+        )
+        db.add(allocation)
+        created_allocations.append(allocation)
+        total += f.allocated_kg * float(price_per_kg)
+
+    order.total_amount = total
+    await db.flush()
+
+    # Allocation ids are only assigned by the DB flush above.
+    allocation_ids = [str(a.id) for a in created_allocations]
 
     # ------------------------------------------------------------------
     # Stage 2b: Decide routing mode (direct / hub / multi_hub)
@@ -252,8 +326,8 @@ async def create_fulfillment_plan(
         # Persist this route + shipment.
         shipment = await dispatch_route(
             db=db,
-            order_id=None,
-            allocation_ids=[],
+            order_id=str(order.id),
+            allocation_ids=allocation_ids,
             vehicle_id=str(truck.id),
             route_mode=routing.mode,
             distance_km=route["distance_km"],
@@ -271,7 +345,6 @@ async def create_fulfillment_plan(
 
         # Build the response route from the persisted RouteStop records.
         # Query them directly (avoid lazy-loading the relationship in async).
-        from sqlalchemy import select
         stops_result = await db.execute(
             select(RouteStop)
             .where(RouteStop.route_id == shipment.route_id)
@@ -423,6 +496,7 @@ async def create_fulfillment_plan(
         infeasibility_reason=(
             landed.warning if not landed.is_economically_viable else match.infeasibility_reason
         ),
+        order_id=order.id,
         routing_mode=routing.mode,
         vehicle_routes=vehicle_routes,
         landed_cost=landed,

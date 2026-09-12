@@ -90,15 +90,46 @@ export default function Login() {
     }
   };
 
-  const handleDemoFill = (demoIdentifier: string) => {
-    if (demoIdentifier.includes("@")) {
-      setMethod("email");
-      setEmail(demoIdentifier);
-    } else {
-      setMethod("phone");
-      setPhone(demoIdentifier);
-    }
+  const handleDemoFill = async (demoIdentifier: string) => {
+    // One-click demo login: fill the form with the seeded demo account and
+    // submit immediately so judges can enter the app in a single click.
+    setMethod("email");
+    setEmail(demoIdentifier);
     setPassword("demo123");
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await api.post("/auth/login", {
+        email: demoIdentifier,
+        password: "demo123",
+      });
+      if (response.data?.access_token && response.data?.role) {
+        login(response.data.access_token, {
+          id: response.data.user_id,
+          email: response.data?.email ?? "",
+          full_name: "",
+          phone: null,
+          role: response.data.role,
+          is_verified: true,
+          is_active: true,
+          latitude: null,
+          longitude: null,
+          created_at: new Date().toISOString(),
+        });
+        if (response.data.role === "farmer" || response.data.role === "fpo_manager") {
+          window.location.href = "/dashboard";
+        } else {
+          window.location.href = "/buyer-dashboard";
+        }
+      }
+    } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 401) setError(t("login.err.invalid"));
+      else if (status === 429) setError(t("login.err.tooMany"));
+      else setError(t("login.err.generic"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMethod = (m: LoginMethod) => {
@@ -227,8 +258,12 @@ export default function Login() {
 
         {showDemo && (
           <div className="auth-demo">
-            <button type="button" onClick={() => handleDemoFill("farmer.demo@kisansetu.in")}>{t("login.demo.farmer")}</button>
-            <button type="button" onClick={() => handleDemoFill("buyer.demo@kisansetu.in")}>{t("login.demo.buyer")}</button>
+            <button type="button" onClick={() => handleDemoFill("rahul.farmer@kisansetu.demo")} disabled={loading}>
+              {t("login.demo.farmer")}
+            </button>
+            <button type="button" onClick={() => handleDemoFill("freshmart@kisansetu.demo")} disabled={loading}>
+              {t("login.demo.buyer")}
+            </button>
           </div>
         )}
       </div>

@@ -60,9 +60,78 @@ class UserResponse(BaseModel):
     is_active: bool
     is_verified: bool
     avatar_url: Optional[str] = None
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    profile: Optional[dict] = None
 
     class Config:
         from_attributes = True
+
+
+# --- Buyer onboarding / profile ---
+class UserProfileUpdate(BaseModel):
+    """Buyer onboarding payload. All fields optional so partial updates work."""
+    full_name: Optional[str] = None
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    business_name: Optional[str] = None
+    business_type: Optional[str] = None  # retail_chain / restaurant / wholesaler / fpo / other
+    delivery_city: Optional[str] = None
+    preferred_crops: Optional[List[str]] = None
+    monthly_volume_kg: Optional[float] = None
+    onboarding_completed: Optional[bool] = None
+
+
+# --- Notifications ---
+class NotificationResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    title: str
+    body: Optional[str] = None
+    category: Optional[str] = None
+    link: Optional[str] = None
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- Buyer insights ---
+class CropVolume(BaseModel):
+    crop_name: str
+    quantity_kg: float
+
+
+class SupplierReliability(BaseModel):
+    supplier_name: str
+    avg_score: float
+    allocation_count: int
+
+
+class DeliveryPerformance(BaseModel):
+    total_shipments: int
+    delivered_shipments: int
+    on_time_rate: float
+    avg_landed_cost_per_kg: float
+
+
+class SpendTrendPoint(BaseModel):
+    month: str
+    amount: float
+
+
+class BuyerInsightsResponse(BaseModel):
+    total_orders: int
+    total_spend: float
+    total_kg: float
+    orders_by_status: dict
+    top_crops: List[CropVolume] = []
+    suppliers: List[SupplierReliability] = []
+    delivery_performance: DeliveryPerformance
+    spend_trend: List[SpendTrendPoint] = []
 
 
 # --- Listings ---
@@ -176,6 +245,49 @@ class OrderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class OrderItemDetailResponse(OrderItemResponse):
+    crop_name: Optional[str] = None
+    variety: Optional[str] = None
+    seller_name: Optional[str] = None
+    pickup_location: Optional[str] = None
+    quality_grade: Optional[str] = None
+
+
+class OrderAllocationResponse(BaseModel):
+    id: UUID
+    listing_id: UUID
+    quantity_kg: float
+    score: Optional[float] = None
+    crop_name: Optional[str] = None
+    seller_name: Optional[str] = None
+    price_per_kg: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OrderShipmentSummary(BaseModel):
+    id: UUID
+    status: str
+    route_mode: Optional[str] = None
+    estimated_distance_km: Optional[float] = None
+    estimated_duration_min: Optional[float] = None
+    landed_cost: Optional[float] = None
+    estimated_arrival: Optional[datetime] = None
+    vehicle_type: Optional[str] = None
+    vehicle_capacity_kg: Optional[float] = None
+    stop_count: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OrderDetailResponse(OrderResponse):
+    items: List[OrderItemDetailResponse] = []
+    allocations: List[OrderAllocationResponse] = []
+    shipments: List[OrderShipmentSummary] = []
 
 
 # --- AI / Matching ---
@@ -521,6 +633,7 @@ class VehicleRouteResponse(BaseModel):
 class FulfillmentPlanResponse(BaseModel):
     status: str  # FEASIBLE / PARTIAL / INFEASIBLE
     infeasibility_reason: Optional[str] = None
+    order_id: Optional[UUID] = None  # order created by the fulfillment pipeline
     routing_mode: Optional[str] = None  # direct / hub / multi_hub
     vehicle_routes: List[VehicleRouteResponse] = []
     landed_cost: Optional[LandedCostBreakdown] = None

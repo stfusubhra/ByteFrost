@@ -100,6 +100,17 @@ class User(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
+    # Buyer onboarding / business profile (JSON):
+    # {
+    #   "business_name": str,
+    #   "business_type": "retail_chain" | "restaurant" | "wholesaler" | "fpo" | "other",
+    #   "delivery_city": str,
+    #   "preferred_crops": [str],
+    #   "monthly_volume_kg": float,
+    #   "onboarding_completed": bool
+    # }
+    profile = Column(JSON, nullable=True)
+
     # Metadata
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -358,3 +369,16 @@ class ShipmentTemperatureLog(Base):
     shipment_id = Column(UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="CASCADE"), nullable=False)
     temperature_celsius = Column(Float, nullable=False)
     recorded_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    body = Column(Text, nullable=True)
+    category = Column(String(50), nullable=True)  # order / shipment / supply / system
+    link = Column(String(500), nullable=True)     # frontend route, e.g. /buyer/orders/{id}
+    is_read = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
