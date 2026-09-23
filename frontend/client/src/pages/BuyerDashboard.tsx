@@ -24,6 +24,7 @@ import {
   UserRound,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
+import ProfileMenu from "@/components/ProfileMenu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export default function BuyerDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [me, setMe] = useState<UserProfile | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -81,10 +82,8 @@ export default function BuyerDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <NotificationsBell />
-          <Button variant="outline" size="sm" onClick={() => logout()}>
-            <UserRound className="size-4" />
-            Sign out
-          </Button>
+          {/* Account menu — buyer portal routes and sign out. */}
+          <ProfileMenu showName />
         </div>
       </header>
 
