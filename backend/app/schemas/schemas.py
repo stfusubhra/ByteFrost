@@ -194,6 +194,8 @@ class ListingResponse(BaseModel):
     pickup_location: Optional[str]
     is_active: bool
     created_at: datetime
+    # Display name of the selling farm / producer (from the seller's account).
+    farm_name: Optional[str] = None
 
     class Config:
         from_attributes = True

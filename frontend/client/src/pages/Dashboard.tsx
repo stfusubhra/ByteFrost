@@ -1,10 +1,12 @@
 /* KisanSetu Field Ledger – core product dashboard.
- * This component now fetches real data from the backend:
+ * This component fetches real data from the backend:
  *   - Active listings for the logged-in farmer
  *   - Price recommendation for the selected listing
  *   - Demand forecast for the active crop
  *   - Buyer matching scores (real API)
- * The UI falls back to a friendly empty state when no data is available.
+ *   - Shipments, incoming orders (real API)
+ * The UI shows honest empty states when no data is available — no fabricated
+ * fallbacks, no internal factor strings, no dead buttons.
  *
  * UI: shadcn/ui primitives (Card, Table, Badge, Dialog, Tabs, Progress…).
  */
@@ -15,7 +17,6 @@ import {
   ArrowLeft,
   ArrowUpRight,
   BarChart3,
-  Bell,
   Boxes,
   ChevronRight,
   CloudSun,
@@ -26,11 +27,9 @@ import {
   MapPinned,
   Menu,
   PackageCheck,
-  Settings2,
   ShieldCheck,
   Sprout,
   Truck,
-  UsersRound,
   Navigation,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,10 +46,8 @@ import {
   fetchShipment,
   fetchTracking,
   fetchIncomingOrders,
-  createListing,
   updateListing,
   Listing,
-  ListingCreatePayload,
   ListingUpdatePayload,
   OrderResponse,
   ShipmentItem,
@@ -95,287 +92,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-/* ────────────────────────────────────────────────────────────
- * Create Listing modal (shadcn Dialog)
- * ──────────────────────────────────────────────────────────── */
-function CreateListingModal({
-  isOpen,
-  onClose,
-  onCreated,
-  t,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onCreated: (listing: Listing) => void;
-  t: (key: LocaleKeys) => string;
-}) {
-  const [form, setForm] = useState({
-    crop_name: "",
-    variety: "",
-    quantity_kg: "",
-    quality_grade: "A",
-    price_per_kg: "",
-    harvest_date: "",
-    availability_start: "",
-    availability_end: "",
-    pickup_location: "",
-    pickup_latitude: "",
-    pickup_longitude: "",
-    description: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }));
-    setError(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!form.crop_name.trim()) {
-      setError(t("createListing.err.cropName"));
-      return;
-    }
-    if (!form.quantity_kg || Number(form.quantity_kg) <= 0) {
-      setError(t("createListing.err.quantity"));
-      return;
-    }
-    if (!form.price_per_kg || Number(form.price_per_kg) <= 0) {
-      setError(t("createListing.err.price"));
-      return;
-    }
-    if (!form.pickup_location.trim()) {
-      setError(t("createListing.err.location"));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const payload: ListingCreatePayload = {
-        crop_name: form.crop_name.trim(),
-        variety: form.variety.trim() || undefined,
-        quantity_kg: Number(form.quantity_kg),
-        quality_grade: form.quality_grade || undefined,
-        price_per_kg: Number(form.price_per_kg),
-        harvest_date: form.harvest_date || undefined,
-        availability_start: form.availability_start || undefined,
-        availability_end: form.availability_end || undefined,
-        pickup_location: form.pickup_location.trim(),
-        pickup_latitude: form.pickup_latitude ? Number(form.pickup_latitude) : undefined,
-        pickup_longitude: form.pickup_longitude ? Number(form.pickup_longitude) : undefined,
-        description: form.description.trim() || undefined,
-      };
-      const created = await createListing(payload);
-      onCreated(created);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("createListing.err.generic"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("createListing.title")}</DialogTitle>
-          <DialogDescription>{t("createListing.subtitle")}</DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t("createListing.basicInfo")}</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="cl-crop_name">
-                  {t("createListing.cropName")} <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cl-crop_name"
-                  name="crop_name"
-                  value={form.crop_name}
-                  onChange={handleChange}
-                  placeholder={t("createListing.cropNamePlaceholder")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cl-variety">{t("createListing.variety")}</Label>
-                <Input
-                  id="cl-variety"
-                  name="variety"
-                  value={form.variety}
-                  onChange={handleChange}
-                  placeholder={t("createListing.varietyPlaceholder")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cl-quantity">
-                  {t("createListing.quantity")} <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cl-quantity"
-                  name="quantity_kg"
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={form.quantity_kg}
-                  onChange={handleChange}
-                  placeholder={t("createListing.quantityPlaceholder")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cl-price">
-                  {t("createListing.price")} <span className="text-destructive">*</span>
-                </Label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                    ₹
-                  </span>
-                  <Input
-                    id="cl-price"
-                    name="price_per_kg"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    value={form.price_per_kg}
-                    onChange={handleChange}
-                    placeholder={t("createListing.pricePlaceholder")}
-                    className="pl-7"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("createListing.qualityGrade")}</Label>
-                <Select
-                  value={form.quality_grade}
-                  onValueChange={(value) => {
-                    setForm((prev) => ({ ...prev, quality_grade: value }));
-                    setError(null);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("createListing.qualityGrade")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">{t("createListing.gradeA")}</SelectItem>
-                    <SelectItem value="B">{t("createListing.gradeB")}</SelectItem>
-                    <SelectItem value="C">{t("createListing.gradeC")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t("createListing.dates")}</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="cl-harvest">{t("createListing.harvestDate")}</Label>
-                <Input id="cl-harvest" name="harvest_date" type="date" value={form.harvest_date} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cl-avail-start">{t("createListing.availStart")}</Label>
-                <Input id="cl-avail-start" name="availability_start" type="date" value={form.availability_start} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cl-avail-end">{t("createListing.availEnd")}</Label>
-                <Input id="cl-avail-end" name="availability_end" type="date" value={form.availability_end} onChange={handleChange} />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t("createListing.location")}</h3>
-            <div className="space-y-2">
-              <Label htmlFor="cl-pickup">
-                {t("createListing.pickupLocation")} <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="cl-pickup"
-                name="pickup_location"
-                value={form.pickup_location}
-                onChange={handleChange}
-                placeholder={t("createListing.pickupLocationPlaceholder")}
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="cl-lat">{t("createListing.latitude")}</Label>
-                <Input
-                  id="cl-lat"
-                  name="pickup_latitude"
-                  type="number"
-                  step="any"
-                  value={form.pickup_latitude}
-                  onChange={handleChange}
-                  placeholder={t("createListing.latitudePlaceholder")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cl-lng">{t("createListing.longitude")}</Label>
-                <Input
-                  id="cl-lng"
-                  name="pickup_longitude"
-                  type="number"
-                  step="any"
-                  value={form.pickup_longitude}
-                  onChange={handleChange}
-                  placeholder={t("createListing.longitudePlaceholder")}
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t("createListing.description")}</h3>
-            <div className="space-y-2">
-              <Label htmlFor="cl-desc">{t("createListing.descriptionLabel")}</Label>
-              <Textarea
-                id="cl-desc"
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                rows={4}
-                placeholder={t("createListing.descriptionPlaceholder")}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              {t("common.cancel")}
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="size-4 animate-spin" />}
-              {t("createListing.submit")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* ────────────────────────────────────────────────────────────
  * Edit Listing modal (shadcn Dialog)
@@ -701,7 +417,7 @@ function EditListingModal({
  * Dashboard shell
  * ──────────────────────────────────────────────────────────── */
 export default function Dashboard() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { t, lang } = useLanguage();
   const [activeNav, setActiveNav] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -718,7 +434,6 @@ export default function Dashboard() {
   const [incomingOrders, setIncomingOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [createListingModal, setCreateListingModal] = useState(false);
   const [editListingModal, setEditListingModal] = useState(false);
   const [listingToEdit, setListingToEdit] = useState<Listing | null>(null);
 
@@ -731,8 +446,6 @@ export default function Dashboard() {
   ];
 
   const activeNavLabel = navItems.find((n) => n.id === activeNav)?.label || t("dash.overview");
-
-  const action = (msg: string) => toast(msg);
 
   const loadShipmentDetail = async (id: string) => {
     setShipmentLoading(true);
@@ -749,34 +462,6 @@ export default function Dashboard() {
   };
 
   const loadData = useCallback(async () => {
-    if (!isAuthenticated) {
-      // Show demo data for screenshots when not authenticated
-      setListing({
-        id: "listing-1",
-        seller_id: "demo",
-        crop_name: "Tomato",
-        variety: "Cherry",
-        quantity_kg: 500,
-        quality_grade: "A",
-        price_per_kg: 45,
-        pickup_location: "Village Vinchur, Nashik, MH",
-        harvest_date: null,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      });
-      setPriceRec({
-        recommended_price: 42,
-        confidence: 0.87,
-        factors: ["comparable_active_listings", "crop_market"],
-      });
-      setMatches([
-        { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
-        { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
-        { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
-      ]);
-      setLoading(false);
-      return;
-    }
     try {
       // 1️⃣ Fetch all listings once (limit 30 is enough for overview + marketplace)
       const all = await fetchListings({ limit: 30 });
@@ -785,22 +470,15 @@ export default function Dashboard() {
       if (active) {
         setListing(active);
 
-        // 2️⃣ Fire price, forecast, matches in parallel with fallback to demo data
+        // 2️⃣ Fire price, forecast, matches in parallel; keep whatever succeeds
         const [priceRes, forecastRes, matchesRes] = await Promise.allSettled([
           fetchPriceRecommendation(active.id),
           fetchDemandForecast(active.crop_name, active.pickup_location || "India"),
           fetchMatches(active.id, 5),
         ]);
         if (priceRes.status === "fulfilled") setPriceRec(priceRes.value);
-        else setPriceRec({ recommended_price: 42, confidence: 0.87, factors: ["comparable_active_listings", "crop_market"] });
         if (forecastRes.status === "fulfilled") setDemandForecast(forecastRes.value);
-        else setDemandForecast({ crop: active.crop_name, region: "Nashik, MH", forecast: [{ week: 1, predicted_demand_kg: 450, confidence: 0.82 }, { week: 2, predicted_demand_kg: 480, confidence: 0.79 }] });
         if (matchesRes.status === "fulfilled") setMatches(matchesRes.value);
-        else setMatches([
-          { buyer_id: "priya01", score: 0.92, explanation: { quantity_fit: 0.95, price_score: 0.88, distance_score: 0.90, reliability: 0.95, distance_km: 28, order_history: 12 } },
-          { buyer_id: "amit02", score: 0.85, explanation: { quantity_fit: 0.80, price_score: 0.82, distance_score: 0.75, reliability: 0.90, distance_km: 42, order_history: 8 } },
-          { buyer_id: "neha03", score: 0.78, explanation: { quantity_fit: 0.70, price_score: 0.85, distance_score: 0.65, reliability: 0.85, distance_km: 61, order_history: 5 } },
-        ]);
       }
 
       // 3️⃣ Shipments, incoming orders – parallel, non‑blocking
@@ -815,53 +493,15 @@ export default function Dashboard() {
           // load first shipment detail in background
           loadShipmentDetail(shipList[0].id);
         }
-      } else {
-        // Demo shipment data
-        setShipments([{
-          id: "shipment-1",
-          allocation_id: "alloc-1",
-          order_id: "order-1",
-          route_id: "route-1",
-          vehicle_id: "vehicle-1",
-          status: "IN_TRANSIT",
-          landed_cost: 25000,
-          route_mode: "hub",
-          estimated_distance_km: 185.5,
-          estimated_duration_min: 210,
-          pickup_latitude: 19.9975,
-          pickup_longitude: 73.7898,
-          drop_latitude: 12.9716,
-          drop_longitude: 77.5946,
-          pickup_time: "2024-01-20T06:00:00Z",
-          delivery_time: "2024-01-21T12:00:00Z",
-          created_at: "2024-01-19T14:30:00Z",
-          stops: [
-            { id: "stop-1", stop_type: "PICKUP", farmer_id: "farmer-1", quantity_kg: 500, sequence: 1, time_window_earliest: "2024-01-20T05:00:00Z", time_window_latest: "2024-01-20T07:00:00Z", latitude: 19.9975, longitude: 73.7898 },
-            { id: "stop-2", stop_type: "DROP", buyer_id: "buyer-1", quantity_kg: 500, sequence: 2, time_window_earliest: "2024-01-21T11:00:00Z", time_window_latest: "2024-01-21T13:00:00Z", latitude: 12.9716, longitude: 77.5946 }
-          ]
-        } as ShipmentItem]);
       }
       if (ordersRes.status === "fulfilled") setIncomingOrders(ordersRes.value);
-      else {
-        // Demo orders
-        setIncomingOrders([{
-          id: "order-1",
-          buyer_id: "buyer-1",
-          status: "CONFIRMED",
-          total_amount: 22500,
-          delivery_address: "FreshMart Supermarket, Mumbai",
-          delivery_deadline: "2024-01-22T10:00:00Z",
-          created_at: "2024-01-19T09:15:00Z",
-          items: [{ id: "item-1", listing_id: "listing-1", quantity_kg: 500, price_per_kg: 45 }]
-        } as OrderResponse]);
-      }
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
       else setError(t("dash.failed"));
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, t]);
+  }, [t]);
 
   useEffect(() => {
     loadData();
@@ -938,14 +578,6 @@ export default function Dashboard() {
         </div>
         <div className="dash-topbar-right flex items-center gap-2.5">
           <LanguageSelector variant="dark" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => action(t("dash.dataUpdates"))}
-            aria-label="Notifications"
-          >
-            <Bell className="size-[18px]" />
-          </Button>
           <Avatar className="dash-avatar size-8">
             <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
               {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
@@ -976,17 +608,6 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-          <div className="dash-nav-label">{t("dash.manage")}</div>
-          <nav className="dash-nav" aria-label="Manage navigation">
-            <button className="dash-nav-item" onClick={() => action("Team management is coming next.")}>
-              <UsersRound className="size-[18px]" />
-              <span>{t("dash.team")}</span>
-            </button>
-            <button className="dash-nav-item" onClick={() => action("Settings are ready for the next release.")}>
-              <Settings2 className="size-[18px]" />
-              <span>{t("dash.settings")}</span>
-            </button>
-          </nav>
           <div className="dash-sidebar-foot">
             <div className="season-note">
               <CloudSun className="size-[18px]" />
@@ -996,8 +617,10 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="mt-4 flex items-center space-x-3">
-              <Button size="sm" onClick={() => setCreateListingModal(true)}>
-                <FilePlus2 className="size-4" /> {t("dash.createListing")}
+              <Button size="sm" asChild>
+                <Link href="/create-listing">
+                  <FilePlus2 className="size-4" /> {t("dash.createListing")}
+                </Link>
               </Button>
               <span className="text-xs text-muted-foreground">{t("dash.needHand")}</span>
             </div>
@@ -1009,7 +632,7 @@ export default function Dashboard() {
             <div className="space-y-6">
               <div className="dash-head">
                 <div>
-                  <p className="eyebrow">{t("dash.inMotion")} · Google OR-Tools VRP Optimization</p>
+                  <p className="eyebrow">{t("dash.inMotion")}</p>
                   <h1>{t("dash.routesTitle")}</h1>
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.routesSub")}
@@ -1191,7 +814,7 @@ export default function Dashboard() {
                         <TableHead>{t("dash.colGrade")}</TableHead>
                         <TableHead>{t("dash.colLocation")}</TableHead>
                         <TableHead>{t("dash.colStatus")}</TableHead>
-                        <TableHead className="text-right">{t("dash.colStatus")}</TableHead>
+                        <TableHead className="text-right" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1305,9 +928,6 @@ export default function Dashboard() {
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {t("dash.supplyNext")}
                   </p>
-                  {!isAuthenticated && (
-                    <Badge variant="secondary" className="mt-2">Demo Data — Sign in for real data</Badge>
-                  )}
                 </div>
                 <Button asChild>
                   <Link href="/create-listing">
@@ -1401,9 +1021,6 @@ export default function Dashboard() {
                     <span className="eyebrow">{t("dash.decisionLayer")}</span>
                     <h2>{t("dash.whatMove")}</h2>
                   </div>
-                  <Button variant="link" size="sm" className="text-primary" onClick={() => action("All opportunities are already ranked by fit.")}>
-                    {t("dash.viewAll")} <ArrowUpRight className="size-3.5" />
-                  </Button>
                 </div>
                 {listing && (
                   <Card>
@@ -1482,46 +1099,43 @@ export default function Dashboard() {
                     <span className="eyebrow">{t("dash.buyerMatching")}</span>
                     <h2>{t("dash.bestMatches")}</h2>
                   </div>
-                  <Button variant="link" size="sm" className="text-primary" onClick={() => action("Matching preferences opened.")}>
-                    {t("dash.tuneMatching")} <Settings2 className="size-3.5" />
-                  </Button>
                 </div>
                 <Card>
-                  <CardContent className="divide-y p-0">
-                    {matches.map((m) => (
-                      <div key={m.buyer_id} className="flex items-center gap-4 p-4">
-                        <Avatar className="size-9">
-                          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                            {shortBuyerId(m.buyer_id)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">{shortBuyerId(m.buyer_id)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {m.explanation?.distance_km ? `${m.explanation.distance_km} km` : ""}
-                          </p>
+                  {matches.length > 0 ? (
+                    <CardContent className="divide-y p-0">
+                      {matches.map((m) => (
+                        <div key={m.buyer_id} className="flex items-center gap-4 p-4">
+                          <Avatar className="size-9">
+                            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                              {shortBuyerId(m.buyer_id)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-foreground">{shortBuyerId(m.buyer_id)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {m.explanation?.distance_km ? `${m.explanation.distance_km} km` : ""}
+                            </p>
+                          </div>
+                          <div className="hidden w-32 sm:block">
+                            <Progress value={Math.round(m.score * 100)} className="h-2" />
+                          </div>
+                          <div className="w-14 text-right">
+                            <p className="text-sm font-bold text-foreground">{Math.round(m.score * 100)}%</p>
+                            <p className="text-xs text-muted-foreground">{t("dash.score")}</p>
+                          </div>
                         </div>
-                        <div className="hidden w-32 sm:block">
-                          <Progress value={Math.round(m.score * 100)} className="h-2" />
-                        </div>
-                        <div className="w-14 text-right">
-                          <p className="text-sm font-bold text-foreground">{Math.round(m.score * 100)}%</p>
-                          <p className="text-xs text-muted-foreground">{t("dash.score")}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => action(`Match ${shortBuyerId(m.buyer_id)} opened.`)}
-                          aria-label={`Open match ${shortBuyerId(m.buyer_id)}`}
-                        >
-                          <ArrowUpRight className="size-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </CardContent>
+                      ))}
+                    </CardContent>
+                  ) : (
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground">{t("dash.noMatches")}</p>
+                    </CardContent>
+                  )}
                   <div className="border-t p-4">
-                    <Button variant="outline" className="w-full" onClick={() => action("Marketplace opened with matches.")}>
-                      {t("dash.exploreMarketplace")} <ArrowUpRight className="size-4" />
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/marketplace">
+                        {t("dash.exploreMarketplace")} <ArrowUpRight className="size-4" />
+                      </Link>
                     </Button>
                   </div>
                 </Card>
@@ -1537,7 +1151,7 @@ export default function Dashboard() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => { loadData(); action("Operations refreshed."); }}
+                    onClick={() => loadData()}
                     aria-label="Refresh operations"
                   >
                     <BarChart3 className="size-4" />
@@ -1586,22 +1200,9 @@ export default function Dashboard() {
 
           <footer className="footer-note">
             <span><Sprout className="size-3.5" /> {t("dash.footerBuilt")}</span>
-            <span>
-              {t("dash.dataUpdates")} <button className="text-link" onClick={() => action("System status: all services operational.")}>{t("dash.systemStatus")}</button>
-            </span>
+            <span>{t("dash.dataUpdates")}</span>
           </footer>
         </main>
-        <CreateListingModal
-          isOpen={createListingModal}
-          onClose={() => setCreateListingModal(false)}
-          onCreated={(newListing) => {
-            setAllListings((prev) => [newListing, ...prev]);
-            setListing(newListing);
-            setCreateListingModal(false);
-            toast.success(t("createListing.success"));
-          }}
-          t={t}
-        />
         <EditListingModal
           isOpen={editListingModal}
           onClose={() => { setEditListingModal(false); setListingToEdit(null); }}

@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatINR, formatDate, formatKg } from "@/lib/format";
 
 const STEPS = [
   { id: 0, label: "Requirement", icon: Package },
@@ -44,10 +45,6 @@ const STEPS = [
 ];
 
 const CROPS = ["Tomato", "Onion", "Potato", "Rice", "Wheat", "Brinjal", "Cauliflower", "Cabbage", "Carrot", "Capsicum", "Garlic", "Ginger", "Mango"];
-
-function formatINR(n: number): string {
-  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-}
 
 export default function Procurement() {
   const { user } = useAuth();
@@ -108,9 +105,9 @@ export default function Procurement() {
       setMatch(result);
       setStep(1);
       if (result.status === "FEASIBLE") {
-        toast.success(`Supply matched: ${result.total_matched_kg} kg across ${result.matched_farmers.length} farmers`);
+        toast.success(`Supply matched: ${formatKg(result.total_matched_kg)} across ${result.matched_farmers.length} farmers`);
       } else if (result.status === "PARTIAL") {
-        toast.warning(`${result.total_matched_kg} kg matched, ${result.shortage_kg} kg short`);
+        toast.warning(`${formatKg(result.total_matched_kg)} matched, ${formatKg(result.shortage_kg)} short`);
       } else {
         toast.error(result.infeasibility_reason || "No feasible supply found");
       }
@@ -332,9 +329,9 @@ export default function Procurement() {
                 <div>
                   <p className="text-sm font-bold">
                     {match.status === "FEASIBLE"
-                      ? `${match.required_kg} kg fully matched`
+                      ? `${formatKg(match.required_kg)} fully matched`
                       : match.status === "PARTIAL"
-                      ? `${match.total_matched_kg} kg matched, ${match.shortage_kg} kg short`
+                      ? `${formatKg(match.total_matched_kg)} matched, ${formatKg(match.shortage_kg)} short`
                       : "No feasible supply"}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -355,9 +352,9 @@ export default function Procurement() {
           </Card>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Required" value={`${match.required_kg} kg`} />
-            <Stat label="Matched" value={`${match.total_matched_kg} kg`} tone="emerald" />
-            <Stat label="Shortage" value={`${match.shortage_kg} kg`} tone={match.shortage_kg > 0 ? "amber" : undefined} />
+            <Stat label="Required" value={formatKg(match.required_kg)} />
+            <Stat label="Matched" value={formatKg(match.total_matched_kg)} tone="emerald" />
+            <Stat label="Shortage" value={formatKg(match.shortage_kg)} tone={match.shortage_kg > 0 ? "amber" : undefined} />
             <Stat label="Farmers" value={String(match.matched_farmers.length)} />
           </div>
 
@@ -382,11 +379,11 @@ export default function Procurement() {
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="text-right">
-                      <p className="font-bold text-emerald-700">{f.allocated_kg} kg</p>
-                      <p className="text-[11px] text-muted-foreground">of {f.available_kg} kg available</p>
+                      <p className="font-bold text-emerald-700">{formatKg(f.allocated_kg)}</p>
+                      <p className="text-[11px] text-muted-foreground">of {formatKg(f.available_kg)} available</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold">₹{f.price_per_kg}/kg</p>
+                      <p className="font-bold">{formatINR(f.price_per_kg)}/kg</p>
                       <p className="text-[11px] text-muted-foreground">fit {Math.round(f.score * 100)}%</p>
                     </div>
                   </div>
@@ -427,7 +424,7 @@ export default function Procurement() {
                 <Stat label="Shipments" value={String(plan.shipment_ids.length)} />
                 <Stat
                   label="Est. delivery"
-                  value={plan.estimated_delivery ? new Date(plan.estimated_delivery).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}
+                  value={plan.estimated_delivery ? formatDate(plan.estimated_delivery) : "—"}
                 />
                 <Stat
                   label="Consolidation saving"
@@ -478,7 +475,7 @@ export default function Procurement() {
                         <p className="text-sm font-semibold">
                           Vehicle {idx + 1}
                           <span className="ml-2 text-xs font-normal text-muted-foreground">
-                            {r.load_kg} kg · {r.distance_km.toFixed(0)} km · {Math.round(r.duration_min)} min
+                            {formatKg(r.load_kg)} · {r.distance_km.toFixed(0)} km · {Math.round(r.duration_min)} min
                           </span>
                         </p>
                         <Badge variant="secondary">{formatINR(r.operating_cost)}</Badge>
@@ -491,7 +488,7 @@ export default function Procurement() {
                             </span>
                             <span className="capitalize">{s.stop_type.toLowerCase()}</span>
                             <span className="ml-auto">
-                              {s.quantity_kg > 0 ? `${s.quantity_kg} kg` : "—"}
+                              {s.quantity_kg > 0 ? formatKg(s.quantity_kg) : "—"}
                             </span>
                           </li>
                         ))}
@@ -527,7 +524,7 @@ export default function Procurement() {
             <div>
               <h2 className="text-xl font-bold">Order placed</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {crop} · {Number(qty)} kg · {formatINR(totalProduceCost)} produce cost. Logistics dispatched with live tracking.
+                {crop} · {formatKg(Number(qty))} · {formatINR(totalProduceCost)} produce cost. Logistics dispatched with live tracking.
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-3">

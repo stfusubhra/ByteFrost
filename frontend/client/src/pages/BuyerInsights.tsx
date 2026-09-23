@@ -14,10 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-
-function formatINR(n: number): string {
-  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-}
+import { formatINR, formatKg } from "@/lib/format";
 
 export default function BuyerInsights() {
   const [data, setData] = useState<BuyerInsightsData | null>(null);
@@ -88,7 +85,7 @@ export default function BuyerInsights() {
       {/* KPI cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard icon={<IndianRupee className="size-5" />} label="Total spend" value={formatINR(data.total_spend)} />
-        <KpiCard icon={<Package className="size-5" />} label="Volume procured" value={`${data.total_kg} kg`} />
+        <KpiCard icon={<Package className="size-5" />} label="Volume procured" value={formatKg(data.total_kg)} />
         <KpiCard icon={<ClipboardIcon />} label="Orders placed" value={String(data.total_orders)} />
         <KpiCard
           icon={<Truck className="size-5" />}
@@ -141,7 +138,7 @@ export default function BuyerInsights() {
                   <div key={c.crop_name}>
                     <div className="mb-1 flex items-center justify-between text-sm">
                       <span className="font-medium">{c.crop_name}</span>
-                      <span className="text-muted-foreground">{c.quantity_kg} kg</span>
+                      <span className="text-muted-foreground">{formatKg(c.quantity_kg)}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div

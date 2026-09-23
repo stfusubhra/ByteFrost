@@ -9,22 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  in_transit: "In transit",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  confirmed: "bg-sky-100 text-sky-800",
-  in_transit: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-muted text-muted-foreground",
-};
+import { formatINR, formatDate, statusLabel, statusTone } from "@/lib/format";
 
 const FILTERS = [
   { value: "", label: "All" },
@@ -34,10 +19,6 @@ const FILTERS = [
   { value: "delivered", label: "Delivered" },
   { value: "cancelled", label: "Cancelled" },
 ];
-
-function formatINR(n: number): string {
-  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-}
 
 export default function BuyerOrders() {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -119,7 +100,7 @@ export default function BuyerOrders() {
             <EmptyTitle>No orders found</EmptyTitle>
             <EmptyDescription>
               {filter
-                ? `No ${STATUS_LABEL[filter]?.toLowerCase()} orders yet.`
+                ? `No ${statusLabel(filter).toLowerCase()} orders yet.`
                 : "You haven't placed any procurement orders yet."}
             </EmptyDescription>
           </EmptyHeader>
@@ -142,18 +123,12 @@ export default function BuyerOrders() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold">Order #{o.id.slice(0, 8)}</p>
-                      <Badge className={STATUS_TONE[o.status] || "bg-muted text-muted-foreground"}>
-                        {STATUS_LABEL[o.status] || o.status}
+                      <Badge className={statusTone(o.status)}>
+                        {statusLabel(o.status)}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(o.created_at).toLocaleString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDate(o.created_at)}
                       {" · "}
                       {totalKg} kg
                       {o.total_amount ? ` · ${formatINR(o.total_amount)}` : ""}

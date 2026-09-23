@@ -22,12 +22,12 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useReveal } from "../hooks/useReveal";
+import { workspaceForRole } from "@/lib/roles";
 import LanguageSelector from "./LanguageSelector";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   NavigationMenu,
@@ -60,7 +60,7 @@ export default function PublicLayout({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [pathname] = useLocation();
   useReveal();
 
@@ -71,15 +71,12 @@ export default function PublicLayout({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const hasToken = isAuthenticated || !!(
-    typeof window !== "undefined" && localStorage.getItem("kisansetu_token")
-  );
+  const hasToken = isAuthenticated;
 
-  const dashboardHref =
-    isAuthenticated && user?.role === "buyer" ? "/buyer-dashboard" : "/dashboard";
+  const dashboardHref = workspaceForRole(user?.role);
 
   const handleLogout = () => {
-    localStorage.removeItem("kisansetu_token");
+    logout();
     window.location.href = "/";
   };
 
@@ -343,15 +340,7 @@ export default function PublicLayout({
               </Badge>
             </div>
             <div className="mt-1 inline-flex items-center gap-1.5">
-              <Input
-                id="newsletter-email"
-                name="newsletter-email"
-                type="email"
-                className="h-9 max-w-44"
-                placeholder={t("footer.newsletter.placeholder")}
-                aria-label={t("footer.newsletter.placeholder")}
-              />
-              <Button size="sm">{t("footer.newsletter.cta")}</Button>
+              <span className="text-sm text-muted-foreground">{t("footer.newsletter.placeholder")}</span>
             </div>
           </div>
         </div>

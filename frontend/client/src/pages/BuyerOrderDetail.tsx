@@ -26,26 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  in_transit: "In transit",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  confirmed: "bg-sky-100 text-sky-800",
-  in_transit: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-muted text-muted-foreground",
-};
-
-function formatINR(n: number): string {
-  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-}
+import { formatINR, formatDate, formatKg, statusLabel, statusTone } from "@/lib/format";
 
 export default function BuyerOrderDetail() {
   const params = useParams<{ id: string }>();
@@ -129,20 +110,14 @@ export default function BuyerOrderDetail() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">Order #{order.id.slice(0, 8)}</h1>
-            <Badge className={STATUS_TONE[order.status] || "bg-muted text-muted-foreground"}>
-              {STATUS_LABEL[order.status] || order.status}
+            <Badge className={statusTone(order.status)}>
+              {statusLabel(order.status)}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Placed {new Date(order.created_at).toLocaleString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            Placed {formatDate(order.created_at)}
             {" · "}
-            {totalKg} kg
+            {formatKg(totalKg)}
             {order.total_amount ? ` · ${formatINR(order.total_amount)}` : ""}
           </p>
         </div>
@@ -168,12 +143,7 @@ export default function BuyerOrderDetail() {
               <p className="text-muted-foreground">
                 Deadline:{" "}
                 <strong className="text-foreground">
-                  {new Date(order.delivery_deadline).toLocaleString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatDate(order.delivery_deadline)}
                 </strong>
               </p>
             )}
@@ -204,8 +174,10 @@ export default function BuyerOrderDetail() {
                 </p>
               </div>
               <div className="text-right text-sm">
-                <p className="font-semibold">{item.quantity_kg} kg</p>
-                <p className="text-xs text-muted-foreground">₹{item.price_per_kg}/kg</p>
+                <p className="font-semibold">{formatKg(item.quantity_kg)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.price_per_kg != null ? `${formatINR(item.price_per_kg)}/kg` : "—"}
+                </p>
               </div>
             </div>
           ))}
@@ -232,9 +204,9 @@ export default function BuyerOrderDetail() {
                   </p>
                 </div>
                 <div className="text-right text-sm">
-                  <p className="font-semibold">{a.quantity_kg} kg</p>
+                  <p className="font-semibold">{formatKg(a.quantity_kg)}</p>
                   {a.price_per_kg != null && (
-                    <p className="text-xs text-muted-foreground">₹{a.price_per_kg}/kg</p>
+                    <p className="text-xs text-muted-foreground">{formatINR(a.price_per_kg)}/kg</p>
                   )}
                 </div>
               </div>
@@ -265,7 +237,7 @@ export default function BuyerOrderDetail() {
                     className="gap-1.5 border data-[state=active]:border-primary"
                   >
                     <Truck className="size-3.5" />
-                    Shipment #{idx + 1} ({s.status})
+                    Shipment #{idx + 1} ({statusLabel(s.status)})
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -286,7 +258,7 @@ export default function BuyerOrderDetail() {
                         />
                         <MiniStat
                           label="Capacity"
-                          value={shipment.vehicle ? `${shipment.vehicle.capacity_kg} kg` : "—"}
+                          value={shipment.vehicle ? formatKg(shipment.vehicle.capacity_kg) : "—"}
                         />
                         <MiniStat
                           label="Distance"

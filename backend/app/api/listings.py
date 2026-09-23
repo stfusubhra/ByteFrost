@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from app.core.database import get_db
@@ -18,6 +18,29 @@ LISTING_CREATOR_ROLES = {
 }
 
 
+def _to_response(listing: ProduceListing, farm_name: Optional[str]) -> ListingResponse:
+    """Build a ListingResponse with the seller's display name (farm_name)."""
+    return ListingResponse(
+        id=listing.id,
+        seller_id=listing.seller_id,
+        crop_name=listing.crop_name,
+        variety=listing.variety,
+        quantity_kg=listing.quantity_kg,
+        quality_grade=listing.quality_grade,
+        price_per_kg=listing.price_per_kg,
+        harvest_date=listing.harvest_date,
+        pickup_location=listing.pickup_location,
+        is_active=listing.is_active,
+        created_at=listing.created_at,
+        farm_name=farm_name,
+    )
+
+
+async def _seller_name(db: AsyncSession, seller_id: UUID) -> Optional[str]:
+    result = await db.execute(select(User.full_name).where(User.id == seller_id))
+    return result.scalar_one_or_none()
+
+
 @router.post("/", response_model=ListingResponse, status_code=201)
 async def create_listing(
     payload: ListingCreate,
@@ -31,7 +54,8 @@ async def create_listing(
     )
     db.add(listing)
     await db.flush()
-    return listing
+    farm_name = await _seller_name(db, listing.seller_id)
+    return _to_response(listing, farm_name)
 
 
 @router.get("/", response_model=List[ListingResponse])
@@ -43,7 +67,11 @@ async def list_listings(
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(ProduceListing).where(ProduceListing.is_active == True)
+    query = (
+        select(ProduceListing, User.full_name)
+        .join(User, ProduceListing.seller_id == User.id)
+        .where(ProduceListing.is_active == True)  # noqa: E712
+    )
 
     if crop_name:
         query = query.where(ProduceListing.crop_name.ilike(f"%{crop_name}%"))
@@ -54,7 +82,8 @@ async def list_listings(
 
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    rows = result.all()
+    return [_to_response(listing, farm_name) for listing, farm_name in rows]
 
 
 @router.get("/{listing_id}", response_model=ListingResponse)
@@ -63,12 +92,15 @@ async def get_listing(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(ProduceListing).where(ProduceListing.id == listing_id)
+        select(ProduceListing, User.full_name)
+        .join(User, ProduceListing.seller_id == User.id)
+        .where(ProduceListing.id == listing_id)
     )
-    listing = result.scalar_one_or_none()
-    if not listing:
+    row = result.one_or_none()
+    if not row:
         raise HTTPException(status_code=404, detail="Listing not found")
-    return listing
+    listing, farm_name = row
+    return _to_response(listing, farm_name)
 
 
 @router.delete("/{listing_id}", status_code=204)
@@ -114,4 +146,5 @@ async def update_listing(
 
     await db.flush()
     await db.refresh(listing)
-    return listing
+    farm_name = await _seller_name(db, listing.seller_id)
+    return _to_response(listing, farm_name)

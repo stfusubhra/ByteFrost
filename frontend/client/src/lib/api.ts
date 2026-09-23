@@ -75,6 +75,8 @@ export interface Listing {
   description?: string | null;
   is_active: boolean;
   created_at: string;
+  /** Display name of the selling farm / producer (from the seller's account). */
+  farm_name?: string | null;
 }
 
 export interface MatchResult {
@@ -167,7 +169,10 @@ export interface SupplyDiscoveryData {
 
 export interface FulfillmentPlanData {
   status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE";
-  matched_farmers: Array<{
+  infeasibility_reason?: string | null;
+  order_id?: string | null;
+  routing_mode?: string | null;
+  matched_farmers?: Array<{
     listing_id: string;
     farmer_id: string;
     farmer_name: string;
@@ -180,11 +185,23 @@ export interface FulfillmentPlanData {
     score: number;
     explanation: Record<string, any>;
   }>;
-  total_matched_kg: number;
-  required_kg: number;
-  shortage_kg: number;
-  fulfillment_percentage: number;
-  infeasibility_reason?: string | null;
+  total_matched_kg?: number;
+  required_kg?: number;
+  shortage_kg?: number;
+  fulfillment_percentage?: number;
+  vehicle_routes?: Array<{
+    vehicle_id: string;
+    stops: RouteStopItem[];
+    distance_km: number;
+    duration_min: number;
+    load_kg: number;
+    operating_cost: number;
+  }>;
+  landed_cost?: LandedCostBreakdownData | null;
+  consolidation_savings_km?: number | null;
+  estimated_delivery?: string | null;
+  shipment_ids: string[];
+  explanation?: PlanExplanationData | null;
 }
 
 // --- Public endpoints (no auth) ---
@@ -529,26 +546,6 @@ export interface PlanExplanationData {
   cost_per_delivered_kg: number;
   estimated_savings_inr: number;
   why_selected: string;
-}
-
-export interface FulfillmentPlanData {
-  status: "FEASIBLE" | "PARTIAL" | "INFEASIBLE";
-  infeasibility_reason?: string | null;
-  order_id?: string | null;
-  routing_mode?: string | null;
-  vehicle_routes?: Array<{
-    vehicle_id: string;
-    stops: RouteStopItem[];
-    distance_km: number;
-    duration_min: number;
-    load_kg: number;
-    operating_cost: number;
-  }>;
-  landed_cost?: LandedCostBreakdownData | null;
-  consolidation_savings_km?: number | null;
-  estimated_delivery?: string | null;
-  shipment_ids: string[];
-  explanation?: PlanExplanationData | null;
 }
 
 export interface IncidentReportData {

@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { fetchListing, Listing } from "@/lib/api";
 import { createOrder, OrderCreate } from "@/lib/api";
+import { cropImage } from "@/lib/marketplace-data";
+import { formatDateShort } from "@/lib/format";
 import PublicLayout from "@/components/PublicLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ArrowRight, MapPin, Loader2, CheckCircle } from "lucide-react";
+import { MapPin, Loader2, CheckCircle } from "lucide-react";
 
 export default function ListingDetail() {
   const { t } = useLanguage();
@@ -18,21 +20,6 @@ export default function ListingDetail() {
   const [toast, setToast] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(0);
   const [notes, setNotes] = useState<string>("");
-
-  const getSellerName = (_listing: Listing): string => {
-    return t("listing.verifiedProducer");
-  };
-
-  const imageMap: Record<string, string> = {
-    Tomatoes: "/images/produce/tomatoes.svg",
-    "Harvest crates": "/images/produce/crates.svg",
-    "Fresh produce": "/images/produce/produce.svg",
-    Default: "/images/produce/farmer.svg",
-  };
-
-  const getImage = (crop: string): string => {
-    return imageMap[crop] || imageMap.Default;
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -85,14 +72,14 @@ export default function ListingDetail() {
       };
       const response = await createOrder(orderData);
       setOrderSuccess(true);
-      showToast(`Order placed! Order ID: ${response.id}`);
+      showToast(`${t("listing.orderSuccess")} Order ID: ${response.id}`);
       setQuantity(listing.quantity_kg);
       setNotes("");
     } catch (err: any) {
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to place order. Please check your credentials and try again.";
+          : t("listing.orderError");
       setOrderError(message);
       showToast(message);
     } finally {
@@ -151,7 +138,7 @@ export default function ListingDetail() {
           {/* Image */}
           <div className="detail-image">
             <img
-              src={getImage(listing.crop_name)}
+              src={cropImage(listing.crop_name)}
               alt={`${listing.crop_name} listing`}
               loading="lazy"
             />
@@ -164,13 +151,13 @@ export default function ListingDetail() {
           <div className="detail-content">
             <h1>{listing.crop_name}</h1>
             <div className="flex gap-2 mt-2">
-              <span className="badge badge-primary">{listing.quality_grade || "Grade A"}</span>
+              <span className="badge badge-primary">{listing.quality_grade || "N/A"}</span>
               <span className="flex items-center gap-1">
                 <MapPin size={14} /> {listing.pickup_location || t("marketplace.locationTBA")}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-3">
-              <strong>{t("listing.seller")}</strong> {getSellerName(listing)}
+              <strong>{t("listing.seller")}</strong> {listing.farm_name || t("listing.sellerUnnamed")}
             </p>
 
             <div className="detail-stats">
@@ -181,7 +168,7 @@ export default function ListingDetail() {
                 <small>{t("listing.pricePerKg")}</small><strong>{listing.price_per_kg !== null ? `₹${listing.price_per_kg.toFixed(2)}/kg` : t("marketplace.priceOnRequest")}</strong>
               </div>
               <div className="detail-stat">
-                <small>{t("listing.harvestDate")}</small><strong>{listing.harvest_date || t("marketplace.harvestDateTBA")}</strong>
+                <small>{t("listing.harvestDate")}</small><strong>{listing.harvest_date ? formatDateShort(listing.harvest_date) : t("marketplace.harvestDateTBA")}</strong>
               </div>
             </div>
 

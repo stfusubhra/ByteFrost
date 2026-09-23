@@ -5,6 +5,8 @@ import AuthLayout from "@/components/AuthLayout";
 import { api } from "../lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { workspaceForRole } from "@/lib/roles";
+import type { LocaleKeys } from "@/locales";
 
 type LoginMethod = "email" | "phone";
 
@@ -17,11 +19,18 @@ function normalizePhone(value: string): string {
   return value.trim();
 }
 
+// Canonical demo accounts (seeded by backend/seed_demo_data.py). Login is
+// phone-based; these are the ONLY demo credentials in the product.
+const DEMO_ACCOUNTS: Array<{ phone: string; password: string; labelKey: LocaleKeys }> = [
+  { phone: "+919876543210", password: "demo1234", labelKey: "login.demo.farmer" },
+  { phone: "+918888888888", password: "demo1234", labelKey: "login.demo.buyer" },
+];
+
 export default function Login() {
   const { login } = useAuth();
   const { t } = useLanguage();
 
-  const [method, setMethod] = useState<LoginMethod>("email");
+  const [method, setMethod] = useState<LoginMethod>("phone");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +38,30 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+
+  /** Complete sign-in: persist auth, fetch the real profile, then route by role. */
+  const completeLogin = async (token: string, role: string) => {
+    login(token, {
+      id: "",
+      email: "",
+      full_name: "",
+      phone: null,
+      role,
+      is_verified: true,
+      is_active: true,
+      latitude: null,
+      longitude: null,
+      created_at: new Date().toISOString(),
+    });
+    // Fetch the full profile so the nav shows the real name immediately.
+    try {
+      const { data } = await api.get("/auth/me");
+      login(token, data);
+    } catch {
+      // Profile fetch is best-effort; the token is already valid.
+    }
+    window.location.href = workspaceForRole(role);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,25 +91,7 @@ export default function Login() {
           : { phone: normalizePhone(phone), password };
       const response = await api.post("/auth/login", payload);
       if (response.data?.access_token && response.data?.role) {
-        // Store token and user info via AuthContext (includes role)
-        login(response.data.access_token, {
-          id: response.data.user_id,
-          email: response.data?.email ?? "",
-          full_name: "",
-          phone: method === "phone" ? (payload.phone ?? null) : null,
-          role: response.data.role,
-          is_verified: true,
-          is_active: true,
-          latitude: null,
-          longitude: null,
-          created_at: new Date().toISOString(),
-        });
-        // Redirect based on role
-        if (response.data.role === "farmer" || response.data.role === "fpo_manager") {
-          window.location.href = "/dashboard";
-        } else {
-          window.location.href = "/buyer-dashboard";
-        }
+        await completeLogin(response.data.access_token, response.data.role);
       } else {
         window.location.href = "/";
       }
@@ -90,37 +105,21 @@ export default function Login() {
     }
   };
 
-  const handleDemoFill = async (demoIdentifier: string) => {
+  const handleDemoFill = async (demoPhone: string, demoPassword: string) => {
     // One-click demo login: fill the form with the seeded demo account and
     // submit immediately so judges can enter the app in a single click.
-    setMethod("email");
-    setEmail(demoIdentifier);
-    setPassword("demo123");
+    setMethod("phone");
+    setPhone(demoPhone.replace("+91", ""));
+    setPassword(demoPassword);
     setError(null);
     setLoading(true);
     try {
       const response = await api.post("/auth/login", {
-        email: demoIdentifier,
-        password: "demo123",
+        phone: demoPhone,
+        password: demoPassword,
       });
       if (response.data?.access_token && response.data?.role) {
-        login(response.data.access_token, {
-          id: response.data.user_id,
-          email: response.data?.email ?? "",
-          full_name: "",
-          phone: null,
-          role: response.data.role,
-          is_verified: true,
-          is_active: true,
-          latitude: null,
-          longitude: null,
-          created_at: new Date().toISOString(),
-        });
-        if (response.data.role === "farmer" || response.data.role === "fpo_manager") {
-          window.location.href = "/dashboard";
-        } else {
-          window.location.href = "/buyer-dashboard";
-        }
+        await completeLogin(response.data.access_token, response.data.role);
       }
     } catch (err: any) {
       const status = err.response?.status;
@@ -212,12 +211,7 @@ export default function Login() {
           )}
 
           <div className="auth-field">
-            <div className="auth-field-label-row">
-              <label htmlFor="password">{t("login.password.label")}</label>
-              <a href="#" className="auth-forgot" onClick={(e) => e.preventDefault()}>
-                {t("login.password.forgot")}
-              </a>
-            </div>
+            <label htmlFor="password">{t("login.password.label")}</label>
             <div className="auth-input-wrap">
               <input
                 type={showPassword ? "text" : "password"}
@@ -258,12 +252,16 @@ export default function Login() {
 
         {showDemo && (
           <div className="auth-demo">
-            <button type="button" onClick={() => handleDemoFill("rahul.farmer@kisansetu.demo")} disabled={loading}>
-              {t("login.demo.farmer")}
-            </button>
-            <button type="button" onClick={() => handleDemoFill("freshmart@kisansetu.demo")} disabled={loading}>
-              {t("login.demo.buyer")}
-            </button>
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.phone}
+                type="button"
+                onClick={() => handleDemoFill(acc.phone, acc.password)}
+                disabled={loading}
+              >
+                {t(acc.labelKey)}
+              </button>
+            ))}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Redirect, Route } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { workspaceForRole } from "@/lib/roles";
 
 interface Props {
   path: string;
@@ -28,11 +29,7 @@ export const ProtectedRoute: React.FC<Props> = ({ path, component: Component, al
           return <Redirect to="/login" />;
         }
         if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-          const target =
-            user.role === "farmer" || user.role === "fpo_manager"
-              ? "/dashboard"
-              : "/buyer-dashboard";
-          return <Redirect to={target} />;
+          return <Redirect to={workspaceForRole(user.role)} />;
         }
         return <Component {...params} />;
       }}

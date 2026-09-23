@@ -35,7 +35,7 @@ Multiple intermediaries reduce farmers' earnings while increasing end-consumer p
 | **Backend API** | Python 3.12, FastAPI, SQLAlchemy (Async), Uvicorn |
 | **Database & Cache** | PostgreSQL (`Numeric(12,2)` money precision), Redis |
 | **AI / Optimization** | Scikit-learn, XGBoost, Pandas, Google OR-Tools VRP |
-| **Testing & CI** | Pytest (Backend 28/28 passing), TypeScript `tsc` (0 errors), GitHub Actions |
+| **Testing & CI** | Pytest (Backend 29/29 passing), TypeScript `tsc` (0 errors), GitHub Actions |
 | **Deployment** | Vercel (Frontend SPA), Render (FastAPI + PostgreSQL + Redis) |
 
 ---
@@ -129,7 +129,7 @@ cd frontend && pnpm run type-check && pnpm run build
 > cd backend && source venv/bin/activate
 > createdb bytefrost_test          # once
 > alembic upgrade head             # apply migrations to the test DB
-> pytest                           # 28/28 passing, dev data untouched
+> pytest                           # 29/29 passing, dev data untouched
 > ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push to `main`/`develop` and on PRs to `main`. **A green CI check is required before merging.**
@@ -138,32 +138,40 @@ CI (`.github/workflows/ci.yml`) runs all of the above on every push to `main`/`d
 
 ## 🌱 Seeding Demo Data (for Hackathon)
 
-Populate the database with demo users, vehicles, hubs, and produce listings:
+Populate the database with the canonical demo dataset — users, vehicles, hubs,
+produce listings, and buyer order history:
 
 ```bash
 cd backend
 source venv/bin/activate
-python seed_demo_data.py
+python seed_demo_data.py          # idempotent — safe to re-run
+python seed_demo_data.py --reset  # wipe demo records only, then reseed
 ```
 
-This creates:
-- **Demo Farmer**: phone `+919999999999`, password `demo1234` (Nashik, Maharashtra)
-- **Demo Buyer**: phone `+918888888888`, password `demo1234` (Mumbai, Maharashtra)
-- **Demo Logistics Partner**: phone `+917777777777`, password `demo1234` (Pune, Maharashtra)
-- **Demo FPO**: Nashik Agro Producer Company Ltd
-- **Vehicles**: 2 (1 refrigerated truck, 1 standard truck)
-- **Hubs**: 2 (Nashik local hub, Mumbai regional hub)
-- **Produce Listings**: 3 (Tomato Cherry 500 kg @ ₹45/kg Grade A, Onion Red 300 kg, Potato White 400 kg)
+This creates (login is phone-based, password `demo1234`):
 
-**Complete 6-step demo flow:**
-1. Farmer creates 500kg tomato listing
-2. AI price recommendation (₹45/kg based on market data)
-3. Buyer discovers listing and places order
-4. System allocates order with 92% match score
-5. Logistics provider assigned with refrigerated vehicle
-6. Route optimized: Nashik → Mumbai (165km, 2.5hrs) + shipment tracking
+- **Demo Farmer**: Rahul Patil, phone `+919876543210` (Nashik, Maharashtra)
+- **Supporting Farmers**: Priya Shinde `+919876543211` (Pune), Sunil Jadhav `+919876543212` (Satara)
+- **Demo Buyer**: FreshMart Mumbai, phone `+918888888888` (Mumbai, Maharashtra)
+- **Vehicles**: 2 (1 refrigerated truck 1500 kg, 1 standard truck 2000 kg)
+- **Hubs**: 2 (Mumbai Regional Hub, Nashik Agri Hub)
+- **Live Listings**: Tomato Cherry 500 kg @ ₹45/kg Grade A (Rahul), Tomato Local 300 kg @ ₹30/kg Grade A (Priya), Tomato Desi 300 kg @ ₹31/kg Grade B (Sunil)
+- **Buyer order history**: 2 delivered + 1 in-transit orders (populates history, insights, and tracking pages)
 
-The seed script is **idempotent** — running it again will not create duplicates.
+**Demo scenario:** FreshMart needs 1000 kg of tomatoes. The matching service
+scores each farmer's listing (distance, quality, freshness, price, reliability)
+and allocates greedily with an economic feasibility check: Rahul (500 kg) and
+Priya (300 kg) are matched for 800 kg total, while Sunil (Satara, ~196 km) is
+skipped because transport cost would exceed 30% of the produce value — the
+result is an honest PARTIAL match with a 200 kg shortage. The fulfillment
+planner then builds a consolidated route (Nashik → Mumbai, ~165 km, ~2.5 hrs)
+with a refrigerated truck, and the order advances PENDING → CONFIRMED →
+DISPATCHED → IN_TRANSIT with live tracking.
+
+**Safety:** the seed is idempotent (upserts by phone, never duplicates) and
+`--reset` deletes ONLY demo records (users with `@kisansetu.demo` emails /
+`profile.demo` flag, and vehicles/hubs marked `demo=True`). Real data is never
+touched, and the seed never runs on backend startup.
 
 ---
 

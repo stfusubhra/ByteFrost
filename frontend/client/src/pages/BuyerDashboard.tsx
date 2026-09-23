@@ -9,7 +9,8 @@ import {
   OrderResponse,
   UserProfile,
 } from "@/lib/api";
-import { IMG, CATEGORY_MAP } from "@/lib/marketplace-data";
+import { CATEGORY_MAP, cropImage } from "@/lib/marketplace-data";
+import { formatINR, formatDateShort, formatKg, statusLabel, statusTone } from "@/lib/format";
 import { toast } from "sonner";
 import {
   ArrowRight,
@@ -28,46 +29,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  in_transit: "In transit",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  confirmed: "bg-sky-100 text-sky-800",
-  in_transit: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-muted text-muted-foreground",
-};
-
-function cropImage(crop: string): string {
-  const key = crop.toLowerCase();
-  const map: Record<string, string> = {
-    tomato: IMG.tomato,
-    onion: IMG.onion,
-    potato: IMG.potato,
-    rice: IMG.rice,
-    wheat: IMG.wheat,
-    brinjal: IMG.brinjal,
-    cauliflower: IMG.cauliflower,
-    mango: IMG.mango,
-    cabbage: IMG.cabbage,
-    carrot: IMG.carrot,
-    capsicum: IMG.capsicum,
-    garlic: IMG.garlic,
-    ginger: IMG.ginger,
-  };
-  return map[key] || IMG.tomato;
-}
-
-function formatINR(n: number): string {
-  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-}
 
 export default function BuyerDashboard() {
   const { user, logout } = useAuth();
@@ -200,7 +161,7 @@ export default function BuyerDashboard() {
             Recommended supply
           </h2>
           <span className="text-xs text-muted-foreground">
-            {listings.length} verified listings available now
+            {listings.length} listings available now
           </span>
         </div>
 
@@ -240,7 +201,7 @@ export default function BuyerDashboard() {
                     loading="lazy"
                   />
                   <Badge className="absolute left-2 top-2 bg-background/90 text-foreground backdrop-blur">
-                    Grade {l.quality_grade || "B"}
+                    Grade {l.quality_grade || "N/A"}
                   </Badge>
                 </div>
                 <CardContent className="space-y-2 p-4">
@@ -253,12 +214,12 @@ export default function BuyerDashboard() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-base font-bold text-primary">₹{l.price_per_kg}</p>
+                      <p className="text-base font-bold text-primary">{formatINR(l.price_per_kg)}</p>
                       <p className="text-[11px] text-muted-foreground">per kg</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
-                    <span>{l.quantity_kg} kg available</span>
+                    <span>{formatKg(l.quantity_kg)} available</span>
                     <span className="capitalize">{CATEGORY_MAP[l.crop_name] || "produce"}</span>
                   </div>
                 </CardContent>
@@ -325,8 +286,8 @@ export default function BuyerDashboard() {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
-                      <Badge className={STATUS_TONE[o.status] || "bg-muted text-muted-foreground"}>
-                        {STATUS_LABEL[o.status] || o.status}
+                      <Badge className={statusTone(o.status)}>
+                        {statusLabel(o.status)}
                       </Badge>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/buyer/orders/${o.id}`}>
@@ -382,17 +343,13 @@ export default function BuyerDashboard() {
                         Order #{o.id.slice(0, 8)}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDateShort(o.created_at)}
                         {" · "}
                         {o.total_amount ? formatINR(o.total_amount) : `${o.items.reduce((a, i) => a + i.quantity_kg, 0)} kg`}
                       </p>
                     </div>
-                    <Badge className={STATUS_TONE[o.status] || "bg-muted text-muted-foreground"}>
-                      {STATUS_LABEL[o.status] || o.status}
+                    <Badge className={statusTone(o.status)}>
+                      {statusLabel(o.status)}
                     </Badge>
                   </CardContent>
                 </Card>

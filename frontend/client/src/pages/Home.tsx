@@ -51,12 +51,6 @@ type PreviewRow = {
   status: string;
 };
 
-const FALLBACK_ROWS: PreviewRow[] = [
-  { id: "f1", crop: "Tomato · Grade A", location: "Nashik, MH", quantity: "500 kg", price: "₹45/kg", status: "Ready to move" },
-  { id: "f2", crop: "Onion · Grade A", location: "Pune, MH", quantity: "300 kg", price: "₹25/kg", status: "Ready to move" },
-  { id: "f3", crop: "Potato · Grade B", location: "Satara, MH", quantity: "400 kg", price: "₹18/kg", status: "Ready to move" },
-];
-
 const STEPS = [
   { icon: Users, key: "home.how.step1" },
   { icon: ShoppingCart, key: "home.how.step2" },
@@ -74,18 +68,18 @@ const TRUST_ITEMS = ["home.trust.1", "home.trust.2", "home.trust.3"] as const;
 
 export default function Home() {
   const { t } = useLanguage();
-  const [rows, setRows] = useState<PreviewRow[]>(FALLBACK_ROWS);
+  const [rows, setRows] = useState<PreviewRow[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
+  const [listingsError, setListingsError] = useState(false);
   useReveal({ threshold: 0.16, rootMargin: "0px 0px -12% 0px" });
 
-  useEffect(() => {
-    let alive = true;
+  const loadPreview = () => {
     setListingsLoading(true);
+    setListingsError(false);
     fetchListings({ limit: 6 })
       .then((listings) => {
-        if (!alive || !listings?.length) return;
         setRows(
-          listings.map((l) => ({
+          (listings ?? []).map((l) => ({
             id: l.id,
             crop: l.variety ? `${l.crop_name} · ${l.variety}` : l.crop_name,
             location: l.pickup_location ?? "—",
@@ -95,11 +89,12 @@ export default function Home() {
           }))
         );
       })
-      .catch(() => {})
-      .finally(() => {
-        if (alive) setListingsLoading(false);
-      });
-    return () => { alive = false; };
+      .catch(() => setListingsError(true))
+      .finally(() => setListingsLoading(false));
+  };
+
+  useEffect(() => {
+    loadPreview();
   }, []);
 
   return (
@@ -231,6 +226,20 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+              ) : listingsError ? (
+                <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+                  <p className="text-sm text-muted-foreground">{t("home.preview.error")}</p>
+                  <Button variant="outline" size="sm" onClick={loadPreview}>
+                    {t("marketplace.retry")}
+                  </Button>
+                </div>
+              ) : rows.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+                  <p className="text-sm text-muted-foreground">{t("home.preview.error")}</p>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/marketplace">{t("home.preview.viewAll")}</Link>
+                  </Button>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -319,14 +328,14 @@ export default function Home() {
 
         <Separator />
 
-        {/* 5 · STATS BAND */}
+        {/* 5 · TRUST BAND */}
         <section className="py-16">
           <div className="container">
             <div className="grid gap-6 sm:grid-cols-3">
               {([
-                { icon: BarChart3, label: "home.trust.1", value: "10,000+" },
-                { icon: Users, label: "home.trust.2", value: "5,000+" },
-                { icon: MapPin, label: "home.trust.3", value: "200+" },
+                { icon: BarChart3, label: "home.trust.1", value: "Verified" },
+                { icon: Users, label: "home.trust.2", value: "Live" },
+                { icon: MapPin, label: "home.trust.3", value: "Direct" },
               ] as const).map(({ icon: Icon, label, value }) => (
                 <Card key={label} className="border-border/50 text-center">
                   <CardContent className="pt-6">

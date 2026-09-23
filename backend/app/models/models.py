@@ -126,6 +126,7 @@ class FPO(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     contact_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    demo = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -266,6 +267,7 @@ class Vehicle(Base):
     status = Column(Enum(VehicleStatus, name="vehiclestatus"), default=VehicleStatus.AVAILABLE)
     current_load_kg = Column(Float, nullable=False, default=0)
     operating_cost_per_km = Column(Float, nullable=False)
+    demo = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -282,6 +284,7 @@ class Hub(Base):
     capacity_kg = Column(Float, nullable=False)
     current_load_kg = Column(Float, nullable=False, default=0)
     status = Column(Enum(HubStatus, name="hubstatus"), default=HubStatus.ACTIVE)
+    demo = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

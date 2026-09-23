@@ -11,6 +11,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { BUYER_ROLES } from "./lib/roles";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import PageLoader from "./components/PageLoader";
@@ -64,18 +65,17 @@ function FullRouter() {
       <LazyRoute path="/listing/:id" component={ListingDetail} />
       <LazyRoute path="/create-listing" component={CreateListing} />
       <LazyRoute path="/solution-story" component={SolutionStory} />
-      <LazyRoute path="/solutions" component={SolutionStory} />
-      <LazyRoute path="/story" component={SolutionStory} />
-      <LazyRoute path="/about" component={SolutionStory} />
       <LazyRoute path="/faq" component={Faq} />
       <LazyRoute path="/contact" component={Contact} />
+      {/* Explicit demo mode: same real APIs, banner + seeded data visible. */}
+      <LazyRoute path="/demo" component={Marketplace} />
       <ProtectedLazyRoute path="/dashboard" component={Dashboard} />
-      <ProtectedLazyRoute path="/buyer-dashboard" component={BuyerDashboard} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
-      <ProtectedLazyRoute path="/buyer/onboarding" component={BuyerOnboarding} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
-      <ProtectedLazyRoute path="/buyer/procurement" component={Procurement} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
-      <ProtectedLazyRoute path="/buyer/orders" component={BuyerOrders} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
-      <ProtectedLazyRoute path="/buyer/orders/:id" component={BuyerOrderDetail} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
-      <ProtectedLazyRoute path="/buyer/insights" component={BuyerInsights} allowedRoles={["buyer_bulk", "buyer_retailer"]} />
+      <ProtectedLazyRoute path="/buyer-dashboard" component={BuyerDashboard} allowedRoles={BUYER_ROLES} />
+      <ProtectedLazyRoute path="/buyer/onboarding" component={BuyerOnboarding} allowedRoles={BUYER_ROLES} />
+      <ProtectedLazyRoute path="/buyer/procurement" component={Procurement} allowedRoles={BUYER_ROLES} />
+      <ProtectedLazyRoute path="/buyer/orders" component={BuyerOrders} allowedRoles={BUYER_ROLES} />
+      <ProtectedLazyRoute path="/buyer/orders/:id" component={BuyerOrderDetail} allowedRoles={BUYER_ROLES} />
+      <ProtectedLazyRoute path="/buyer/insights" component={BuyerInsights} allowedRoles={BUYER_ROLES} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
