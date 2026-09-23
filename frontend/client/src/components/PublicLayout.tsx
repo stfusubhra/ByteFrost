@@ -1,7 +1,7 @@
 /* KisanSetu public shell.
    Header + footer rebuilt with shadcn/ui components:
    - Desktop nav: NavigationMenu; Mobile nav: Sheet drawer.
-   - User menu: DropdownMenu + Avatar.
+   - User menu: shared ProfileMenu (avatar + role-aware dropdown).
    - Theme + language controls.
    Aligned to the DPI-era problem statement: marketplace, solutions with
    logistics and AI forecast surface as first-class destinations. */
@@ -16,7 +16,6 @@ import {
   Menu,
   Sprout,
   Truck,
-  User,
   X,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,11 +23,11 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useReveal } from "../hooks/useReveal";
 import { workspaceForRole } from "@/lib/roles";
 import LanguageSelector from "./LanguageSelector";
+import ProfileMenu from "./ProfileMenu";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -36,14 +35,6 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -85,14 +76,6 @@ export default function PublicLayout({
     { href: "/solution-story", label: t("nav.solutionStory") },
     { href: "/faq", label: t("nav.faq") },
   ];
-
-  const initials = (user?.full_name || "KS")
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -150,34 +133,7 @@ export default function PublicLayout({
             <LanguageSelector variant="dark" />
 
             {hasToken ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-9 gap-2 px-2" aria-label="Account menu">
-                    <Avatar className="size-7">
-                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden max-w-24 truncate text-sm font-medium xl:inline">
-                      {user?.full_name || t("nav.welcome")}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuLabel>{t("nav.account")}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={dashboardHref} className="cursor-pointer">
-                      <User className="size-4" />
-                      {t("nav.dashboard")}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-                    <LogOut className="size-4" />
-                    {t("nav.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ProfileMenu showName />
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>

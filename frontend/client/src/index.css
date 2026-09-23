@@ -2270,18 +2270,6 @@ img {
   gap: 12px;
 }
 
-.dash-avatar {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .dash-body {
   display: grid;
   grid-template-columns: 220px 1fr;

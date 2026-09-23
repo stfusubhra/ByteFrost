@@ -68,6 +68,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import ProfileMenu from "@/components/ProfileMenu";
 import {
   Dialog,
   DialogContent,
@@ -578,11 +579,14 @@ export default function Dashboard() {
         </div>
         <div className="dash-topbar-right flex items-center gap-2.5">
           <LanguageSelector variant="dark" />
-          <Avatar className="dash-avatar size-8">
-            <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-              {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
-            </AvatarFallback>
-          </Avatar>
+          {/* Account menu — the workspace sections switch in place. */}
+          <ProfileMenu
+            showName
+            onSelectSection={(section) => {
+              setActiveNav(section);
+              setSidebarOpen(false);
+            }}
+          />
         </div>
       </header>
 
